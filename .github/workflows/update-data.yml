@@ -27,8 +27,8 @@ jobs:
         id: run
         continue-on-error: true
         env:
-          # Comparaison avec SC Trade Tools : passer à 'true' une fois l'accord de SC Trade Tools obtenu.
-          SCTT_ENABLED: 'false'
+          # Comparaison avec SC Trade Tools : activée le 04.11.2026 avec l'accord de SC Trade Tools (endpoints publics de lecture uniquement).
+          SCTT_ENABLED: 'true'
         run: node scripts/update-data.mjs
       - name: Publier les changements
         run: |
