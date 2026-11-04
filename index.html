@@ -261,6 +261,10 @@ a.lnkloc:hover{color:var(--accent);border-bottom-color:var(--accent)}
 #updBar{position:sticky;top:0;z-index:30;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:9px 16px;background:var(--accent2);color:#111;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.4)}
 #updBar[hidden]{display:none}
 #tokenHint{font-size:12px;color:var(--accent2)}
+details.uexsend{margin-top:14px;border:1px solid var(--line);border-radius:8px;padding:8px 12px;background:var(--panel2)}
+details.uexsend summary{cursor:pointer;font-weight:600}
+details.uexsend label.chk{display:flex;gap:8px;align-items:center;margin-top:8px}
+details.uexsend label.chk input{width:auto}
 #tokenHint[hidden]{display:none}
 #tokenHint a{color:var(--accent2);font-weight:600}
 #tokenHint button{background:none;border:0;color:var(--muted);cursor:pointer;font:inherit;padding:0 4px}
@@ -479,7 +483,7 @@ a.lnkloc:hover{color:var(--accent);border-bottom-color:var(--accent)}
     <ul class="privacy">
       <li><b>Aucun cookie, aucun pistage</b> : pas de statistiques de visite, pas de publicité, aucun script chargé depuis un autre site.</li>
       <li><b>Vos données restent dans votre navigateur</b> : réglages, token, contrats, contrôles et épingles sont enregistrés uniquement sur cet appareil et ne sont envoyés nulle part. Vider les données du site dans le navigateur les efface.</li>
-      <li><b>Sites contactés : UEX</b> (api.uexcorp.uk), pour lire les prix, les terminaux et les distances. Votre token, si vous en avez mis un, n'est envoyé qu'à UEX.</li>
+      <li><b>Sites contactés : UEX</b> (api.uexcorp.uk), pour lire les prix, les terminaux et les distances, et pour envoyer vos relevés si vous le demandez. Votre token et votre secret key, si vous en avez mis, ne sont envoyés qu'à UEX.</li>
       <li><b>Et le site de l'application</b> (anjclerc.github.io), pour vérifier s'il existe une nouvelle version et charger les données de minage (scmdb) et de comparaison (SC Trade Tools) déjà préparées. La page ne contacte jamais directement scmdb ni SC Trade Tools.</li>
       <li>Comme tout site web, l'hébergeur (GitHub Pages) et UEX voient l'adresse IP de votre connexion lorsqu'ils répondent.</li>
     </ul>
@@ -492,6 +496,10 @@ a.lnkloc:hover{color:var(--accent);border-bottom-color:var(--accent)}
         <input type="password" id="sToken" autocomplete="off">
       </label>
       <p class="hint">Créé sur uexcorp.space → My Apps. Stocké uniquement dans ce navigateur (ou lu depuis <code>config.js</code> s'il est à côté du fichier).</p>
+      <label>Secret key UEX (pour envoyer vos relevés, facultatif)
+        <input type="password" id="sSecret" autocomplete="off">
+      </label>
+      <p class="hint">Sert seulement à partager vos prix relevés en jeu depuis les <b>Contrôles</b>. Il faut d'abord <a href="https://uexcorp.space/data/signup" target="_blank" rel="noopener">devenir datarunner UEX</a> (gratuit), puis copier la secret key dans <a href="https://uexcorp.space/account/home/tab/account_main#panel-secret-key" target="_blank" rel="noopener">votre compte UEX › Secret Key</a>. Stockée uniquement dans ce navigateur, envoyée seulement à UEX.</p>
       <p class="hint"><b>Recommandé</b> (gratuit) : l'application fonctionne aussi sans token, mais avec le vôtre, UEX sait quelle application l'interroge et compte vos requêtes à part. Merci de les aider ainsi ! <a href="#" id="openWelcome">Comment obtenir un token ?</a></p>
       <div class="row" style="margin-top:10px">
         <button class="btn" id="btnSaveSettings">Enregistrer</button>
@@ -613,11 +621,32 @@ let state = { terminals:{}, commodities:{}, prices:[], vehicles:[], fleet: LS.ge
 let checks = LS.get('checks', []);
 let filters = Object.assign({ship:'', cargo:46, budget:0, priceMode:'last'}, LS.get('filters', {}));
 // Version de la page : à changer à chaque publication (date-heure, comparée comme du texte).
-const APP_VERSION = '2026-11-04T15:03';
+const APP_VERSION = '2026-11-04T15:29';
 const SITE_URL = 'https://anjclerc.github.io/sc-hauling/';
 // Dictionnaire français → anglais (textes affichés). Les clés sont comparées espaces normalisés.
 const I18N_EN = {
 // ---- Barre du haut / onglets ----
+"Secret key UEX (pour envoyer vos relevés, facultatif)":"UEX secret key (to submit your price reports, optional)",
+"Sert seulement à partager vos prix relevés en jeu depuis les":"Only used to share the prices you read in game, from","Il faut d'abord":"You first need to","devenir datarunner UEX":"become a UEX datarunner",
+"(gratuit), puis copier la secret key dans":"(free), then copy the secret key from","votre compte UEX › Secret Key":"your UEX account › Secret Key",". Stockée uniquement dans ce navigateur, envoyée seulement à UEX.":". Stored only in this browser, sent only to UEX.",
+"pour lire les prix, les terminaux et les distances, et pour envoyer vos relevés si vous le demandez. Votre token et votre secret key, si vous en avez mis, ne sont envoyés qu'à UEX.":"to read prices, terminals and distances, and to submit your price reports if you ask it to. Your token and secret key, if you entered them, are only sent to UEX.",
+"📤 Partager ces prix avec UEX":"📤 Share these prices with UEX","Vos prix relevés en jeu aident toute la communauté. Il faut être":"Prices you read in game help the whole community. You need to be a",
+"datarunner UEX":"UEX datarunner","et avoir mis votre token et votre secret key dans":"and have entered your token and secret key in",
+". Pendant vos 90 premiers jours de datarunner, UEX demande une capture d'écran du terminal pour chaque relevé. N'envoyez que des prix lus vous-même au terminal.":". During your first 90 days as a datarunner, UEX requires a screenshot of the terminal for every report. Only submit prices you read yourself at the terminal.",
+"Seuls les prix saisis plus haut (achat et/ou vente) sont envoyés.":"Only the prices entered above (buy and/or sell) are submitted.",
+"Capture du terminal d'achat —":"Screenshot of the buy terminal —","Capture du terminal de vente —":"Screenshot of the sell terminal —",
+"Test seulement (UEX vérifie tout sans rien enregistrer)":"Test only (UEX checks everything but saves nothing)","📤 Envoyer à UEX":"📤 Submit to UEX","Envoi…":"Sending…","Envoyer à UEX, sous votre compte :":"Submit to UEX, under your account:","N'envoyez que des prix lus vous-même au terminal.":"Only submit prices you read yourself at the terminal.","TEST (rien ne sera enregistré) —":"TEST (nothing will be saved) —",
+"Test réussi : UEX accepterait":"Test passed: UEX would accept","Envoyé à UEX :":"Submitted to UEX:","Envoi refusé par UEX —":"Rejected by UEX —",
+"Test réussi : UEX a tout vérifié, rien n'a été enregistré.":"Test passed: UEX checked everything, nothing was saved.",
+"Relevés envoyés à UEX (traités en général sous 24 h). Merci pour la contribution !":"Reports submitted to UEX (usually processed within 24 h). Thanks for contributing!",
+"Pour envoyer vos relevés, ajoutez votre token et votre secret key UEX dans Réglages.":"To submit your reports, add your UEX token and secret key in Settings.","Aucun prix relevé à envoyer.":"No recorded price to submit.",
+"UEX demande une capture d'écran du terminal (période d'évaluation de 90 jours des nouveaux datarunners) : ajoutez-la puis renvoyez.":"UEX requires a screenshot of the terminal (90-day evaluation period for new datarunners): add it and submit again.",
+"Votre compte UEX n'est pas (encore) datarunner : inscrivez-vous sur uexcorp.space/data/signup.":"Your UEX account is not a datarunner (yet): sign up at uexcorp.space/data/signup.",
+"Secret key UEX manquante : ajoutez-la dans Réglages.":"UEX secret key missing: add it in Settings.","Secret key UEX invalide : vérifiez-la dans Réglages.":"Invalid UEX secret key: check it in Settings.",
+"Token UEX invalide : vérifiez-le dans Réglages.":"Invalid UEX token: check it in Settings.","Ce relevé a déjà été envoyé il y a moins de 5 minutes.":"This report was already submitted less than 5 minutes ago.",
+"Trop de relevés envoyés récemment : réessayez plus tard.":"Too many reports submitted recently: try again later.","Votre compte datarunner UEX est bloqué.":"Your UEX datarunner account is blocked.",
+"UEX ne connaît pas ce terminal.":"UEX does not know this terminal.","UEX ne connaît pas cette marchandise à ce terminal.":"UEX does not know this commodity at this terminal.",
+"Capture d'écran trop lourde (10 Mo maximum).":"Screenshot too large (10 MB maximum).","envoyé à l'instant":"sent just now",
 "Ajoutez votre token UEX gratuit":"Add your free UEX token",": UEX sait alors quelle application l'interroge.":": UEX then knows which app is calling it.","Masquer pendant 30 jours":"Hide for 30 days",
 "Recommandé":"Recommended","(gratuit) : l'application fonctionne aussi sans token, mais avec le vôtre, UEX sait quelle application l'interroge et compte vos requêtes à part. Merci de les aider ainsi !":"(free): the app also works without a token, but with yours UEX knows which app is calling it and counts your requests separately. Thanks for helping them!",
 "Limite de requêtes UEX atteinte, réessayez dans une minute.":"UEX request limit reached, try again in a minute.","Avec votre propre token UEX (Réglages), vos requêtes sont comptées à part.":"With your own UEX token (Settings), your requests are counted separately.",
@@ -833,6 +862,8 @@ const I18N_EN_RE = [
 ];
 // Appliqués en premier, avant le dictionnaire (phrases avec des nombres au milieu)
 const I18N_EN_PRE = [
+  [/\benvoyé il y a/g, 'sent il y a'],
+  [/(achat|vente) de (.+?) à (.+?) : ([\d\s,.\u202f\u00a0]+) aUEC\/SCU/g, (m,k,c,t,v)=>`${k==='achat'?'buy':'sell'}: ${c} at ${t}, ${v} aUEC/SCU`],
   [/\((\d+) derniers jours\), avec l'écart par rapport au prix UEX\./g, '(last $1 days), with the difference from the UEX price.'],
   [/Comparaison SC Trade Tools : ([\d\s,.  ’']+) prix sur ([\d\s,.  ’']+) rattachés à un terminal UEX \((\d+) lieux sur (\d+)\), relevés des (\d+) derniers jours, mis à jour/g,
     'SC Trade Tools comparison: $1 prices out of $2 matched to a UEX terminal ($3 of $4 locations), reports from the last $5 days, updated'],
@@ -1221,7 +1252,21 @@ function editorHtml(g, c){
       <button class="btn sec" data-act="ko">✖ Rejeter</button>
       <button class="btn sec" data-act="pending">Remettre en cours</button>
     </div>
+    ${uexSendHtml(c)}
   </div>`;
+}
+function uexSendHtml(c){
+  const sent = c.uexSent || {};
+  const when = t => t ? ` <span class="pill acc">envoyé ${agoTxt(t)}</span>` : '';
+  return `<details class="uexsend">
+    <summary>📤 Partager ces prix avec UEX${sent.buy||sent.sell ? when(Math.max(sent.buy||0, sent.sell||0)) : ''}</summary>
+    <p class="hint">Vos prix relevés en jeu aident toute la communauté. Il faut être <a href="https://uexcorp.space/data/signup" target="_blank" rel="noopener">datarunner UEX</a> et avoir mis votre token et votre secret key dans <b>Réglages</b>. Pendant vos 90 premiers jours de datarunner, UEX demande une capture d'écran du terminal pour chaque relevé. N'envoyez que des prix lus vous-même au terminal.</p>
+    <label>Capture du terminal d'achat — ${esc(c.origin)}${when(sent.buy)}<input type="file" accept="image/*" data-shot="buy"></label>
+    <label>Capture du terminal de vente — ${esc(c.dest)}${when(sent.sell)}<input type="file" accept="image/*" data-shot="sell"></label>
+    <p class="hint">Seuls les prix saisis plus haut (achat et/ou vente) sont envoyés.</p>
+    <label class="chk"><input type="checkbox" data-role="uextest"> Test seulement (UEX vérifie tout sans rien enregistrer)</label>
+    <div class="row" style="margin-top:8px"><button class="btn" data-act="submit">📤 Envoyer à UEX</button><span class="muted" data-role="uexres"></span></div>
+  </details>`;
 }
 
 function groupHtml(g, isOpen){
@@ -1324,22 +1369,55 @@ $('#checksList').addEventListener('click', async e=>{
   if(act==='ok') toast(`Route validée. Elle sera signalée « à recontrôler » dans ${+settings.retestDays||14} jours.`);
 });
 
+// Capture d'écran → JPEG base64 (réduite à 2560 px de large pour rester sous la limite de 10 Mo d'UEX)
+function shotToBase64(file){
+  return new Promise((ok, ko)=>{
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = ()=>{ const k = Math.min(1, 2560/img.width), cv = document.createElement('canvas');
+      cv.width = Math.round(img.width*k); cv.height = Math.round(img.height*k); cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+      URL.revokeObjectURL(url); ok(cv.toDataURL('image/jpeg', 0.85).split(',')[1]); };
+    img.onerror = ()=>{ URL.revokeObjectURL(url); ko(new Error('image illisible')); };
+    img.src = url;
+  });
+}
+const UEX_SUBMIT_ERR = {
+  screenshot_required: 'UEX demande une capture d\'écran du terminal (période d\'évaluation de 90 jours des nouveaux datarunners) : ajoutez-la puis renvoyez.',
+  user_not_allowed: 'Votre compte UEX n\'est pas (encore) datarunner : inscrivez-vous sur uexcorp.space/data/signup.',
+  missing_secret_key: 'Secret key UEX manquante : ajoutez-la dans Réglages.', invalid_secret_key: 'Secret key UEX invalide : vérifiez-la dans Réglages.',
+  access_denied: 'Token UEX invalide : vérifiez-le dans Réglages.', duplicated_report: 'Ce relevé a déjà été envoyé il y a moins de 5 minutes.',
+  too_many_reports: 'Trop de relevés envoyés récemment : réessayez plus tard.', user_disabled: 'Votre compte datarunner UEX est bloqué.',
+  terminal_not_found: 'UEX ne connaît pas ce terminal.', invalid_id_commodity: 'UEX ne connaît pas cette marchandise à ce terminal.',
+  screenshot_length_exceeds_limit: 'Capture d\'écran trop lourde (10 Mo maximum).'
+};
 async function submitToUex(c, btn){
-  if(!settings.secret){ toast('Ajoutez votre secret key UEX dans Réglages pour envoyer des relevés.', true); return; }
-  const reports = [];
-  if(num(c.obs.buy)!=null){ const pr = {id_commodity:c.cid, price_buy:num(c.obs.buy)}; if(num(c.obs.stock)!=null) pr.scu_buy = num(c.obs.stock); reports.push({id_terminal:c.oid, name:c.origin, prices:[pr]}); }
-  if(num(c.obs.sell)!=null){ const pr = {id_commodity:c.cid, price_sell:num(c.obs.sell)}; if(num(c.obs.demand)!=null) pr.scu_sell = num(c.obs.demand); reports.push({id_terminal:c.oid===c.did?c.oid:c.did, name:c.dest, prices:[pr]}); }
-  if(!reports.length){ toast('Aucun prix observé à envoyer.', true); return; }
-  if(!confirm(`Envoyer ${reports.length} relevé(s) à UEX (${reports.map(r=>r.name).join(', ')}) sous votre compte ?`)) return;
-  btn.disabled = true;
-  try{
-    for(const r of reports){
-      await api('data_submit', {method:'POST', headers:{'Content-Type':'application/json','secret-key':settings.secret}, body: JSON.stringify({id_terminal:r.id_terminal, type:'commodity', is_production:1, prices:r.prices})});
-    }
-    c.submitted = Date.now(); saveChecks();
-    toast('Relevés envoyés à UEX. Merci pour la contribution !');
-  }catch(e){ toast('Envoi refusé par UEX : '+e.message, true); }
-  btn.disabled = false;
+  const ed = btn.closest('.editor'), out = ed.querySelector('[data-role=uexres]');
+  if(!settings.token || !settings.secret){ toast('Pour envoyer vos relevés, ajoutez votre token et votre secret key UEX dans Réglages.', true); return; }
+  const test = ed.querySelector('[data-role=uextest]').checked;
+  const sides = [];
+  if(num(c.obs.buy)!=null){ const pr = {id_commodity:c.cid, price_buy:num(c.obs.buy)}; if(num(c.obs.stock)!=null) pr.scu_buy = num(c.obs.stock); sides.push({k:'buy', id_terminal:c.oid, name:c.origin, pr}); }
+  if(num(c.obs.sell)!=null){ const pr = {id_commodity:c.cid, price_sell:num(c.obs.sell)}; if(num(c.obs.demand)!=null) pr.scu_sell = num(c.obs.demand); sides.push({k:'sell', id_terminal:c.did, name:c.dest, pr}); }
+  if(!sides.length){ toast('Aucun prix relevé à envoyer.', true); return; }
+  const list = sides.map(x=>`${x.k==='buy'?'achat':'vente'} de ${c.commodity} à ${x.name} : ${fmt(x.pr.price_buy||x.pr.price_sell)} aUEC/SCU`).join('\n');
+  if(!confirm((test ? 'TEST (rien ne sera enregistré) — ' : '') + `Envoyer à UEX, sous votre compte :\n${list}\n\nN'envoyez que des prix lus vous-même au terminal.`)) return;
+  btn.disabled = true; out.textContent = 'Envoi…';
+  const done = [], errs = [];
+  for(const x of sides){
+    try{
+      const body = {id_terminal:x.id_terminal, type:'commodity', is_production: test?0:1, prices:[x.pr]};
+      const f = ed.querySelector(`input[data-shot=${x.k}]`)?.files?.[0];
+      if(f) body.screenshot = await shotToBase64(f);
+      const r = await fetch(API+'data_submit', {method:'POST', headers:{'Content-Type':'application/json', 'Authorization':'Bearer '+settings.token, 'secret_key':settings.secret}, body: JSON.stringify(body)});
+      let j = {}; try{ j = await r.json(); }catch(e){}
+      if(j.status === 'ok'){ done.push(x); if(!test){ (c.uexSent ||= {})[x.k] = Date.now(); } }
+      else errs.push(`${x.name} : ${UEX_SUBMIT_ERR[j.status] || ((j.status||'erreur')+(j.message?' — '+j.message:'')+' ['+r.status+']')}`);
+    }catch(e){ errs.push(`${x.name} : ${e.message}`); }
+  }
+  saveChecks(); btn.disabled = false;
+  if(done.length) out.innerHTML = `<span class="pos">${test ? 'Test réussi : UEX accepterait ' : 'Envoyé à UEX : '}${done.map(x=>esc(x.name)).join(', ')}.</span>`;
+  else out.textContent = '';
+  if(errs.length) toast('Envoi refusé par UEX — ' + errs.join(' · '), true);
+  else toast(test ? 'Test réussi : UEX a tout vérifié, rien n\'a été enregistré.' : 'Relevés envoyés à UEX (traités en général sous 24 h). Merci pour la contribution !');
+  if(done.length && !test){ const det = ed.closest('details.check'); const sum = ed.querySelector('details.uexsend > summary'); if(sum && !sum.querySelector('.pill')) sum.insertAdjacentHTML('beforeend', ' <span class="pill acc">envoyé à l\'instant</span>'); }
 }
 
 /* ================= UI wiring ================= */
@@ -2347,7 +2425,7 @@ $('#lcSearch').addEventListener('change', e=>{
 });
 
 // Settings
-function fillSettings(){ $('#sLang').value = settings.lang || 'auto'; $('#sToken').value = settings.token||''; $('#sMinNet').value = settings.minNet; $('#sTolerance').value = settings.tolerance; $('#sRetest').value = settings.retestDays; $('#retestDaysTxt').textContent = settings.retestDays;
+function fillSettings(){ $('#sLang').value = settings.lang || 'auto'; $('#sToken').value = settings.token||''; $('#sSecret').value = settings.secret||''; $('#sMinNet').value = settings.minNet; $('#sTolerance').value = settings.tolerance; $('#sRetest').value = settings.retestDays; $('#retestDaysTxt').textContent = settings.retestDays;
   $('#sQtSpeed').value = settings.qtSpeed; $('#sQtSpool').value = settings.qtSpool; $('#sOvStation').value = settings.ovStation; $('#sOvCity').value = settings.ovCity; $('#sOvOutpost').value = settings.ovOutpost; $('#sLoad').value = settings.loadPer100; $('#sJump').value = settings.jumpMin; }
 $('#btnSaveTravel').addEventListener('click', ()=>{
   const g = (id, d) => { const v = num($(id).value); return v==null ? d : v; };
@@ -2355,7 +2433,7 @@ $('#btnSaveTravel').addEventListener('click', ()=>{
   LS.set('settings', settings); computeResources(); toast('Paramètres de trajet enregistrés.');
 });
 $('#sLang').addEventListener('change', e=>{ settings.lang = e.target.value; LS.set('settings', settings); location.reload(); });
-$('#btnSaveSettings').addEventListener('click', ()=>{ settings.token = $('#sToken').value.trim(); LS.set('settings', settings); toast('Réglages enregistrés.'); updateTokenHint(); });
+$('#btnSaveSettings').addEventListener('click', ()=>{ settings.token = $('#sToken').value.trim(); settings.secret = $('#sSecret').value.trim(); LS.set('settings', settings); toast('Réglages enregistrés.'); updateTokenHint(); });
 // Rappel discret dans la barre du haut tant qu'aucun token n'est enregistré (masquable 30 jours)
 function updateTokenHint(){
   let hiddenUntil = 0; try{ hiddenUntil = +LS.get('tokenHintHide', 0) || 0; }catch(e){}
