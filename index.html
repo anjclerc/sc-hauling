@@ -524,8 +524,9 @@ a.lnkloc:hover{color:var(--accent);border-bottom-color:var(--accent)}
     <div class="panel">
       <h2>Données</h2>
       <p class="hint" id="cacheInfo"></p>
+      <p class="hint">La sauvegarde contient vos contrôles, contrats, lieux ajoutés, épingles, routes choisies et réglages (sans votre token). Elle sert à passer d'un navigateur ou d'un appareil à l'autre, par exemple du fichier local au site en ligne. L'import ajoute ce qui manque sans rien effacer.</p>
       <div class="row" style="margin-top:10px">
-        <button class="btn sec" id="btnExport">Exporter mes contrôles (JSON)</button>
+        <button class="btn sec" id="btnExport">Exporter mes données (JSON)</button>
         <label class="btn sec" style="display:inline-block;cursor:pointer;color:var(--text);font-size:14px">Importer…<input type="file" id="importFile" accept=".json" hidden></label>
         <button class="btn danger" id="btnClearCache">Vider le cache API</button>
       </div>
@@ -749,7 +750,13 @@ const I18N_EN = {
 "Temps = arrêt au départ + saut quantique (distance ÷ vitesse + préparation) + arrêt à l'arrivée + chargement/déchargement. Ajustez ces valeurs à votre vaisseau et à votre façon de jouer.":"Time = stop at departure + quantum jump (distance ÷ speed + spool) + stop at arrival + loading/unloading. Adjust these values to your ship and play style.",
 "Vitesse quantique (km/s)":"Quantum speed (km/s)","Préparation par saut (min)":"Spool per jump (min)","Arrêt en station (min)":"Stop at a station (min)","Arrêt en ville (min)":"Stop in a city (min)",
 "Arrêt en avant-poste (min)":"Stop at an outpost (min)","Charger + décharger (min / 100 SCU)":"Load + unload (min / 100 SCU)","Traversée d'un trou de ver (min)":"Wormhole crossing (min)",
-"Données":"Data","Exporter mes contrôles (JSON)":"Export my checks (JSON)","Importer…":"Import…","Vider le cache API":"Clear API cache",
+"Données":"Data","Exporter mes contrôles (JSON)":"Export my checks (JSON)","Exporter mes données (JSON)":"Export my data (JSON)",
+"La sauvegarde contient vos contrôles, contrats, lieux ajoutés, épingles, routes choisies et réglages (sans votre token). Elle sert à passer d'un navigateur ou d'un appareil à l'autre, par exemple du fichier local au site en ligne. L'import ajoute ce qui manque sans rien effacer.":"The backup contains your checks, contracts, added locations, pins, chosen routes and settings (without your token). Use it to move from one browser or device to another, for example from the local file to the online site. Importing adds what is missing without deleting anything.",
+"Sauvegarde exportée :":"Backup exported:","contrôle(s),":"check(s),","contrat(s),":"contract(s),","lieu(x) ajouté(s),":"added location(s),","épingle(s).":"pin(s).",
+"Fichier invalide : ce n'est pas un fichier JSON.":"Invalid file: this is not a JSON file.","Ce fichier ne contient aucune donnée SC Hauling.":"This file contains no SC Hauling data.",
+"Le fichier est vide : il a été exporté depuis un navigateur sans contrôle ni contrat. Exportez depuis celui qui contient vos données.":"The file is empty: it was exported from a browser with no checks or contracts. Export from the one that holds your data.",
+"Import terminé :":"Import complete:","lieu(x) et":"location(s) and","épingle(s) ajoutés.":"pin(s) added.","Réglages repris.":"Settings applied.",
+"Rien de nouveau à ajouter : tout ce que contient le fichier était déjà présent.":"Nothing new to add: everything in the file was already here.","Importer…":"Import…","Vider le cache API":"Clear API cache",
 "Réglages enregistrés.":"Settings saved.","Seuils enregistrés.":"Thresholds saved.","Paramètres de trajet enregistrés.":"Trip settings saved.","Token enregistré.":"Token saved.",
 "Aucun token : l'application fonctionne en accès public.":"No token: the app works with public access.","✔ Token valide, UEX répond.":"✔ Valid token, UEX responds.",
 "✖ Token refusé par UEX (":"✖ Token rejected by UEX (","). Vérifiez que vous avez copié le « Jeton Bearer » en entier.":"). Make sure you copied the whole “Bearer token”.","✖ Impossible de joindre UEX :":"✖ Cannot reach UEX:",
@@ -2309,8 +2316,45 @@ $('#btnTestApi').addEventListener('click', async ()=>{
   const out = $('#apiTestResult'); out.textContent = 'Test en cours…';
   out.innerHTML = await testToken(settings.token);
 });
-$('#btnExport').addEventListener('click', ()=>{ const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(checks,null,2)],{type:'application/json'})); a.download = 'sc-hauling-controles.json'; a.click(); });
-$('#importFile').addEventListener('change', async e=>{ const f = e.target.files[0]; if(!f) return; try{ const arr = JSON.parse(await f.text()); if(!Array.isArray(arr)) throw new Error('format'); const ids = new Set(checks.map(c=>c.id)); arr.forEach(c=>{ if(!ids.has(c.id)) checks.push(c); }); renderChecks(); toast(arr.length+' fiche(s) importée(s).'); }catch(err){ toast('Fichier invalide.', true); } });
+// Sauvegarde complète : tout sauf le token et les caches
+const BACKUP_KEYS = ['checks','contracts','customLocs','resPins','resPick','sgPins','lcRecent','contractStart','filters','resFilters','settings','sgSortCol'];
+function backupCounts(d){ return {checks:(d.checks||[]).length, contracts:(d.contracts||[]).length, locs:(d.customLocs||[]).length, pins:(d.resPins||[]).length+(d.sgPins||[]).length}; }
+$('#btnExport').addEventListener('click', ()=>{
+  const data = {};
+  BACKUP_KEYS.forEach(k=>{ const v = LS.get(k); if(v!=null) data[k] = v; });
+  if(data.settings){ data.settings = Object.assign({}, data.settings); delete data.settings.token; delete data.settings.secret; }
+  const file = {app:'SC Hauling', format:2, exported:new Date().toISOString(), data};
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(file, null, 2)], {type:'application/json'}));
+  a.download = 'sc-hauling-sauvegarde-'+new Date().toISOString().slice(0,10)+'.json'; a.click();
+  const n = backupCounts(data);
+  toast(`Sauvegarde exportée : ${n.checks} contrôle(s), ${n.contracts} contrat(s), ${n.locs} lieu(x) ajouté(s), ${n.pins} épingle(s).`);
+});
+$('#importFile').addEventListener('change', async e=>{
+  const f = e.target.files[0]; e.target.value = ''; if(!f) return;
+  let obj; try{ obj = JSON.parse(await f.text()); }catch(err){ toast('Fichier invalide : ce n\'est pas un fichier JSON.', true); return; }
+  // Ancien format : tableau de contrôles. Nouveau : {app, format, data:{…}}
+  const d = Array.isArray(obj) ? {checks:obj} : (obj && typeof obj==='object' ? (obj.data || obj) : null);
+  if(!d || !BACKUP_KEYS.some(k=>d[k]!=null)){ toast('Ce fichier ne contient aucune donnée SC Hauling.', true); return; }
+  const n = backupCounts(d);
+  if(!n.checks && !n.contracts && !n.locs && !n.pins && !d.settings && !d.filters){ toast('Le fichier est vide : il a été exporté depuis un navigateur sans contrôle ni contrat. Exportez depuis celui qui contient vos données.', true); return; }
+  const add = {checks:0, contracts:0, locs:0, pins:0};
+  const mergeById = (key, cnt)=>{ const cur = LS.get(key, []), ids = new Set(cur.map(x=>x.id)); (d[key]||[]).forEach(x=>{ if(x && !ids.has(x.id)){ cur.push(x); ids.add(x.id); add[cnt]++; } }); LS.set(key, cur); };
+  mergeById('checks', 'checks'); mergeById('contracts', 'contracts');
+  { const cur = LS.get('customLocs', []), names = new Set(cur.map(x=>locKey(x.name))); (d.customLocs||[]).forEach(x=>{ if(x && !names.has(locKey(x.name))){ cur.push(x); names.add(locKey(x.name)); add.locs++; } }); LS.set('customLocs', cur); }
+  ['resPins','sgPins'].forEach(k=>{ const cur = new Set(LS.get(k, [])); (d[k]||[]).forEach(x=>{ if(!cur.has(x)){ cur.add(x); add.pins++; } }); LS.set(k, [...cur]); });
+  if(d.resPick) LS.set('resPick', Object.assign({}, d.resPick, LS.get('resPick', {})));
+  if(d.lcRecent) LS.set('lcRecent', [...new Set(LS.get('lcRecent', []).concat(d.lcRecent))].slice(0, 8));
+  ['filters','resFilters','sgSortCol'].forEach(k=>{ if(d[k]) LS.set(k, Object.assign({}, LS.get(k, {}), d[k])); });
+  if(d.contractStart && !LS.get('contractStart')) LS.set('contractStart', d.contractStart);
+  if(d.settings){ const cur = LS.get('settings', {}), keep = {token:cur.token, secret:cur.secret, lang:cur.lang}; LS.set('settings', Object.assign({}, cur, d.settings, keep)); }
+  const msg = (add.checks+add.contracts+add.locs+add.pins)
+    ? `Import terminé : ${add.checks} contrôle(s), ${add.contracts} contrat(s), ${add.locs} lieu(x) et ${add.pins} épingle(s) ajoutés.${d.settings?' Réglages repris.':''}`
+    : `Rien de nouveau à ajouter : tout ce que contient le fichier était déjà présent.${d.settings?' Réglages repris.':''}`;
+  try{ sessionStorage.setItem('sch.importMsg', msg); }catch(err){}
+  location.reload();
+});
+try{ const m = sessionStorage.getItem('sch.importMsg'); if(m){ sessionStorage.removeItem('sch.importMsg'); setTimeout(()=>{ showTab('settings'); toast(m); }, 300); } }catch(e){}
 $('#btnClearCache').addEventListener('click', ()=>{ ['terminals','commodities','prices','vehicles'].forEach(k=>LS.del('cache.'+k)); state.distances = {}; LS.del('distances'); loadAll(true); });
 
 async function testToken(tok){
