@@ -40,5 +40,6 @@ export function buildMining(md, version) {
       }
     }
   });
-  return { v: version || md.version, L, R };
+  // Q : distributions de qualité scmdb (par type de minage, rareté, élément et lieu), utilisées pour estimer les chances d'une qualité minimale
+  return { v: version || md.version, L, R, Q: md.qualityDistribution || null };
 }

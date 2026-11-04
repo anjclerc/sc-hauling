@@ -709,7 +709,7 @@ let state = { terminals:{}, commodities:{}, prices:[], vehicles:[], fleet: LS.ge
 let checks = LS.get('checks', []);
 let filters = Object.assign({ship:'', cargo:46, budget:0, priceMode:'last'}, LS.get('filters', {}));
 // Version de la page : à changer à chaque publication (date-heure, comparée comme du texte).
-const APP_VERSION = '2026-11-04T16:44';
+const APP_VERSION = '2026-11-04T16:48';
 const SITE_URL = 'https://anjclerc.github.io/sc-hauling/';
 // Dictionnaire français → anglais (textes affichés). Les clés sont comparées espaces normalisés.
 const I18N_EN = {
@@ -737,7 +737,7 @@ const I18N_EN = {
 "Aucune mission ne le donne dans les données actuelles (butin, Wikelo, événement ou pas encore obtenable).":"No mission gives it in the current data (loot, Wikelo, event, or not obtainable yet).",
 "Chargement des blueprints…":"Loading blueprints…","Données des blueprints indisponibles (connexion au site nécessaire).":"Blueprint data unavailable (connection to the site required).",
 "Aucun blueprint ne correspond.":"No matching blueprint.","Données :":"Data:",". Prix d'achat : UEX (la qualité n'est pas garantie).":". Buy prices: UEX (quality not guaranteed).",
-"Blueprints possibles :":"Possible blueprints:","Suivre cette mission":"Follow this mission","Suivre ce blueprint":"Follow this blueprint","Ne plus suivre":"Unfollow","Voir ce terminal (achat)":"See this terminal (buy)","pas vendu en terminal":"not sold at terminals","Voir les blueprints de cette mission":"See this mission's blueprints","Voir tous les blueprints":"See all blueprints","Blueprints de la mission":"Blueprints of mission","Coût d'entrée :":"Buy-in:","(à payer pour accepter la mission)":"(to pay when accepting the mission)",
+"Blueprints possibles :":"Possible blueprints:","Suivre cette mission":"Follow this mission","des roches (estimation)":"of rocks (estimate)","Suivre ce blueprint":"Follow this blueprint","Ne plus suivre":"Unfollow","Voir ce terminal (achat)":"See this terminal (buy)","pas vendu en terminal":"not sold at terminals","Voir les blueprints de cette mission":"See this mission's blueprints","Voir tous les blueprints":"See all blueprints","Blueprints de la mission":"Blueprints of mission","Coût d'entrée :":"Buy-in:","(à payer pour accepter la mission)":"(to pay when accepting the mission)",
 "Équipement à pied":"FPS gear","Vaisseau":"Ship","Objets de mission":"Mission items","Armure":"Armour","Armes":"Weapons","Munitions":"Ammo","Refroidisseur":"Cooler","Générateur":"Power plant","Bouclier":"Shield","Moteur quantique":"Quantum drive","Laser de minage":"Mining laser","Rayon tracteur":"Tractor beam","Module de minage":"Mining module","Conteneur de minerai":"Ore pod","Récupération":"Salvage",
 "🎯 Missions / BP":"🎯 Missions / BP","Missions et blueprints":"Missions and blueprints","Missions selon votre rang":"Missions for your rank",
 "Choisissez une faction et votre rang actuel : la page montre les missions que vous pouvez accepter maintenant, puis celles à débloquer, avec ce qu'il manque (rang ou missions à finir avant). Cochez « J'ai fini cette mission » pour débloquer la suite.":"Pick a faction and your current rank: the page shows the missions you can accept now, then the ones to unlock and what is missing (rank or missions to finish first). Tick “I finished this mission” to unlock the next ones.",
@@ -985,6 +985,7 @@ const I18N_EN_RE = [
 ];
 // Appliqués en premier, avant le dictionnaire (phrases avec des nombres au milieu)
 const I18N_EN_PRE = [
+  [/Qualité ≥ (\d+) :/g, 'Quality ≥ $1:'],
   [/⭐ Suivies \((\d+)\)/g, '⭐ Followed ($1)'],
   [/⭐ Suivis \((\d+)\)/g, '⭐ Followed ($1)'],
   [/Contenu : (\d+) contrôle\(s\), (\d+) contrat\(s\), (\d+) lieu\(x\), (\d+) épingle\(s\), (\d+) mission\(s\) finie\(s\)\. Taille du lien : ([\d\s,.  ]+) caractères\./g, 'Content: $1 check(s), $2 contract(s), $3 location(s), $4 pin(s), $5 finished mission(s). Link length: $6 characters.'],
@@ -2880,13 +2881,44 @@ function bpWhere(kind, name){
   }
   return out.length ? out.join(' ') : '<span class="muted">—</span>';
 }
+// ---- Qualité : chance qu'un minerai atteigne une qualité minimale (distributions scmdb, loi normale tronquée) ----
+function normCdf(x){ const t = 1/(1+0.3275911*Math.abs(x)/Math.SQRT2), y = 1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-0.284496736)*t+0.254829592)*t*Math.exp(-x*x/2); return x>=0 ? (1+y)/2 : (1-y)/2; }
+function qualChance(dist, q){
+  if(!dist) return null; const {min, max, mean, stddev} = dist; if(q <= min) return 1; if(q > max) return 0;
+  const F = x => normCdf((x-mean)/stddev), den = F(max)-F(min); return den > 0 ? Math.max(0, (F(max)-F(q))/den) : null;
+}
+function qualDist(r, locIdx){
+  const Q = MINING.Q; if(!Q) return null;
+  const L = MINING.L[locIdx], name = L[0], sys = L[1];
+  let cat = r[0]==='ship' ? Q.shipmineables?.[r[2]||'common'] : r[0]==='roc' ? Q.groundmineables : Q.fpsmineables;
+  if(!cat) return null;
+  const el = normEl(r[1]); if(cat.elementOverrides) for(const [k,v] of Object.entries(cat.elementOverrides)) if(normEl(k)===el) return v;
+  let best = null, spec = 0;
+  for(const list of Object.values(cat.locationOverrides||{})) for(const o of list){
+    const s = o.locations.includes(name) ? 2 : o.locations.includes(sys) ? 1 : 0;
+    if(s > spec || (s && s===spec && o.distribution.min > best.min)){ spec = s; best = o.distribution; }
+  }
+  return best || cat.default || null;
+}
+// Pour un ingrédient : meilleure chance d'atteindre la qualité demandée, par système (lieux où il est présent)
+function bpQualityHtml(name, minQ){
+  if(!(minQ > 1)) return '';
+  const sk = sigKeyFor(name); if(!sk || !MINING.Q) return '';
+  const r = MINING.R.find(x=>x[0]+'|'+x[1]===sk); if(!r) return '';
+  const bySys = new Map();
+  r[4].filter(x=>x[1]>0).forEach(x=>{ const c = qualChance(qualDist(r, x[0]), minQ); if(c==null) return; const sys = MINING.L[x[0]][1], cur = bySys.get(sys);
+    if(!cur || c > cur.c) bySys.set(sys, {c, loc: MINING.L[x[0]][0]}); });
+  if(!bySys.size) return '';
+  const pc = c => c >= 0.995 ? '100 %' : c < 0.001 ? '< '+nf1.format(0.1)+' %' : nf1.format(c*100)+' %';
+  return `<div class="muted" style="font-size:12px;margin-top:3px">Qualité ≥ ${minQ} : ${[...bySys].sort((a,b)=>b[1].c-a[1].c).map(([sys,v])=>`<b class="${v.c>=0.1?'pos':v.c>=0.01?'warnc':'neg'}">${pc(v.c)}</b> ${esc(sys)}${v.c<1 && sys!==v.loc ? ' <span>('+esc(v.loc)+')</span>' : ''}`).join(' · ')} <span>des roches (estimation)</span></div>`;
+}
 function bpItemHtml(b, i, pre){
   const fol = bpFollow.has(b.n);
   const ms = (b.m||[]).map(j=>({j, m:MS?.M[j], st:MS?.M[j] ? msStatus(MS.M[j]) : null})).filter(x=>x.m);
   ms.sort((a,c)=> (a.st.st!=='ok') - (c.st.st!=='ok') || a.m.r0 - c.m.r0 || a.m.t.localeCompare(c.m.t));
   const okN = ms.filter(x=>x.st.st==='ok').length;
   const src = b.d ? '<span class="pill good">connu par défaut</span>' : ms.length ? `<span class="pill acc">${ms.length} mission${ms.length>1?'s':''}</span>${okN ? `<span class="pill good">${okN} disponible${okN>1?'s':''} pour moi</span>` : ''}` : '<span class="pill">source inconnue</span>';
-  const rows = b.sl.map(([slot, kind, name, q, minQ])=>`<tr><td class="muted">${esc(slot)}</td><td><b>${esc(name)}</b></td><td>${kind==='r' ? q.toLocaleString(LOC,{maximumFractionDigits:2})+' SCU' : '×'+q}</td><td>${minQ>1 ? '≥ '+minQ : '—'}</td><td>${bpWhere(kind, name)}</td></tr>`).join('');
+  const rows = b.sl.map(([slot, kind, name, q, minQ])=>`<tr><td class="muted">${esc(slot)}</td><td><b>${esc(name)}</b></td><td>${kind==='r' ? q.toLocaleString(LOC,{maximumFractionDigits:2})+' SCU' : '×'+q}</td><td>${minQ>1 ? '≥ '+minQ : '—'}</td><td>${bpWhere(kind, name)}${bpQualityHtml(name, minQ)}</td></tr>`).join('');
   const how = b.d ? '<p>Connu par défaut : tous les joueurs peuvent le fabriquer.</p>'
     : ms.length ? `<div>${ms.map(x=>`<div>${x.st.st==='ok' ? '✅' : x.st.st==='over' ? '⏹' : '🔒'} <button class="lnk2" data-goms="${x.j}">${esc(x.m.t)}</button> <span class="muted">— ${esc(MS.F[x.m.f])}${x.m.s>=0 ? ' · '+esc(rankName(x.m.s,x.m.r0)) : ''}${x.m.sy.length ? ' · '+esc(x.m.sy.join(', ')) : ''}</span></div>`).join('')}</div><p class="hint">✅ disponible pour vous · 🔒 à débloquer · ⏹ plus proposée à votre rang (selon les rangs choisis dans la vue Missions). Le blueprint fait partie des récompenses possibles de la mission.</p>`
     : '<p class="muted">Aucune mission ne le donne dans les données actuelles (butin, Wikelo, événement ou pas encore obtenable).</p>';
