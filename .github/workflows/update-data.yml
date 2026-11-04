@@ -1,0 +1,48 @@
+# Met à jour data/*.json (minage scmdb.net, prix SC Trade Tools) et publie si quelque chose a changé.
+# Lancement manuel : onglet Actions › « Mise à jour des données » › Run workflow.
+name: Mise à jour des données
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 4 * * *'   # tous les jours vers 5 h 17 (heure suisse en hiver)
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-data
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Récupérer les données
+        id: run
+        continue-on-error: true
+        env:
+          # Comparaison avec SC Trade Tools : passer à 'true' une fois l'accord de SC Trade Tools obtenu.
+          SCTT_ENABLED: 'false'
+        run: node scripts/update-data.mjs
+      - name: Publier les changements
+        run: |
+          git add data
+          if git diff --cached --quiet; then
+            echo "Aucun changement."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "Mise à jour automatique des données"
+            git push
+          fi
+      - name: Signaler un échec
+        if: steps.run.outcome == 'failure'
+        run: |
+          echo "::error::Une source n'a pas pu être lue (voir l'étape « Récupérer les données »). Les données précédentes sont conservées."
+          exit 1

@@ -43,6 +43,17 @@ Your contracts, checks and settings are stored in your browser. They are never s
 
 ---
 
+## Données mises à jour automatiquement / Automatic data updates
+
+Le script [`scripts/update-data.mjs`](scripts/update-data.mjs) est lancé chaque jour par GitHub Actions ([`update-data.yml`](.github/workflows/update-data.yml)), ou à la main depuis l'onglet **Actions › Mise à jour des données › Run workflow**. Il récupère ce que l'API UEX ne fournit pas et le publie dans [`data/`](data) :
+
+- `mining.json` : minerais, signatures et lieux de minage d'après [scmdb.net](https://scmdb.net) (dernière version « live » du jeu) ;
+- `sctrade.json` : derniers prix relevés sur [SC Trade Tools](https://sc-trade.tools), pour les comparer avec UEX (désactivé tant que SC Trade Tools n'a pas donné son accord : `SCTT_ENABLED` dans le workflow).
+
+L'application lit ces fichiers au démarrage et garde ses données intégrées si elles sont indisponibles.
+
+*A daily GitHub Action fetches the data the UEX API does not provide (mining data from scmdb.net, community prices from SC Trade Tools) into `data/`. The app loads these files at startup and falls back to its built-in data.*
+
 ## Crédits / Credits
 
 🇫🇷 D'une idée de **Akumetsu86**, fait par **Claude** (IA d'Anthropic).
