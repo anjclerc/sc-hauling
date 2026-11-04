@@ -316,7 +316,7 @@ details.uexsend label.chk input{width:auto}
     <button data-tab="resources" class="on">💎 Ressources</button>
     <button data-tab="signatures">📶 Signatures</button>
     <button data-tab="location">📍 Lieu</button>
-    <button data-tab="missions">🎯 Missions</button>
+    <button data-tab="missions" title="Missions et blueprints">🎯 Missions / BP</button>
     <button data-tab="checks">✅ Contrôles <span class="cnt" id="checkCount" hidden>0</span></button>
     <button data-tab="settings">⚙️ Réglages</button>
   </nav>
@@ -678,7 +678,7 @@ let state = { terminals:{}, commodities:{}, prices:[], vehicles:[], fleet: LS.ge
 let checks = LS.get('checks', []);
 let filters = Object.assign({ship:'', cargo:46, budget:0, priceMode:'last'}, LS.get('filters', {}));
 // Version de la page : à changer à chaque publication (date-heure, comparée comme du texte).
-const APP_VERSION = '2026-11-04T16:26';
+const APP_VERSION = '2026-11-04T16:28';
 const SITE_URL = 'https://anjclerc.github.io/sc-hauling/';
 // Dictionnaire français → anglais (textes affichés). Les clés sont comparées espaces normalisés.
 const I18N_EN = {
@@ -696,7 +696,7 @@ const I18N_EN = {
 "Aucun blueprint ne correspond.":"No matching blueprint.","Données :":"Data:",". Prix d'achat : UEX (la qualité n'est pas garantie).":". Buy prices: UEX (quality not guaranteed).",
 "Blueprints possibles :":"Possible blueprints:","Voir ce terminal (achat)":"See this terminal (buy)","pas vendu en terminal":"not sold at terminals","🛒 Marché des joueurs":"🛒 Player market","Annonces de joueurs sur UEX":"Player listings on UEX","Voir les blueprints de cette mission":"See this mission's blueprints","Voir tous les blueprints":"See all blueprints","Blueprints de la mission":"Blueprints of mission","Coût d'entrée :":"Buy-in:","(à payer pour accepter la mission)":"(to pay when accepting the mission)",
 "Équipement à pied":"FPS gear","Vaisseau":"Ship","Objets de mission":"Mission items","Armure":"Armour","Armes":"Weapons","Munitions":"Ammo","Refroidisseur":"Cooler","Générateur":"Power plant","Bouclier":"Shield","Moteur quantique":"Quantum drive","Laser de minage":"Mining laser","Rayon tracteur":"Tractor beam","Module de minage":"Mining module","Conteneur de minerai":"Ore pod","Récupération":"Salvage",
-"🎯 Missions":"🎯 Missions","Missions selon votre rang":"Missions for your rank",
+"🎯 Missions / BP":"🎯 Missions / BP","Missions et blueprints":"Missions and blueprints","Missions selon votre rang":"Missions for your rank",
 "Choisissez une faction et votre rang actuel : la page montre les missions que vous pouvez accepter maintenant, puis celles à débloquer, avec ce qu'il manque (rang ou missions à finir avant). Cochez « J'ai fini cette mission » pour débloquer la suite.":"Pick a faction and your current rank: the page shows the missions you can accept now, then the ones to unlock and what is missing (rank or missions to finish first). Tick “I finished this mission” to unlock the next ones.",
 "Faction":"Faction","Système":"System","Rechercher une mission":"Search a mission","ex. Ambush":"e.g. Ambush","Chargement des missions…":"Loading missions…","Votre rang —":"Your rank —",
 "Rang requis :":"Rank required:","Finir d'abord une mission parmi :":"First finish one mission among:","Événement :":"Event:","Mission d'introduction à finir :":"Introduction mission to finish:",
