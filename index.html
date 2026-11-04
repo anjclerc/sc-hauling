@@ -677,7 +677,7 @@ let state = { terminals:{}, commodities:{}, prices:[], vehicles:[], fleet: LS.ge
 let checks = LS.get('checks', []);
 let filters = Object.assign({ship:'', cargo:46, budget:0, priceMode:'last'}, LS.get('filters', {}));
 // Version de la page : à changer à chaque publication (date-heure, comparée comme du texte).
-const APP_VERSION = '2026-11-04T16:15';
+const APP_VERSION = '2026-11-04T16:22';
 const SITE_URL = 'https://anjclerc.github.io/sc-hauling/';
 // Dictionnaire français → anglais (textes affichés). Les clés sont comparées espaces normalisés.
 const I18N_EN = {
@@ -693,7 +693,7 @@ const I18N_EN = {
 "Aucune mission ne le donne dans les données actuelles (butin, Wikelo, événement ou pas encore obtenable).":"No mission gives it in the current data (loot, Wikelo, event, or not obtainable yet).",
 "Chargement des blueprints…":"Loading blueprints…","Données des blueprints indisponibles (connexion au site nécessaire).":"Blueprint data unavailable (connection to the site required).",
 "Aucun blueprint ne correspond.":"No matching blueprint.","Données :":"Data:",". Prix d'achat : UEX (la qualité n'est pas garantie).":". Buy prices: UEX (quality not guaranteed).",
-"Blueprints possibles :":"Possible blueprints:","Coût d'entrée :":"Buy-in:","(à payer pour accepter la mission)":"(to pay when accepting the mission)",
+"Blueprints possibles :":"Possible blueprints:","Voir ce terminal (achat)":"See this terminal (buy)","Voir les blueprints de cette mission":"See this mission's blueprints","Voir tous les blueprints":"See all blueprints","Blueprints de la mission":"Blueprints of mission","Coût d'entrée :":"Buy-in:","(à payer pour accepter la mission)":"(to pay when accepting the mission)",
 "Équipement à pied":"FPS gear","Vaisseau":"Ship","Objets de mission":"Mission items","Armure":"Armour","Armes":"Weapons","Munitions":"Ammo","Refroidisseur":"Cooler","Générateur":"Power plant","Bouclier":"Shield","Moteur quantique":"Quantum drive","Laser de minage":"Mining laser","Rayon tracteur":"Tractor beam","Module de minage":"Mining module","Conteneur de minerai":"Ore pod","Récupération":"Salvage",
 "🎯 Missions":"🎯 Missions","Missions selon votre rang":"Missions for your rank",
 "Choisissez une faction et votre rang actuel : la page montre les missions que vous pouvez accepter maintenant, puis celles à débloquer, avec ce qu'il manque (rang ou missions à finir avant). Cochez « J'ai fini cette mission » pour débloquer la suite.":"Pick a faction and your current rank: the page shows the missions you can accept now, then the ones to unlock and what is missing (rank or missions to finish first). Tick “I finished this mission” to unlock the next ones.",
@@ -944,6 +944,7 @@ const I18N_EN_PRE = [
   [/(\d+) blueprints?\b(?! de)/g, (m,n)=>`${n} blueprint${n>1?'s':''}`],
   [/(\d+) affichés : affinez la recherche/g, '$1 shown: refine your search'],
   [/💰 dès /g, '💰 from '],
+  [/\+ (\d+) autres : tout voir/g, '+ $1 more: see all'],
   [/coût ([\d\s,.\u202f\u00a0]+) aUEC/g, 'cost $1 aUEC'],
   [/(\d+) disponibles? pour moi/g, '$1 available to me'],
   [/encore ([\d\s,.  ]+) rep/g, '$1 rep to go'],
@@ -2712,7 +2713,7 @@ function msItemHtml(m, i, st){
     m.il ? '<span class="pill ill">illégale</span>' : '',
     m.once ? '<span class="pill warn">une seule fois</span>' : '',
     m.solo ? '<span class="pill">solo</span>' : '',
-    m.bp ? '<span class="pill acc">blueprint</span>' : '',
+    m.bl ? `<button class="pill acc" data-msbp="${i}" title="Voir les blueprints de cette mission" style="cursor:pointer;background:none">🛠 ${m.bl.length} blueprint${m.bl.length>1?'s':''}</button>` : m.bp ? '<span class="pill acc">blueprint</span>' : '',
     m.un ? `<span class="pill good">débloque ${m.un.length}</span>` : '',
   ].join('');
   const range = m.s >= 0 ? `${esc(rankName(m.s,m.r0))}${m.r1!=null ? ' → '+esc(rankName(m.s,m.r1)) : ' <span>et plus</span>'}` : '<span class="muted">aucun rang requis</span>';
@@ -2726,7 +2727,7 @@ function msItemHtml(m, i, st){
       ${m.intro ? `<div><span class="muted">Introduction :</span> ${msLinks(m.intro, cur)}</div>` : ''}
       ${m.un ? `<div><span class="muted">Débloque :</span> ${msLinks(m.un, cur)}</div>` : ''}
       ${m.lk ? `<div class="warnc"><span>Bloquée si votre réputation est :</span> ${esc(m.lk.join(' · '))}</div>` : ''}
-      ${m.bl && BP ? `<div><span class="muted">Blueprints possibles :</span> ${m.bl.slice(0,12).map(j=>`<button class="lnk2" data-gobp="${j}">${esc(BP.B[j].n)}</button>`).join(', ')}${m.bl.length>12 ? ` <span class="muted">+${m.bl.length-12}</span>` : ''}</div>` : m.bp ? '<div><span class="muted">Cette mission peut donner un blueprint de fabrication.</span></div>' : ''}
+      ${m.bl && BP ? `<div><span class="muted">Blueprints possibles :</span> ${m.bl.slice(0,12).map(j=>`<button class="lnk2" data-gobp="${j}">${esc(BP.B[j].n)}</button>`).join(', ')}${m.bl.length>12 ? ` <button class="lnk2" data-msbp="${i}">+ ${m.bl.length-12} autres : tout voir</button>` : ''}</div>` : m.bp ? '<div><span class="muted">Cette mission peut donner un blueprint de fabrication.</span></div>' : ''}
       <label class="chk"><input type="checkbox" data-msdone="${i}" ${done?'checked':''}> J'ai fini cette mission</label>
     </div>
   </details>`;
@@ -2773,13 +2774,14 @@ $('#msSearch').addEventListener('input', ()=>renderMissions());
 $('#msRanks').addEventListener('change', e=>{ const sel = e.target.closest('select[data-msscope]'); if(!sel) return;
   msRank[MS.F[+$('#msFac').value]+'|'+MS.S[+sel.dataset.msscope][0]] = +sel.value; LS.set('msRank', msRank); renderMissions(); });
 $('#msBody').addEventListener('click', e=>{ const b = e.target.closest('[data-goms]'); if(b){ e.preventDefault(); goMission(+b.dataset.goms); return; }
-  const g = e.target.closest('[data-gobp]'); if(g){ e.preventDefault(); goBlueprint(+g.dataset.gobp); } });
+  const g = e.target.closest('[data-gobp]'); if(g){ e.preventDefault(); goBlueprint(+g.dataset.gobp); return; }
+  const mb = e.target.closest('[data-msbp]'); if(mb){ e.preventDefault(); e.stopPropagation(); goMissionBlueprints(+mb.dataset.msbp); } });
 $('#msBody').addEventListener('change', e=>{ const c = e.target.closest('input[data-msdone]'); if(!c) return;
   const k = msKey(MS.M[+c.dataset.msdone]); c.checked ? msDone.add(k) : msDone.delete(k); LS.set('msDone', [...msDone]);
   const open = [...$$('#msBody details.msitem[open]')].map(d=>d.id); renderMissions().then(()=>open.forEach(id=>{ const d = document.getElementById(id); if(d) d.open = true; })); });
 
 // ---- Blueprints (data/blueprints.json) ----
-let BP = null, bpLoading = null, msMode = 'missions';
+let BP = null, bpLoading = null, msMode = 'missions', bpMission = null;
 async function loadBlueprints(){
   if(BP) return BP;
   if(!bpLoading) bpLoading = (async ()=>{
@@ -2803,8 +2805,11 @@ function bpWhere(kind, name){
   if(sk) out.push(`<button class="lnk3" data-gosig="${esc(sk)}" title="Où le miner">📡 Signatures</button>`);
   const n = normEl(name), cids = Object.values(state.commodities||{}).filter(c=>normEl(c.name)===n).map(c=>c.id);
   if(cids.length){
-    let best = null; state.prices.forEach(p=>{ if(cids.includes(p.id_commodity) && p.price_buy>0 && state.terminals[p.id_terminal] && (!best || p.price_buy<best.price)) best = {price:p.price_buy, t:state.terminals[p.id_terminal]}; });
-    if(best) out.push(`<button class="lnk3" data-gores="${cids.join(',')}" title="Où l'acheter">💰 dès ${fmt(best.price)} aUEC/SCU</button> <span class="muted">${esc(termName(best.t))}</span>`);
+    // Les 2 terminaux les moins chers : un clic ouvre leur page Lieu (Ressources ne montre que les marchandises revendables avec bénéfice)
+    const buys = state.prices.filter(p=>cids.includes(p.id_commodity) && p.price_buy>0 && state.terminals[p.id_terminal]).sort((a,b)=>a.price_buy-b.price_buy);
+    const seen = new Set();
+    buys.filter(p=>!seen.has(p.id_terminal) && seen.add(p.id_terminal)).slice(0,2).forEach(p=>{ const t = state.terminals[p.id_terminal];
+      out.push(`<button class="lnk3" data-golc="t:${t.id}" title="Voir ce terminal (achat)">💰 ${fmt(p.price_buy)} aUEC/SCU · ${esc(termName(t))}</button>`); });
   }
   return out.length ? out.join(' ') : '<span class="muted">—</span>';
 }
@@ -2834,25 +2839,34 @@ async function renderBlueprints(){
   if(!sel.options.length){ const cats = [...new Set(BP.B.map(bpCat))].sort(); sel.innerHTML = '<option value="">Toutes</option>' + cats.map(c=>`<option>${esc(c)}</option>`).join(''); sel.value = LS.get('bpType',''); $('#bpSrc').value = LS.get('bpSrc',''); }
   const q = $('#bpSearch').value.trim().toLowerCase(), cat = sel.value, srcF = $('#bpSrc').value;
   const okFor = b => (b.m||[]).some(j=>MS?.M[j] && msStatus(MS.M[j]).st==='ok');
-  const list = BP.B.map((b,i)=>({b,i})).filter(({b})=> (!cat || bpCat(b)===cat) && (!q || b.n.toLowerCase().includes(q) || b.sl.some(s=>s[2].toLowerCase().includes(q)))
+  const only = bpMission != null && MS?.M[bpMission]?.bl ? new Set(MS.M[bpMission].bl) : null;
+  const list = BP.B.map((b,i)=>({b,i})).filter(({b,i})=> (!only || only.has(i)) && (!cat || bpCat(b)===cat) && (!q || b.n.toLowerCase().includes(q) || b.sl.some(s=>s[2].toLowerCase().includes(q)))
     && (!srcF || (srcF==='m' && b.m) || (srcF==='d' && b.d) || (srcF==='u' && !b.m && !b.d) || (srcF==='ok' && okFor(b))));
   const MAX = 40;
-  $('#bpSum').innerHTML = `<span class="pill acc">${list.length} blueprint${list.length>1?'s':''}</span>${list.length>MAX ? `<span class="pill">${MAX} affichés : affinez la recherche</span>` : ''}`;
+  $('#bpSum').innerHTML = (only ? `<span class="pill warn">Blueprints de la mission « ${esc(MS.M[bpMission].t)} » <button class="lnk2" data-bpclear="1" title="Voir tous les blueprints">✕</button></span>` : '') + `<span class="pill acc">${list.length} blueprint${list.length>1?'s':''}</span>${list.length>MAX ? `<span class="pill">${MAX} affichés : affinez la recherche</span>` : ''}`;
   $('#bpBody').innerHTML = `<div class="panel">${list.length ? list.slice(0,MAX).map(({b,i})=>bpItemHtml(b,i)).join('') : '<p class="muted">Aucun blueprint ne correspond.</p>'}<p class="hint">Données : <a href="https://scmdb.net/?page=fab" target="_blank" rel="noopener">scmdb.net</a>, version ${esc(BP.v)}. Prix d'achat : UEX (la qualité n'est pas garantie).</p></div>`;
+}
+function goMissionBlueprints(i){
+  if(!BP || !MS?.M[i]?.bl) return;
+  bpMission = i; setMsMode('bp'); $('#bpSearch').value = ''; $('#bpType').value = ''; $('#bpSrc').value = '';
+  renderBlueprints().then(()=>scrollTo({top:0, behavior:'smooth'}));
 }
 function goBlueprint(i){
   if(!BP || !BP.B[i]) return;
-  setMsMode('bp'); $('#bpSearch').value = BP.B[i].n; $('#bpType').value = ''; $('#bpSrc').value = '';
+  bpMission = null; setMsMode('bp'); $('#bpSearch').value = BP.B[i].n; $('#bpType').value = ''; $('#bpSrc').value = '';
   renderBlueprints().then(()=>{ const el = $('#bp-'+i); if(!el) return; el.open = true; el.scrollIntoView({block:'center', behavior:'smooth'}); el.classList.add('flash'); setTimeout(()=>el.classList.remove('flash'), 1800); });
 }
 $$('.msmode button').forEach(b=>b.addEventListener('click', ()=>{ setMsMode(b.dataset.msmode); renderMissions(); }));
 $('#bpSearch').addEventListener('input', ()=>renderBlueprints());
+$('#bpSum').addEventListener('click', e=>{ if(e.target.closest('[data-bpclear]')){ bpMission = null; renderBlueprints(); } });
 $('#bpType').addEventListener('change', e=>{ LS.set('bpType', e.target.value); renderBlueprints(); });
 $('#bpSrc').addEventListener('change', e=>{ LS.set('bpSrc', e.target.value); renderBlueprints(); });
 $('#bpBody').addEventListener('click', e=>{
   const m = e.target.closest('[data-goms]'); if(m){ e.preventDefault(); goMission(+m.dataset.goms); return; }
   const gs = e.target.closest('[data-gosig]'); if(gs){ e.preventDefault(); goToSig(gs.dataset.gosig); return; }
-  const gr = e.target.closest('[data-gores]'); if(gr){ e.preventDefault(); goToRes(gr.dataset.gores.split(',').map(Number)); }
+  const gr = e.target.closest('[data-gores]'); if(gr){ e.preventDefault(); goToRes(gr.dataset.gores.split(',').map(Number)); return; }
+  const gl = e.target.closest('[data-golc]'); if(gl){ e.preventDefault(); goToLoc(gl.dataset.golc); return; }
+  const x = e.target.closest('[data-bpclear]'); if(x){ bpMission = null; renderBlueprints(); }
 });
 try{ if(LS.get('msMode','missions')==='bp') setMsMode('bp'); }catch(e){}
 
