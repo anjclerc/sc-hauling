@@ -48,6 +48,7 @@ Your contracts, checks and settings are stored in your browser. They are never s
 Le script [`scripts/update-data.mjs`](scripts/update-data.mjs) est lancé chaque jour par GitHub Actions ([`update-data.yml`](.github/workflows/update-data.yml)), ou à la main depuis l'onglet **Actions › Mise à jour des données › Run workflow**. Il récupère ce que l'API UEX ne fournit pas et le publie dans [`data/`](data) :
 
 - `mining.json` : minerais, signatures et lieux de minage d'après [scmdb.net](https://scmdb.net), via leur miroir GitHub [KrovaxCode/SCMDB_DATA](https://github.com/KrovaxCode/SCMDB_DATA) (scmdb.net en secours), dernière version « live » du jeu ;
+- `blueprints.json` : blueprints de fabrication, ingrédients et missions qui les donnent (onglet 🎯 Missions › 🛠 Blueprints), d'après scmdb ;
 - `missions.json` : missions par faction, rangs requis, prérequis et ce qu'elles débloquent (onglet 🎯 Missions), d'après scmdb ;
 - `sctrade.json` : derniers prix relevés sur [SC Trade Tools](https://sc-trade.tools), pour les comparer avec UEX (désactivé tant que SC Trade Tools n'a pas donné son accord : `SCTT_ENABLED` dans le workflow).
 

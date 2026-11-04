@@ -6,7 +6,7 @@
 //   S[i] = [nom interne, nom affiché, [noms des rangs], [réputation minimale de chaque rang]]
 //   F[i] = nom de la faction
 //   M[i] = { t: titre, f: faction, ty: type, ca: catégorie, s: échelle (-1 = aucune), r0: rang min, r1: rang max (null = aucun),
-//            u: [récompense min, max] aUEC, sy: systèmes, n: nombre de variantes, rep: réputation gagnée,
+//            u: [récompense min, max] aUEC, bi: coût d'entrée (aUEC), sy: systèmes, n: nombre de variantes, rep: réputation gagnée,
 //            il: illégale, once: une seule fois, solo: non partageable,
 //            pre: { n: nombre de missions à finir, g: [missions qui débloquent] } | { ev: événement, pts: points },
 //            intro: [missions d'introduction à finir], un: [missions débloquées], lk: [blocages de réputation], bp: nb de pools de blueprints }
@@ -45,13 +45,14 @@ export function buildMissions(md, version) {
     let g = gByKey.get(key);
     if (!g) {
       g = { t: title, f, ty: clean(c.missionType), ca: c.category, s, r0, r1, u: [Infinity, 0], sy: new Set(), n: 0, rep: 0,
-            il: 0, once: 0, solo: 0, _pre: [], _intro: new Set(), _give: new Set(), lk: new Set(), bp: 0 };
+            il: 0, once: 0, solo: 0, _pre: [], _intro: new Set(), _give: new Set(), lk: new Set(), bp: 0, bi: 0, _bps: new Set() };
       gByKey.set(key, g); groups.push(g);
     }
     g.n++;
     if (c.rewardUEC > 0) { g.u[0] = Math.min(g.u[0], c.rewardUEC); g.u[1] = Math.max(g.u[1], c.rewardUEC); }
     for (const sy of (c.systems || c.availableSystems || [])) g.sy.add(sy);
     if (c.illegal) g.il = 1;
+    if (c.buyIn > g.bi) g.bi = c.buyIn;
     if (c.onceOnly) g.once = 1;
     if (c.canBeShared === false) g.solo = 1;
     const fr = md.factionRewardsPools?.[c.factionRewardsIndex];
@@ -62,6 +63,7 @@ export function buildMissions(md, version) {
     for (const t of (c.completionTags || [])) g._give.add(t.tag);
     for (const l of (c.reputationLockout || [])) g.lk.add(`${clean(l.factionName)} : ${clean(l.minStanding?.name)}${l.maxStanding?.name ? ' – ' + clean(l.maxStanding.name) : ''}`);
     g.bp = Math.max(g.bp, (c.blueprintRewards || []).length);
+    for (const br of (c.blueprintRewards || [])) for (const b of (md.blueprintPools?.[br.blueprintPool]?.blueprints || [])) g._bps.add(b.blueprintRecord);
     gOfContract.set(c.id, g); gByDebug.set(c.debugName, g);
   }
 
@@ -74,6 +76,7 @@ export function buildMissions(md, version) {
                 u: g.u[1] ? [g.u[0], g.u[1]] : null, sy: [...g.sy].sort(), n: g.n };
     if (g.rep) o.rep = g.rep;
     if (g.il) o.il = 1;
+    if (g.bi) o.bi = g.bi;
     if (g.once) o.once = 1;
     if (g.solo) o.solo = 1;
     if (g.bp) o.bp = g.bp;
@@ -94,5 +97,10 @@ export function buildMissions(md, version) {
   });
   // Missions débloquées (sens inverse des prérequis)
   M.forEach((o, i) => { for (const j of [...(o.pre?.g || []), ...(o.intro || [])]) (M[j].un ||= []).includes(i) || M[j].un.push(i); });
-  return { v: version || md.version, S, F: facNames, M };
+  const out = { v: version || md.version, S, F: facNames, M };
+  // Blueprints offerts par chaque mission (guid → missions), non publié tel quel : sert à relier les deux fichiers
+  const bpGroups = new Map();
+  groups.forEach((g, i) => { for (const b of g._bps) { if (!bpGroups.has(b)) bpGroups.set(b, []); bpGroups.get(b).push(i); } });
+  Object.defineProperty(out, 'bpGroups', { value: bpGroups, enumerable: false });
+  return out;
 }

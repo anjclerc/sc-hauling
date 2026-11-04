@@ -4,6 +4,7 @@
 //  - data/mining.json  : minage (minerais, signatures, lieux, pourcentages) d'après scmdb.net (via son miroir GitHub),
 //                        dernière version « live » du jeu.
 //                        Le fichier n'est réécrit que si les données changent.
+//  - data/blueprints.json : blueprints de fabrication (ingrédients, missions qui les donnent) d'après scmdb.
 //  - data/missions.json : missions (factions, rangs requis, prérequis, ce qu'elles débloquent) d'après scmdb (via son miroir GitHub).
 //  - data/sctrade.json : derniers prix relevés par la communauté de SC Trade Tools (14 derniers jours),
 //                        pour comparer avec UEX. Seulement si la variable d'environnement SCTT_ENABLED vaut "true".
@@ -11,6 +12,7 @@
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { buildMining } from './mining.mjs';
 import { buildMissions } from './missions.mjs';
+import { buildBlueprints } from './blueprints.mjs';
 
 const UA = { 'User-Agent': 'SC-Hauling data updater (https://github.com/anjclerc/sc-hauling)' };
 const DATA = new URL('../data/', import.meta.url);
@@ -71,11 +73,26 @@ async function updateMining() {
     summary: m => `${m.L.length} lieux, ${m.R.length} ressources` });
   return { version: r.version, source: r.source, locations: r.data.L.length, resources: r.data.R.length, changed: r.changed };
 }
+// Missions + blueprints : construits ensemble (les missions indiquent les blueprints qu'elles donnent et inversement)
 async function updateMissions() {
-  const r = await updateScmdb({ label: 'scmdb missions', kind: 'merged', prefix: 'merged', out: 'missions.json', build: buildMissions,
-    check: m => (m.M.length < 100 || m.F.length < 5) ? `missions suspectes (${m.M.length} missions, ${m.F.length} factions)` : null,
-    summary: m => `${m.M.length} missions, ${m.F.length} factions` });
-  return { version: r.version, source: r.source, missions: r.data.M.length, factions: r.data.F.length, changed: r.changed };
+  const errors = [];
+  for (const src of SCMDB_SOURCES) {
+    try {
+      const mf = await liveFile(src.base, 'merged', 'merged'), bf = await liveFile(src.base, 'crafting_blueprints', 'crafting_blueprints');
+      const missions = buildMissions(await getJson(src.base + mf.file), mf.version);
+      const blueprints = buildBlueprints(await getJson(src.base + bf.file), bf.version, missions);
+      if (missions.M.length < 100 || missions.F.length < 5) throw new Error(`missions suspectes (${missions.M.length} missions, ${missions.F.length} factions)`);
+      if (blueprints.B.length < 100) throw new Error(`blueprints suspects (${blueprints.B.length})`);
+      let changed = false;
+      for (const [out, data] of [['missions.json', missions], ['blueprints.json', blueprints]]) {
+        if (JSON.stringify(await readJson(out)) !== JSON.stringify(data)) { await writeJson(out, data); changed = true; }
+      }
+      const viaMission = blueprints.B.filter(b => b.m).length;
+      console.log(`scmdb missions (${src.name}) : version ${mf.version}, ${missions.M.length} missions, ${missions.F.length} factions, ${blueprints.B.length} blueprints (${viaMission} via missions) — ${changed ? 'mis à jour' : 'inchangé'}`);
+      return { version: mf.version, source: src.name, missions: missions.M.length, factions: missions.F.length, blueprints: blueprints.B.length, changed };
+    } catch (e) { errors.push(`${src.name} : ${e.message}`); console.warn(`scmdb missions (${src.name}) indisponible, source suivante…`); }
+  }
+  throw new Error(errors.join(' | '));
 }
 
 // ---------- SC Trade Tools : prix relevés par la communauté ----------

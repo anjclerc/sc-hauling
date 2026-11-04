@@ -262,6 +262,14 @@ a.lnkloc:hover{color:var(--accent);border-bottom-color:var(--accent)}
 #updBar[hidden]{display:none}
 #tokenHint{font-size:12px;color:var(--accent2)}
 .mssum{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.msmode{display:flex;gap:6px;margin-bottom:12px}
+.msmode button{background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:6px;padding:6px 14px;cursor:pointer;font:inherit}
+.msmode button.on{border-color:var(--accent);color:var(--accent);font-weight:600}
+.bpt{width:100%;border-collapse:collapse;font-size:13px;margin:6px 0}
+.bpt th,.bpt td{border-bottom:1px solid var(--line);padding:5px 6px;text-align:left;vertical-align:top}
+.bpt th{color:var(--muted);font-weight:500;font-size:12px}
+.bpt .lnk3{background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:6px;padding:2px 8px;cursor:pointer;font:inherit;font-size:12px;margin:1px 4px 1px 0}
+.bpt .lnk3:hover{border-color:var(--accent);color:var(--accent)}
 .mssec{margin:0 0 14px}
 .mssec > summary{cursor:pointer;font-weight:600;font-size:14px;padding:6px 0}
 .msgrp{font-size:12px;color:var(--accent);margin:12px 0 6px;text-transform:uppercase;letter-spacing:.04em}
@@ -303,13 +311,13 @@ details.uexsend label.chk input{width:auto}
   <div id="tokenHint" hidden>🔑 <a href="#" id="tokenHintGo">Ajoutez votre token UEX gratuit</a><span> : UEX sait alors quelle application l'interroge.</span> <button id="tokenHintX" title="Masquer pendant 30 jours">✕</button></div>
   <button class="btn sec small" id="btnRefresh">↻ Actualiser les prix</button>
   <nav>
-    <button data-tab="contracts">Contrats / Route <span class="cnt" id="contractCount" hidden>0</span></button>
-    <button data-tab="resources" class="on">Ressources</button>
-    <button data-tab="signatures">Signatures</button>
+    <button data-tab="contracts">📦 Contrats / Route <span class="cnt" id="contractCount" hidden>0</span></button>
+    <button data-tab="resources" class="on">💎 Ressources</button>
+    <button data-tab="signatures">📶 Signatures</button>
     <button data-tab="location">📍 Lieu</button>
     <button data-tab="missions">🎯 Missions</button>
-    <button data-tab="checks">Contrôles <span class="cnt" id="checkCount" hidden>0</span></button>
-    <button data-tab="settings">Réglages</button>
+    <button data-tab="checks">✅ Contrôles <span class="cnt" id="checkCount" hidden>0</span></button>
+    <button data-tab="settings">⚙️ Réglages</button>
   </nav>
 </header>
 
@@ -489,6 +497,8 @@ details.uexsend label.chk input{width:auto}
 <!-- ================= MISSIONS ================= -->
 <section class="tab" id="tab-missions">
   <div class="panel">
+    <div class="msmode"><button data-msmode="missions" class="on">🎯 Missions</button><button data-msmode="bp">🛠 Blueprints</button></div>
+    <div id="msPane">
     <h2>Missions selon votre rang</h2>
     <p class="hint" style="margin-top:-4px;margin-bottom:10px">Choisissez une faction et votre rang actuel : la page montre les missions que vous pouvez accepter maintenant, puis celles à débloquer, avec ce qu'il manque (rang ou missions à finir avant). Cochez « J'ai fini cette mission » pour débloquer la suite.</p>
     <div class="filters">
@@ -498,8 +508,20 @@ details.uexsend label.chk input{width:auto}
       <label>Rechercher une mission<input id="msSearch" placeholder="ex. Ambush" autocomplete="off"></label>
     </div>
     <div class="mssum" id="msSum"></div>
+    </div>
+    <div id="bpPane" hidden>
+      <h2>Blueprints de fabrication</h2>
+      <p class="hint" style="margin-top:-4px;margin-bottom:10px">Cherchez un objet (ou un ingrédient) : vous voyez comment obtenir son blueprint (connu par défaut ou via quelles missions, avec votre statut pour chacune) et où trouver chaque ingrédient (minage dans Signatures, achat dans Ressources).</p>
+      <div class="filters">
+        <label>Rechercher un objet ou un ingrédient<input id="bpSearch" placeholder="ex. Arrowhead, Titanium" autocomplete="off"></label>
+        <label>Catégorie<select id="bpType"></select></label>
+        <label>Obtention<select id="bpSrc"><option value="">Toutes</option><option value="m">Via des missions</option><option value="ok">Via une mission disponible pour moi</option><option value="d">Connu par défaut</option><option value="u">Source inconnue</option></select></label>
+      </div>
+      <div class="mssum" id="bpSum"></div>
+    </div>
   </div>
   <div id="msBody"><div class="panel empty">Chargement des missions…</div></div>
+  <div id="bpBody" hidden></div>
   <p class="hint" id="msSource"></p>
 </section>
 
@@ -655,11 +677,24 @@ let state = { terminals:{}, commodities:{}, prices:[], vehicles:[], fleet: LS.ge
 let checks = LS.get('checks', []);
 let filters = Object.assign({ship:'', cargo:46, budget:0, priceMode:'last'}, LS.get('filters', {}));
 // Version de la page : à changer à chaque publication (date-heure, comparée comme du texte).
-const APP_VERSION = '2026-11-04T16:02';
+const APP_VERSION = '2026-11-04T16:15';
 const SITE_URL = 'https://anjclerc.github.io/sc-hauling/';
 // Dictionnaire français → anglais (textes affichés). Les clés sont comparées espaces normalisés.
 const I18N_EN = {
 // ---- Barre du haut / onglets ----
+"🛠 Blueprints":"🛠 Blueprints","Blueprints de fabrication":"Crafting blueprints",
+"Cherchez un objet (ou un ingrédient) : vous voyez comment obtenir son blueprint (connu par défaut ou via quelles missions, avec votre statut pour chacune) et où trouver chaque ingrédient (minage dans Signatures, achat dans Ressources).":"Search an item (or an ingredient): see how to get its blueprint (known by default or through which missions, with your status for each) and where to find each ingredient (mining in Signatures, buying in Resources).",
+"Rechercher un objet ou un ingrédient":"Search an item or an ingredient","ex. Arrowhead, Titanium":"e.g. Arrowhead, Titanium","Catégorie":"Category","Obtention":"How to get",
+"Toutes":"All","Via des missions":"Through missions","Via une mission disponible pour moi":"Through a mission available to me","Connu par défaut":"Known by default","Source inconnue":"Unknown source",
+"connu par défaut":"known by default","source inconnue":"unknown source","pour moi":"to me","Ingrédients":"Ingredients","Emplacement":"Slot","Ingrédient":"Ingredient","Quantité":"Quantity","Qualité min.":"Min. quality","Où le trouver":"Where to find it",
+"Où le miner":"Where to mine it","Où l'acheter":"Where to buy it","Comment obtenir le blueprint":"How to get the blueprint",
+"Connu par défaut : tous les joueurs peuvent le fabriquer.":"Known by default: every player can craft it.",
+"✅ disponible pour vous · 🔒 à débloquer · ⏹ plus proposée à votre rang (selon les rangs choisis dans la vue Missions). Le blueprint fait partie des récompenses possibles de la mission.":"✅ available to you · 🔒 to unlock · ⏹ no longer offered at your rank (based on the ranks chosen in the Missions view). The blueprint is one of the mission's possible rewards.",
+"Aucune mission ne le donne dans les données actuelles (butin, Wikelo, événement ou pas encore obtenable).":"No mission gives it in the current data (loot, Wikelo, event, or not obtainable yet).",
+"Chargement des blueprints…":"Loading blueprints…","Données des blueprints indisponibles (connexion au site nécessaire).":"Blueprint data unavailable (connection to the site required).",
+"Aucun blueprint ne correspond.":"No matching blueprint.","Données :":"Data:",". Prix d'achat : UEX (la qualité n'est pas garantie).":". Buy prices: UEX (quality not guaranteed).",
+"Blueprints possibles :":"Possible blueprints:","Coût d'entrée :":"Buy-in:","(à payer pour accepter la mission)":"(to pay when accepting the mission)",
+"Équipement à pied":"FPS gear","Vaisseau":"Ship","Objets de mission":"Mission items","Armure":"Armour","Armes":"Weapons","Munitions":"Ammo","Refroidisseur":"Cooler","Générateur":"Power plant","Bouclier":"Shield","Moteur quantique":"Quantum drive","Laser de minage":"Mining laser","Rayon tracteur":"Tractor beam","Module de minage":"Mining module","Conteneur de minerai":"Ore pod","Récupération":"Salvage",
 "🎯 Missions":"🎯 Missions","Missions selon votre rang":"Missions for your rank",
 "Choisissez une faction et votre rang actuel : la page montre les missions que vous pouvez accepter maintenant, puis celles à débloquer, avec ce qu'il manque (rang ou missions à finir avant). Cochez « J'ai fini cette mission » pour débloquer la suite.":"Pick a faction and your current rank: the page shows the missions you can accept now, then the ones to unlock and what is missing (rank or missions to finish first). Tick “I finished this mission” to unlock the next ones.",
 "Faction":"Faction","Système":"System","Rechercher une mission":"Search a mission","ex. Ambush":"e.g. Ambush","Chargement des missions…":"Loading missions…","Votre rang —":"Your rank —",
@@ -906,6 +941,11 @@ const I18N_EN_RE = [
 ];
 // Appliqués en premier, avant le dictionnaire (phrases avec des nombres au milieu)
 const I18N_EN_PRE = [
+  [/(\d+) blueprints?\b(?! de)/g, (m,n)=>`${n} blueprint${n>1?'s':''}`],
+  [/(\d+) affichés : affinez la recherche/g, '$1 shown: refine your search'],
+  [/💰 dès /g, '💰 from '],
+  [/coût ([\d\s,.\u202f\u00a0]+) aUEC/g, 'cost $1 aUEC'],
+  [/(\d+) disponibles? pour moi/g, '$1 available to me'],
   [/encore ([\d\s,.  ]+) rep/g, '$1 rep to go'],
   [/Finir d'abord (\d+) missions parmi :/g, 'First finish $1 missions among:'],
   [/Nécessite (\d+) missions parmi :/g, 'Requires $1 missions among:'],
@@ -2507,7 +2547,7 @@ $('#btnTestApi').addEventListener('click', async ()=>{
   out.innerHTML = await testToken(settings.token);
 });
 // Sauvegarde complète : tout sauf le token et les caches
-const BACKUP_KEYS = ['checks','contracts','customLocs','resPins','resPick','sgPins','lcRecent','contractStart','filters','resFilters','settings','sgSortCol','msRank','msDone','msFac','msSys'];
+const BACKUP_KEYS = ['checks','contracts','customLocs','resPins','resPick','sgPins','lcRecent','contractStart','filters','resFilters','settings','sgSortCol','msRank','msDone','msFac','msSys','msMode','bpType','bpSrc'];
 function backupCounts(d){ return {checks:(d.checks||[]).length, contracts:(d.contracts||[]).length, locs:(d.customLocs||[]).length, pins:(d.resPins||[]).length+(d.sgPins||[]).length}; }
 $('#btnExport').addEventListener('click', ()=>{
   const data = {};
@@ -2668,6 +2708,7 @@ function msItemHtml(m, i, st){
     return '';
   }).join('<br>');
   const pills = [
+    m.bi ? `<span class="pill warn">coût ${fmt(m.bi)} aUEC</span>` : '',
     m.il ? '<span class="pill ill">illégale</span>' : '',
     m.once ? '<span class="pill warn">une seule fois</span>' : '',
     m.solo ? '<span class="pill">solo</span>' : '',
@@ -2679,17 +2720,20 @@ function msItemHtml(m, i, st){
     <summary><span class="mt">${done?'✔ ':''}${esc(m.t)}</span>${pills}<span class="mr">${reward}${m.rep ? ` <span class="pos">+${fmt(m.rep)} rep</span>` : ''}</span>${why ? `<span class="mwhy">${why}</span>` : ''}</summary>
     <div class="mbody">
       <div><span class="muted">Rang :</span> ${range}${m.s>=0 ? ` <span class="muted">(${esc(MS.S[m.s][1])})</span>` : ''}</div>
+      ${m.bi ? `<div><span class="muted">Coût d'entrée :</span> <b>${fmt(m.bi)} aUEC</b> <span class="muted">(à payer pour accepter la mission)</span></div>` : ''}
       <div><span class="muted">Systèmes :</span> ${m.sy.length ? esc(m.sy.join(', ')) : '—'}${m.n>1 ? ` <span class="muted">· ${m.n} variantes</span>` : ''}</div>
       ${m.pre && m.pre.g ? `<div><span class="muted">${m.pre.n>1 ? 'Nécessite '+m.pre.n+' missions parmi :' : 'Nécessite une mission parmi :'}</span> ${msLinks(m.pre.g, cur)}</div>` : ''}
       ${m.intro ? `<div><span class="muted">Introduction :</span> ${msLinks(m.intro, cur)}</div>` : ''}
       ${m.un ? `<div><span class="muted">Débloque :</span> ${msLinks(m.un, cur)}</div>` : ''}
       ${m.lk ? `<div class="warnc"><span>Bloquée si votre réputation est :</span> ${esc(m.lk.join(' · '))}</div>` : ''}
-      ${m.bp ? '<div><span class="muted">Cette mission peut donner un blueprint de fabrication.</span></div>' : ''}
+      ${m.bl && BP ? `<div><span class="muted">Blueprints possibles :</span> ${m.bl.slice(0,12).map(j=>`<button class="lnk2" data-gobp="${j}">${esc(BP.B[j].n)}</button>`).join(', ')}${m.bl.length>12 ? ` <span class="muted">+${m.bl.length-12}</span>` : ''}</div>` : m.bp ? '<div><span class="muted">Cette mission peut donner un blueprint de fabrication.</span></div>' : ''}
       <label class="chk"><input type="checkbox" data-msdone="${i}" ${done?'checked':''}> J'ai fini cette mission</label>
     </div>
   </details>`;
 }
 async function renderMissions(){
+  if(msMode === 'bp') return renderBlueprints();
+  if(!BP) loadBlueprints().then(b=>{ if(b && msMode==='missions') renderMissions(); });
   if(!MS){ await loadMissions(); if(!MS){ $('#msBody').innerHTML = '<div class="panel empty">Données des missions indisponibles (connexion au site nécessaire).</div>'; return; } }
   fillMissionFactions();
   const f = +$('#msFac').value, sys = $('#msSys').value, q = $('#msSearch').value.trim().toLowerCase();
@@ -2717,6 +2761,7 @@ async function renderMissions(){
 }
 function goMission(i){
   const m = MS.M[i]; if(!m) return;
+  setMsMode('missions');
   if(+$('#msFac').value !== m.f){ $('#msFac').value = m.f; LS.set('msFac', MS.F[m.f]); }
   $('#msSearch').value = ''; $('#msSys').value = ''; LS.set('msSys', '');
   renderMissions().then(()=>{ const el = $('#ms-'+i); if(!el) return; el.closest('details.mssec')?.setAttribute('open',''); el.open = true;
@@ -2727,10 +2772,89 @@ $('#msSys').addEventListener('change', e=>{ LS.set('msSys', e.target.value); ren
 $('#msSearch').addEventListener('input', ()=>renderMissions());
 $('#msRanks').addEventListener('change', e=>{ const sel = e.target.closest('select[data-msscope]'); if(!sel) return;
   msRank[MS.F[+$('#msFac').value]+'|'+MS.S[+sel.dataset.msscope][0]] = +sel.value; LS.set('msRank', msRank); renderMissions(); });
-$('#msBody').addEventListener('click', e=>{ const b = e.target.closest('[data-goms]'); if(b){ e.preventDefault(); goMission(+b.dataset.goms); } });
+$('#msBody').addEventListener('click', e=>{ const b = e.target.closest('[data-goms]'); if(b){ e.preventDefault(); goMission(+b.dataset.goms); return; }
+  const g = e.target.closest('[data-gobp]'); if(g){ e.preventDefault(); goBlueprint(+g.dataset.gobp); } });
 $('#msBody').addEventListener('change', e=>{ const c = e.target.closest('input[data-msdone]'); if(!c) return;
   const k = msKey(MS.M[+c.dataset.msdone]); c.checked ? msDone.add(k) : msDone.delete(k); LS.set('msDone', [...msDone]);
   const open = [...$$('#msBody details.msitem[open]')].map(d=>d.id); renderMissions().then(()=>open.forEach(id=>{ const d = document.getElementById(id); if(d) d.open = true; })); });
+
+// ---- Blueprints (data/blueprints.json) ----
+let BP = null, bpLoading = null, msMode = 'missions';
+async function loadBlueprints(){
+  if(BP) return BP;
+  if(!bpLoading) bpLoading = (async ()=>{
+    try{ const r = await fetch(DATA_URL + 'blueprints.json?h=' + Math.floor(Date.now()/36e5)); if(r.ok){ const j = await r.json(); if(j && Array.isArray(j.B)) BP = j; } }catch(e){}
+    bpLoading = null; return BP;
+  })();
+  return bpLoading;
+}
+const BP_TYPE = {armour:'Armure', weapons:'Armes', ammo:'Munitions', cooler:'Refroidisseur', powerplant:'Générateur', shield:'Bouclier', radar:'Radar', quantumdrive:'Moteur quantique', mininglaser:'Laser de minage', tractorbeam:'Rayon tracteur', refuelling:'Ravitaillement', miningmodule:'Module de minage', orepod:'Conteneur de minerai', salvage:'Récupération'};
+const BP_GEAR = {fpsgear:'Équipement à pied', vehiclegear:'Vaisseau', missionitems:'Objets de mission'};
+const bpCat = b => (BP_GEAR[b.g]||b.g) + (b.ty ? ' › ' + (BP_TYPE[b.ty]||b.ty) : '');
+function setMsMode(mode){
+  msMode = mode; LS.set('msMode', mode);
+  $$('.msmode button').forEach(b=>b.classList.toggle('on', b.dataset.msmode===mode));
+  $('#msPane').hidden = mode!=='missions'; $('#msBody').hidden = mode!=='missions'; $('#msSource').hidden = mode!=='missions';
+  $('#bpPane').hidden = mode!=='bp'; $('#bpBody').hidden = mode!=='bp';
+}
+// Où trouver un ingrédient : minage (Signatures) et achat (Ressources, prix UEX le plus bas)
+function bpWhere(kind, name){
+  const out = [], sk = sigKeyFor(name);
+  if(sk) out.push(`<button class="lnk3" data-gosig="${esc(sk)}" title="Où le miner">📡 Signatures</button>`);
+  const n = normEl(name), cids = Object.values(state.commodities||{}).filter(c=>normEl(c.name)===n).map(c=>c.id);
+  if(cids.length){
+    let best = null; state.prices.forEach(p=>{ if(cids.includes(p.id_commodity) && p.price_buy>0 && state.terminals[p.id_terminal] && (!best || p.price_buy<best.price)) best = {price:p.price_buy, t:state.terminals[p.id_terminal]}; });
+    if(best) out.push(`<button class="lnk3" data-gores="${cids.join(',')}" title="Où l'acheter">💰 dès ${fmt(best.price)} aUEC/SCU</button> <span class="muted">${esc(termName(best.t))}</span>`);
+  }
+  return out.length ? out.join(' ') : '<span class="muted">—</span>';
+}
+function bpItemHtml(b, i){
+  const ms = (b.m||[]).map(j=>({j, m:MS?.M[j], st:MS?.M[j] ? msStatus(MS.M[j]) : null})).filter(x=>x.m);
+  ms.sort((a,c)=> (a.st.st!=='ok') - (c.st.st!=='ok') || a.m.r0 - c.m.r0 || a.m.t.localeCompare(c.m.t));
+  const okN = ms.filter(x=>x.st.st==='ok').length;
+  const src = b.d ? '<span class="pill good">connu par défaut</span>' : ms.length ? `<span class="pill acc">${ms.length} mission${ms.length>1?'s':''}</span>${okN ? `<span class="pill good">${okN} disponible${okN>1?'s':''} pour moi</span>` : ''}` : '<span class="pill">source inconnue</span>';
+  const rows = b.sl.map(([slot, kind, name, q, minQ])=>`<tr><td class="muted">${esc(slot)}</td><td><b>${esc(name)}</b></td><td>${kind==='r' ? q.toLocaleString(LOC,{maximumFractionDigits:2})+' SCU' : '×'+q}</td><td>${minQ>1 ? '≥ '+minQ : '—'}</td><td>${bpWhere(kind, name)}</td></tr>`).join('');
+  const how = b.d ? '<p>Connu par défaut : tous les joueurs peuvent le fabriquer.</p>'
+    : ms.length ? `<div>${ms.map(x=>`<div>${x.st.st==='ok' ? '✅' : x.st.st==='over' ? '⏹' : '🔒'} <button class="lnk2" data-goms="${x.j}">${esc(x.m.t)}</button> <span class="muted">— ${esc(MS.F[x.m.f])}${x.m.s>=0 ? ' · '+esc(rankName(x.m.s,x.m.r0)) : ''}${x.m.sy.length ? ' · '+esc(x.m.sy.join(', ')) : ''}</span></div>`).join('')}</div><p class="hint">✅ disponible pour vous · 🔒 à débloquer · ⏹ plus proposée à votre rang (selon les rangs choisis dans la vue Missions). Le blueprint fait partie des récompenses possibles de la mission.</p>`
+    : '<p class="muted">Aucune mission ne le donne dans les données actuelles (butin, Wikelo, événement ou pas encore obtenable).</p>';
+  return `<details class="msitem" id="bp-${i}">
+    <summary><span class="mt">${esc(b.n)}</span><span class="pill">${esc(bpCat(b))}</span>${b.mf ? `<span class="pill">${esc(b.mf)}</span>` : ''}${src}<span class="mr muted">⏱ ${b.t>=60 ? Math.round(b.t/60)+' min' : b.t+' s'}</span></summary>
+    <div class="mbody">
+      <h4 class="sec">Ingrédients</h4>
+      <div class="histwrap"><table class="bpt"><thead><tr><th>Emplacement</th><th>Ingrédient</th><th>Quantité</th><th>Qualité min.</th><th>Où le trouver</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <h4 class="sec">Comment obtenir le blueprint</h4>
+      ${how}
+    </div>
+  </details>`;
+}
+async function renderBlueprints(){
+  if(!BP){ $('#bpBody').innerHTML = '<div class="panel empty">Chargement des blueprints…</div>'; await loadBlueprints(); if(!BP){ $('#bpBody').innerHTML = '<div class="panel empty">Données des blueprints indisponibles (connexion au site nécessaire).</div>'; return; } }
+  if(!MS) await loadMissions();
+  const sel = $('#bpType');
+  if(!sel.options.length){ const cats = [...new Set(BP.B.map(bpCat))].sort(); sel.innerHTML = '<option value="">Toutes</option>' + cats.map(c=>`<option>${esc(c)}</option>`).join(''); sel.value = LS.get('bpType',''); $('#bpSrc').value = LS.get('bpSrc',''); }
+  const q = $('#bpSearch').value.trim().toLowerCase(), cat = sel.value, srcF = $('#bpSrc').value;
+  const okFor = b => (b.m||[]).some(j=>MS?.M[j] && msStatus(MS.M[j]).st==='ok');
+  const list = BP.B.map((b,i)=>({b,i})).filter(({b})=> (!cat || bpCat(b)===cat) && (!q || b.n.toLowerCase().includes(q) || b.sl.some(s=>s[2].toLowerCase().includes(q)))
+    && (!srcF || (srcF==='m' && b.m) || (srcF==='d' && b.d) || (srcF==='u' && !b.m && !b.d) || (srcF==='ok' && okFor(b))));
+  const MAX = 40;
+  $('#bpSum').innerHTML = `<span class="pill acc">${list.length} blueprint${list.length>1?'s':''}</span>${list.length>MAX ? `<span class="pill">${MAX} affichés : affinez la recherche</span>` : ''}`;
+  $('#bpBody').innerHTML = `<div class="panel">${list.length ? list.slice(0,MAX).map(({b,i})=>bpItemHtml(b,i)).join('') : '<p class="muted">Aucun blueprint ne correspond.</p>'}<p class="hint">Données : <a href="https://scmdb.net/?page=fab" target="_blank" rel="noopener">scmdb.net</a>, version ${esc(BP.v)}. Prix d'achat : UEX (la qualité n'est pas garantie).</p></div>`;
+}
+function goBlueprint(i){
+  if(!BP || !BP.B[i]) return;
+  setMsMode('bp'); $('#bpSearch').value = BP.B[i].n; $('#bpType').value = ''; $('#bpSrc').value = '';
+  renderBlueprints().then(()=>{ const el = $('#bp-'+i); if(!el) return; el.open = true; el.scrollIntoView({block:'center', behavior:'smooth'}); el.classList.add('flash'); setTimeout(()=>el.classList.remove('flash'), 1800); });
+}
+$$('.msmode button').forEach(b=>b.addEventListener('click', ()=>{ setMsMode(b.dataset.msmode); renderMissions(); }));
+$('#bpSearch').addEventListener('input', ()=>renderBlueprints());
+$('#bpType').addEventListener('change', e=>{ LS.set('bpType', e.target.value); renderBlueprints(); });
+$('#bpSrc').addEventListener('change', e=>{ LS.set('bpSrc', e.target.value); renderBlueprints(); });
+$('#bpBody').addEventListener('click', e=>{
+  const m = e.target.closest('[data-goms]'); if(m){ e.preventDefault(); goMission(+m.dataset.goms); return; }
+  const gs = e.target.closest('[data-gosig]'); if(gs){ e.preventDefault(); goToSig(gs.dataset.gosig); return; }
+  const gr = e.target.closest('[data-gores]'); if(gr){ e.preventDefault(); goToRes(gr.dataset.gores.split(',').map(Number)); }
+});
+try{ if(LS.get('msMode','missions')==='bp') setMsMode('bp'); }catch(e){}
 
 // ---- Bandeau « nouvelle version » : compare APP_VERSION avec la page publiée sur GitHub ----
 $('#appVer').textContent = APP_VERSION;
