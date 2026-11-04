@@ -1,7 +1,8 @@
 // Mise à jour des données que l'API UEX ne fournit pas. Lancé par GitHub Actions (.github/workflows/update-data.yml),
 // ou à la main : `node scripts/update-data.mjs` depuis la racine du dépôt (Node 18 ou plus récent).
 //
-//  - data/mining.json  : minage (minerais, signatures, lieux, pourcentages) d'après scmdb.net, dernière version « live » du jeu.
+//  - data/mining.json  : minage (minerais, signatures, lieux, pourcentages) d'après scmdb.net (via son miroir GitHub),
+//                        dernière version « live » du jeu.
 //                        Le fichier n'est réécrit que si les données changent.
 //  - data/sctrade.json : derniers prix relevés par la communauté de SC Trade Tools (14 derniers jours),
 //                        pour comparer avec UEX. Seulement si la variable d'environnement SCTT_ENABLED vaut "true".
@@ -29,18 +30,37 @@ async function readJson(name) { try { return JSON.parse(await readFile(new URL(n
 async function writeJson(name, obj) { await writeFile(new URL(name, DATA), JSON.stringify(obj) + '\n'); }
 
 // ---------- scmdb.net : minage ----------
+// Source principale : le miroir GitHub des données scmdb (conseillé par l'équipe scmdb, synchronisé chaque jour) ;
+// en secours : scmdb.net directement. Les deux fichiers sont identiques (vérifié le 04.11.2026).
+const SCMDB_SOURCES = [
+  { name: 'miroir GitHub KrovaxCode/SCMDB_DATA', base: 'https://raw.githubusercontent.com/KrovaxCode/SCMDB_DATA/main/data/' },
+  { name: 'scmdb.net', base: 'https://scmdb.net/data/' },
+];
+async function liveMiningFile(base) {
+  try {   // latest.json : version « live » et nom de ses fichiers
+    const live = (await getJson(base + 'latest.json', 1)).channels.live;
+    if (live && live.version && live.files && live.files.mining_data) return { version: live.version, file: live.files.mining_data };
+  } catch {}
+  const versions = await getJson(base + 'versions.json');   // la liste commence par la plus récente
+  const version = versions.map(v => v.version).find(v => /-live\./.test(v));
+  if (!version) throw new Error('aucune version « live » dans versions.json');
+  return { version, file: `mining_data-${version}.json` };
+}
 async function updateMining() {
-  const versions = await getJson('https://scmdb.net/data/versions.json');
-  const live = versions.map(v => v.version).find(v => /-live\./.test(v));   // la liste commence par la plus récente
-  if (!live) throw new Error('aucune version « live » dans versions.json');
-  const md = await getJson(`https://scmdb.net/data/mining_data-${live}.json`);
-  const mining = buildMining(md, live);
-  if (mining.L.length < 10 || mining.R.length < 10) throw new Error(`données de minage suspectes (${mining.L.length} lieux, ${mining.R.length} ressources)`);
-  const old = await readJson('mining.json');
-  const changed = JSON.stringify(old) !== JSON.stringify(mining);
-  if (changed) await writeJson('mining.json', mining);
-  console.log(`scmdb : version ${live}, ${mining.L.length} lieux, ${mining.R.length} ressources — ${changed ? 'mis à jour' : 'inchangé'}`);
-  return { version: live, locations: mining.L.length, resources: mining.R.length, changed };
+  const errors = [];
+  for (const src of SCMDB_SOURCES) {
+    try {
+      const { version: live, file } = await liveMiningFile(src.base);
+      const mining = buildMining(await getJson(src.base + file), live);
+      if (mining.L.length < 10 || mining.R.length < 10) throw new Error(`données de minage suspectes (${mining.L.length} lieux, ${mining.R.length} ressources)`);
+      const old = await readJson('mining.json');
+      const changed = JSON.stringify(old) !== JSON.stringify(mining);
+      if (changed) await writeJson('mining.json', mining);
+      console.log(`scmdb (${src.name}) : version ${live}, ${mining.L.length} lieux, ${mining.R.length} ressources — ${changed ? 'mis à jour' : 'inchangé'}`);
+      return { version: live, source: src.name, locations: mining.L.length, resources: mining.R.length, changed };
+    } catch (e) { errors.push(`${src.name} : ${e.message}`); console.warn(`scmdb (${src.name}) indisponible, source suivante…`); }
+  }
+  throw new Error(errors.join(' | '));
 }
 
 // ---------- SC Trade Tools : prix relevés par la communauté ----------
