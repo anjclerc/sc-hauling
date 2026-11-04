@@ -258,9 +258,20 @@ a.lnkloc:hover{color:var(--accent);border-bottom-color:var(--accent)}
 .privacy{margin:4px 0 8px;padding-left:20px;line-height:1.6;font-size:13px}
 .about a{text-decoration:none}
 .about a:hover{text-decoration:underline}
+#updBar{position:sticky;top:0;z-index:30;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:9px 16px;background:var(--accent2);color:#111;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+#updBar[hidden]{display:none}
+#updBar .btn{background:#111;color:#fff;border-color:#111}
+#updBar .btn.sec{background:transparent;color:#111;border-color:#111}
+#updBar a.btn{text-decoration:none;display:inline-block;padding:4px 9px;font-size:12px;border:1px solid #111;border-radius:6px}
 </style>
 </head>
 <body>
+<div id="updBar" hidden role="status">
+  <span>🔄 Une nouvelle version de SC Hauling est disponible</span><span id="updVer" style="opacity:.7"></span>
+  <span id="updWeb"><button class="btn small" id="updGo">Recharger la page</button></span>
+  <span id="updFile" hidden><a class="btn" id="updSite" href="https://anjclerc.github.io/sc-hauling/" target="_blank" rel="noopener">Ouvrir le site à jour</a></span>
+  <button class="btn sec small" id="updLater">Plus tard</button>
+</div>
 <header>
   <h1>SC <span>Hauling</span></h1>
   <div id="dataStatus">Chargement…</div>
@@ -455,6 +466,7 @@ a.lnkloc:hover{color:var(--accent);border-bottom-color:var(--accent)}
     <p><b>SC Hauling</b> — d'une idée de <b>Akumetsu86</b>, fait par <b>Claude</b> (IA d'Anthropic).</p>
     <p>Un grand merci à <a href="https://uexcorp.space" target="_blank" rel="noopener"><b>UEX</b></a> et à sa communauté de joueurs, qui relèvent les prix du commerce en jeu et les partagent gratuitement avec leur API. Sans eux, cette application n'existerait pas.</p>
     <p>Merci aussi à <a href="https://scmdb.net" target="_blank" rel="noopener"><b>scmdb.net</b></a> pour les données de minage (signatures et lieux des minerais).</p>
+    <p class="muted">Version <span id="appVer"></span> — <button class="btn sec small" id="btnCheckUpd">Vérifier les mises à jour</button></p>
     <h4 class="sec" style="margin-top:14px">Confidentialité</h4>
     <ul class="privacy">
       <li><b>Aucun cookie, aucun pistage</b> : pas de statistiques de visite, pas de publicité, aucun script chargé depuis un autre site.</li>
@@ -591,9 +603,16 @@ if(!settings.token && CFG.token) settings.token = CFG.token;
 let state = { terminals:{}, commodities:{}, prices:[], vehicles:[], fleet: LS.get('fleet', []), distances: LS.get('distances', {}), routes:[], sort: LS.get('sort', {key:'margin',dir:-1}), loadedAt:null };
 let checks = LS.get('checks', []);
 let filters = Object.assign({ship:'', cargo:46, budget:0, priceMode:'last'}, LS.get('filters', {}));
+// Version de la page : à changer à chaque publication (date-heure, comparée comme du texte).
+const APP_VERSION = '2026-11-04T14:20';
+const SITE_URL = 'https://anjclerc.github.io/sc-hauling/';
 // Dictionnaire français → anglais (textes affichés). Les clés sont comparées espaces normalisés.
 const I18N_EN = {
 // ---- Barre du haut / onglets ----
+"🔄 Une nouvelle version de SC Hauling est disponible":"🔄 A new version of SC Hauling is available","Recharger la page":"Reload the page",
+"Ouvrir le site à jour":"Open the up-to-date site","Plus tard":"Later","Vérifier les mises à jour":"Check for updates",
+"Vous avez la dernière version.":"You have the latest version.","Impossible de vérifier la version (hors ligne ?).":"Could not check the version (offline?).",
+"Nouvelle version disponible : voir le bandeau en haut.":"New version available: see the banner at the top.",
 "Contrats / Route":"Contracts / Route","Ressources":"Resources","Signatures":"Signatures","📍 Lieu":"📍 Location","Contrôles":"Checks","Réglages":"Settings",
 "↻ Actualiser les prix":"↻ Refresh prices","Chargement…":"Loading…","Chargement des données UEX…":"Loading UEX data…","Chargement des prix UEX…":"Loading UEX prices…",
 "terminaux ·":"terminals ·","à bord :":"on board:","(de":"(from","min (cache 30 min). Distances mémorisées :":"min ago (30 min cache). Stored distances:",
@@ -2354,6 +2373,37 @@ $('#importFile').addEventListener('change', async e=>{
   try{ sessionStorage.setItem('sch.importMsg', msg); }catch(err){}
   location.reload();
 });
+// ---- Bandeau « nouvelle version » : compare APP_VERSION avec la page publiée sur GitHub ----
+$('#appVer').textContent = APP_VERSION;
+async function checkUpdate(manual){
+  const now = Date.now();
+  if(!manual && now - (checkUpdate._last||0) < 10*60e3) return;   // au plus une fois toutes les 10 min
+  checkUpdate._last = now;
+  let v;
+  try{
+    const r = await fetch(SITE_URL + 'index.html?t=' + now, {cache:'no-store'});
+    if(!r.ok) throw 0;
+    const m = (await r.text()).match(/const APP_VERSION = '([^']+)'/);
+    if(!m) throw 0; v = m[1];
+  }catch(e){ if(manual) toast('Impossible de vérifier la version (hors ligne ?).', true); return; }
+  if(v <= APP_VERSION){ if(manual) toast('Vous avez la dernière version.'); return; }
+  let later = null; try{ later = sessionStorage.getItem('sch.updLater'); }catch(e){}
+  if(!manual && later === v) return;
+  const isFile = location.protocol === 'file:';
+  $('#updVer').textContent = ' (' + v.replace('T',' ') + ')';
+  $('#updWeb').hidden = isFile; $('#updFile').hidden = !isFile;
+  $('#updSite').href = SITE_URL + '?v=' + encodeURIComponent(v);
+  $('#updBar').dataset.v = v; $('#updBar').hidden = false;
+  if(manual) toast('Nouvelle version disponible : voir le bandeau en haut.');
+}
+// Recharger avec une adresse unique pour contourner le cache de GitHub (≈10 min).
+$('#updGo').addEventListener('click', ()=>{ location.href = location.pathname + '?v=' + encodeURIComponent($('#updBar').dataset.v||Date.now()) + location.hash; });
+$('#updLater').addEventListener('click', ()=>{ try{ sessionStorage.setItem('sch.updLater', $('#updBar').dataset.v||''); }catch(e){} $('#updBar').hidden = true; });
+$('#btnCheckUpd').addEventListener('click', ()=>checkUpdate(true));
+setTimeout(()=>checkUpdate(), 4000);
+setInterval(()=>checkUpdate(), 60*60e3);
+document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState === 'visible') checkUpdate(); });
+window.addEventListener('focus', ()=>checkUpdate());
 try{ const m = sessionStorage.getItem('sch.importMsg'); if(m){ sessionStorage.removeItem('sch.importMsg'); setTimeout(()=>{ showTab('settings'); toast(m); }, 300); } }catch(e){}
 $('#btnClearCache').addEventListener('click', ()=>{ ['terminals','commodities','prices','vehicles'].forEach(k=>LS.del('cache.'+k)); state.distances = {}; LS.del('distances'); loadAll(true); });
 
