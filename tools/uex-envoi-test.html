@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Test envoi UEX</title>
+<style>
+  :root{--bg:#0b0f14;--panel:#121922;--line:#243241;--text:#d9e4ee;--muted:#7f93a6;--accent:#36c5f0;--good:#3ecf8e;--bad:#ef5b5b;--warn:#f0b429}
+  body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 system-ui,sans-serif;padding:16px}
+  main{max-width:760px;margin:0 auto}
+  h1{font-size:18px;margin:0 0 6px} p{margin:6px 0}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;margin:12px 0}
+  label{display:block;font-size:12px;color:var(--muted);margin:8px 0 3px}
+  input,select{width:100%;box-sizing:border-box;background:#0e151d;color:var(--text);border:1px solid var(--line);border-radius:6px;padding:7px 9px;font:inherit}
+  .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:0 12px}
+  button{background:var(--accent);color:#06121a;border:0;border-radius:6px;padding:9px 14px;font:inherit;font-weight:600;cursor:pointer;margin-top:12px}
+  button:disabled{opacity:.5;cursor:default}
+  .muted{color:var(--muted)} .ok{color:var(--good)} .ko{color:var(--bad)} .warn{color:var(--warn)}
+  table{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px} td,th{border-bottom:1px solid var(--line);padding:6px;text-align:left;vertical-align:top}
+  code{background:#0e151d;padding:1px 4px;border-radius:4px;word-break:break-all}
+</style>
+</head>
+<body>
+<main>
+  <h1>Test d'envoi de relevés à UEX</h1>
+  <p class="muted">Outil de diagnostic local, à ouvrir depuis <code>C:\StarCitizenTading</code>. Les envois se font en <b>mode test</b> (<code>is_production: 0</code>) : UEX vérifie tout mais <b>n'enregistre rien</b>. Le token et la secret key restent dans cette page (lus depuis <code>config.js</code> s'il est à côté) et ne sont envoyés qu'à UEX.</p>
+
+  <div class="panel">
+    <div class="row">
+      <div><label>Token de l'application (Bearer)<input type="password" id="token" autocomplete="off"></label></div>
+      <div><label>Secret key de votre profil UEX<input type="password" id="secret" autocomplete="off"></label></div>
+    </div>
+    <div class="row">
+      <div><label>Terminal<select id="term"><option>Chargement…</option></select></label></div>
+      <div><label>Marchandise<select id="com"><option>Chargement…</option></select></label></div>
+    </div>
+    <div class="row">
+      <div><label>Sens<select id="side"><option value="buy">Prix d'achat (je l'achète ici)</option><option value="sell">Prix de vente (je le vends ici)</option></select></label></div>
+      <div><label>Prix /SCU relevé en jeu<input type="number" id="price" min="0" step="1"></label></div>
+    </div>
+    <button id="go">Tester l'envoi (mode test, rien n'est enregistré)</button>
+    <p class="muted" id="hint">Le prix actuel d'UEX pour ce terminal et cette marchandise s'affiche ici.</p>
+  </div>
+
+  <div class="panel">
+    <b>Résultats</b>
+    <p class="muted">La documentation d'UEX demande la secret key dans l'en-tête <code>secret-key</code>. Un navigateur ne peut l'envoyer que si UEX l'autorise (CORS) : la page essaie donc aussi d'autres façons de la transmettre.</p>
+    <table><thead><tr><th>Méthode</th><th>Résultat</th></tr></thead><tbody id="res"><tr><td colspan="2" class="muted">Pas encore testé.</td></tr></tbody></table>
+  </div>
+</main>
+<script src="config.js" onerror="void 0"></script>
+<script>
+const API = 'https://api.uexcorp.uk/2.0/';
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const CFG = window.UEX_CONFIG || {};
+$('#token').value = CFG.token || ''; $('#secret').value = CFG.secretKey || '';
+let prices = [];
+
+async function get(path){ const r = await fetch(API + path); const j = await r.json(); if(j.status !== 'ok') throw new Error(j.status); return j.data; }
+(async () => {
+  try{
+    const [t, c, p] = await Promise.all([get('terminals?type=commodity'), get('commodities'), get('commodities_prices_all')]);
+    prices = p;
+    t.sort((a,b) => (a.nickname||a.name).localeCompare(b.nickname||b.name));
+    $('#term').innerHTML = t.map(x => `<option value="${x.id}">${esc(x.nickname||x.name)} — ${esc(x.star_system_name)}</option>`).join('');
+    c.sort((a,b) => a.name.localeCompare(b.name));
+    $('#com').innerHTML = c.map(x => `<option value="${x.id}">${esc(x.name)}</option>`).join('');
+    showUex();
+  }catch(e){ $('#hint').innerHTML = '<span class="ko">Impossible de charger les données UEX : ' + esc(e.message) + '</span>'; }
+})();
+function showUex(){
+  const p = prices.find(x => x.id_terminal == $('#term').value && x.id_commodity == $('#com').value);
+  const side = $('#side').value, v = p && (side === 'buy' ? p.price_buy : p.price_sell);
+  $('#hint').textContent = v ? `Prix UEX actuel : ${v} aUEC/SCU (UEX refuse en général un écart de plus de 25 % avec la moyenne).` : 'UEX n\'a pas de prix pour ce terminal, cette marchandise et ce sens.';
+  if(v && !$('#price').value) $('#price').value = v;
+}
+['#term','#com','#side'].forEach(s => $(s).addEventListener('change', () => { $('#price').value = ''; showUex(); }));
+
+$('#go').addEventListener('click', async () => {
+  const token = $('#token').value.trim(), secret = $('#secret').value.trim(), price = +$('#price').value;
+  if(!token || !secret || !(price > 0)){ alert('Il faut le token, la secret key et un prix.'); return; }
+  const side = $('#side').value;
+  const report = { id_terminal: +$('#term').value, type: 'commodity', is_production: 0,
+    prices: [{ id_commodity: +$('#com').value, ['price_' + side]: price }] };
+  const auth = { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };
+  const methods = [
+    ['En-tête « secret-key » (documentation)', API + 'data_submit', { ...auth, 'secret-key': secret }, report],
+    ['En-tête « secret_key »', API + 'data_submit', { ...auth, 'secret_key': secret }, report],
+    ['Champ « secret_key » dans le corps', API + 'data_submit', auth, { ...report, secret_key: secret }],
+    ['Paramètre « secret_key » dans l\'adresse', API + 'data_submit?secret_key=' + encodeURIComponent(secret), auth, report],
+  ];
+  $('#go').disabled = true; $('#res').innerHTML = '';
+  for(const [label, url, headers, body] of methods){
+    const tr = document.createElement('tr'); tr.innerHTML = `<td>${esc(label)}</td><td class="muted">envoi…</td>`; $('#res').append(tr);
+    let html;
+    try{
+      const r = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
+      const txt = await r.text(); let j = null; try{ j = JSON.parse(txt); }catch(e){}
+      const st = j ? j.status : '(réponse non JSON)';
+      const cls = st === 'ok' ? 'ok' : /secret|auth|not_allowed|access_denied|user_/.test(st) ? 'ko' : 'warn';
+      html = `<span class="${cls}"><b>${esc(st)}</b></span> <span class="muted">(HTTP ${r.status})</span>` + (j && j.message ? `<br>${esc(j.message)}` : '') + (j && j.data ? `<br><code>${esc(JSON.stringify(j.data).slice(0, 300))}</code>` : '');
+    }catch(e){ html = `<span class="ko"><b>Bloqué par le navigateur</b></span> <span class="muted">(${esc(e.message)}) : UEX n'autorise pas cet en-tête depuis une page web (CORS).</span>`; }
+    tr.lastElementChild.outerHTML = `<td>${html}</td>`;
+  }
+  $('#go').disabled = false;
+});
+</script>
+</body>
+</html>
