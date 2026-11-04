@@ -5,6 +5,8 @@
 
 **▶ https://anjclerc.github.io/sc-hauling/**
 
+📖 [Wiki — mode d'emploi / user guide](https://github.com/anjclerc/sc-hauling/wiki) · 🐞 [Signaler un bug / Report a bug](https://github.com/anjclerc/sc-hauling/issues/new?template=bug.yml) · 💡 [Proposer une idée / Suggest an idea](https://github.com/anjclerc/sc-hauling/issues/new?template=suggestion.yml)
+
 ---
 
 ## 🇫🇷 Français

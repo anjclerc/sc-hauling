@@ -1,0 +1,63 @@
+name: "🐞 Bug"
+description: "Quelque chose ne marche pas / Something doesn't work"
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        🇫🇷 Merci de signaler ce problème ! Plus c'est précis, plus c'est rapide à corriger.
+        🇬🇧 Thanks for reporting this! The more precise, the faster it gets fixed.
+  - type: dropdown
+    id: tab
+    attributes:
+      label: "Onglet concerné / Tab"
+      options:
+        - "Ressources / Resources"
+        - "Contrats / Route — Contracts / Route"
+        - "Signatures"
+        - "📍 Lieu / Location"
+        - "Contrôles / Checks"
+        - "Réglages / Settings"
+        - "Autre / Other"
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: "Que se passe-t-il ? / What happens?"
+      description: "Décrivez le problème. / Describe the problem."
+      placeholder: "Ex. : le bénéfice de Laranite est négatif alors que… / e.g. Laranite profit is negative although…"
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: "Comment le reproduire ? / Steps to reproduce"
+      placeholder: |
+        1. Ouvrir… / Open…
+        2. Cliquer sur… / Click…
+        3. …
+  - type: textarea
+    id: expected
+    attributes:
+      label: "Ce que vous attendiez / What you expected"
+  - type: input
+    id: browser
+    attributes:
+      label: "Navigateur et appareil / Browser and device"
+      placeholder: "Ex. / e.g. Chrome 130, Windows 11 — Safari, iPhone"
+  - type: input
+    id: lang
+    attributes:
+      label: "Langue de l'application / App language"
+      placeholder: "Français / English"
+  - type: textarea
+    id: shots
+    attributes:
+      label: "Captures d'écran / Screenshots"
+      description: "Glissez une image ici (facultatif). / Drag an image here (optional)."
+  - type: markdown
+    attributes:
+      value: |
+        ⚠️ 🇫🇷 Ne collez jamais votre token UEX dans une issue. 🇬🇧 Never paste your UEX token in an issue.

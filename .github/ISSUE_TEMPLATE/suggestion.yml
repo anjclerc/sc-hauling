@@ -1,0 +1,40 @@
+name: "💡 Suggestion"
+description: "Proposer une idée ou une amélioration / Suggest an idea or improvement"
+title: "[Suggestion] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        🇫🇷 Une idée pour SC Hauling ? Décrivez-la ici.
+        🇬🇧 An idea for SC Hauling? Describe it here.
+  - type: dropdown
+    id: tab
+    attributes:
+      label: "Onglet concerné / Tab"
+      options:
+        - "Ressources / Resources"
+        - "Contrats / Route — Contracts / Route"
+        - "Signatures"
+        - "📍 Lieu / Location"
+        - "Contrôles / Checks"
+        - "Réglages / Settings"
+        - "Nouvel onglet / New tab"
+        - "Autre / Other"
+  - type: textarea
+    id: idea
+    attributes:
+      label: "Votre idée / Your idea"
+      description: "Ce que vous aimeriez voir. / What you would like to see."
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: "Pourquoi ? / Why?"
+      description: "Dans quelle situation de jeu cela vous aiderait ? / In which in-game situation would it help you?"
+  - type: textarea
+    id: example
+    attributes:
+      label: "Exemple ou maquette (facultatif) / Example or mockup (optional)"
+      description: "Capture d'écran, croquis, autre outil qui le fait déjà… / Screenshot, sketch, another tool that already does it…"

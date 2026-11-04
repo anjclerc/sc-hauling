@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: "📖 Wiki — mode d'emploi / user guide"
+    url: https://github.com/anjclerc/sc-hauling/wiki
+    about: "Consultez la FAQ avant de signaler un problème. / Check the FAQ before reporting an issue."
+  - name: "▶ Ouvrir l'application / Open the app"
+    url: https://anjclerc.github.io/sc-hauling/
+    about: "SC Hauling sur GitHub Pages."
