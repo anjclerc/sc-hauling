@@ -23,13 +23,14 @@
 <body>
 <main>
   <h1>Test d'envoi de relevés à UEX</h1>
-  <p class="muted">Outil de diagnostic local, à ouvrir depuis <code>C:\StarCitizenTading</code>. Les envois se font en <b>mode test</b> (<code>is_production: 0</code>) : UEX vérifie tout mais <b>n'enregistre rien</b>. Le token et la secret key restent dans cette page (lus depuis <code>config.js</code> s'il est à côté) et ne sont envoyés qu'à UEX.</p>
+  <p class="muted">Outil de diagnostic local, à ouvrir depuis <code>C:\StarCitizenTading</code>. Les envois se font en <b>mode test</b> (<code>is_production: 0</code>) : UEX vérifie tout mais <b>n'enregistre rien</b>. Le token et la secret key ne sont envoyés qu'à UEX. Sur le site, ils sont repris des Réglages de SC Hauling (stockés uniquement dans votre navigateur) ; en local, ils peuvent aussi venir de <code>config.js</code>.</p>
 
   <div class="panel">
     <div class="row">
       <div><label>Token de l'application (Bearer)<input type="password" id="token" autocomplete="off"></label></div>
       <div><label>Secret key de votre profil UEX<input type="password" id="secret" autocomplete="off"></label></div>
     </div>
+    <label style="display:flex;gap:8px;align-items:center;color:var(--text);font-size:13px"><input type="checkbox" id="remember" style="width:auto"> Mémoriser la secret key dans ce navigateur (comme le token, jamais envoyée ailleurs qu'à UEX)</label>
     <div class="row">
       <div><label>Terminal<select id="term"><option>Chargement…</option></select></label></div>
       <div><label>Marchandise<select id="com"><option>Chargement…</option></select></label></div>
@@ -54,7 +55,16 @@ const API = 'https://api.uexcorp.uk/2.0/';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const CFG = window.UEX_CONFIG || {};
-$('#token').value = CFG.token || ''; $('#secret').value = CFG.secretKey || '';
+let ST = {}; try{ ST = JSON.parse(localStorage.getItem('sch.settings')) || {}; }catch(e){}
+$('#token').value = ST.token || CFG.token || ''; $('#secret').value = ST.secret || CFG.secretKey || '';
+$('#remember').checked = !!ST.secret;
+function saveKeys(){
+  try{ const s = JSON.parse(localStorage.getItem('sch.settings')) || {};
+    s.token = $('#token').value.trim() || s.token;
+    if($('#remember').checked) s.secret = $('#secret').value.trim(); else delete s.secret;
+    localStorage.setItem('sch.settings', JSON.stringify(s)); }catch(e){}
+}
+$('#remember').addEventListener('change', saveKeys);
 let prices = [];
 
 async function get(path){ const r = await fetch(API + path); const j = await r.json(); if(j.status !== 'ok') throw new Error(j.status); return j.data; }
@@ -80,6 +90,7 @@ function showUex(){
 $('#go').addEventListener('click', async () => {
   const token = $('#token').value.trim(), secret = $('#secret').value.trim(), price = +$('#price').value;
   if(!token || !secret || !(price > 0)){ alert('Il faut le token, la secret key et un prix.'); return; }
+  saveKeys();
   const side = $('#side').value;
   const report = { id_terminal: +$('#term').value, type: 'commodity', is_production: 0,
     prices: [{ id_commodity: +$('#com').value, ['price_' + side]: price }] };
