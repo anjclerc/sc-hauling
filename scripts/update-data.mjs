@@ -4,11 +4,13 @@
 //  - data/mining.json  : minage (minerais, signatures, lieux, pourcentages) d'après scmdb.net (via son miroir GitHub),
 //                        dernière version « live » du jeu.
 //                        Le fichier n'est réécrit que si les données changent.
+//  - data/missions.json : missions (factions, rangs requis, prérequis, ce qu'elles débloquent) d'après scmdb (via son miroir GitHub).
 //  - data/sctrade.json : derniers prix relevés par la communauté de SC Trade Tools (14 derniers jours),
 //                        pour comparer avec UEX. Seulement si la variable d'environnement SCTT_ENABLED vaut "true".
 //  - data/meta.json    : date et résumé de la dernière mise à jour de chaque source.
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { buildMining } from './mining.mjs';
+import { buildMissions } from './missions.mjs';
 
 const UA = { 'User-Agent': 'SC-Hauling data updater (https://github.com/anjclerc/sc-hauling)' };
 const DATA = new URL('../data/', import.meta.url);
@@ -36,31 +38,44 @@ const SCMDB_SOURCES = [
   { name: 'miroir GitHub KrovaxCode/SCMDB_DATA', base: 'https://raw.githubusercontent.com/KrovaxCode/SCMDB_DATA/main/data/' },
   { name: 'scmdb.net', base: 'https://scmdb.net/data/' },
 ];
-async function liveMiningFile(base) {
+async function liveFile(base, kind, prefix) {
   try {   // latest.json : version « live » et nom de ses fichiers
     const live = (await getJson(base + 'latest.json', 1)).channels.live;
-    if (live && live.version && live.files && live.files.mining_data) return { version: live.version, file: live.files.mining_data };
+    if (live && live.version && live.files && live.files[kind]) return { version: live.version, file: live.files[kind] };
   } catch {}
   const versions = await getJson(base + 'versions.json');   // la liste commence par la plus récente
   const version = versions.map(v => v.version).find(v => /-live\./.test(v));
   if (!version) throw new Error('aucune version « live » dans versions.json');
-  return { version, file: `mining_data-${version}.json` };
+  return { version, file: `${prefix}-${version}.json` };
 }
-async function updateMining() {
+// Lit un fichier scmdb (miroir puis secours), le convertit et l'écrit dans data/ s'il a changé.
+async function updateScmdb({ label, kind, prefix, out, build, check, summary }) {
   const errors = [];
   for (const src of SCMDB_SOURCES) {
     try {
-      const { version: live, file } = await liveMiningFile(src.base);
-      const mining = buildMining(await getJson(src.base + file), live);
-      if (mining.L.length < 10 || mining.R.length < 10) throw new Error(`données de minage suspectes (${mining.L.length} lieux, ${mining.R.length} ressources)`);
-      const old = await readJson('mining.json');
-      const changed = JSON.stringify(old) !== JSON.stringify(mining);
-      if (changed) await writeJson('mining.json', mining);
-      console.log(`scmdb (${src.name}) : version ${live}, ${mining.L.length} lieux, ${mining.R.length} ressources — ${changed ? 'mis à jour' : 'inchangé'}`);
-      return { version: live, source: src.name, locations: mining.L.length, resources: mining.R.length, changed };
-    } catch (e) { errors.push(`${src.name} : ${e.message}`); console.warn(`scmdb (${src.name}) indisponible, source suivante…`); }
+      const { version: live, file } = await liveFile(src.base, kind, prefix);
+      const data = build(await getJson(src.base + file), live);
+      const bad = check(data); if (bad) throw new Error(bad);
+      const old = await readJson(out);
+      const changed = JSON.stringify(old) !== JSON.stringify(data);
+      if (changed) await writeJson(out, data);
+      console.log(`${label} (${src.name}) : version ${live}, ${summary(data)} — ${changed ? 'mis à jour' : 'inchangé'}`);
+      return { version: live, source: src.name, changed, data };
+    } catch (e) { errors.push(`${src.name} : ${e.message}`); console.warn(`${label} (${src.name}) indisponible, source suivante…`); }
   }
   throw new Error(errors.join(' | '));
+}
+async function updateMining() {
+  const r = await updateScmdb({ label: 'scmdb minage', kind: 'mining_data', prefix: 'mining_data', out: 'mining.json', build: buildMining,
+    check: m => (m.L.length < 10 || m.R.length < 10) ? `données de minage suspectes (${m.L.length} lieux, ${m.R.length} ressources)` : null,
+    summary: m => `${m.L.length} lieux, ${m.R.length} ressources` });
+  return { version: r.version, source: r.source, locations: r.data.L.length, resources: r.data.R.length, changed: r.changed };
+}
+async function updateMissions() {
+  const r = await updateScmdb({ label: 'scmdb missions', kind: 'merged', prefix: 'merged', out: 'missions.json', build: buildMissions,
+    check: m => (m.M.length < 100 || m.F.length < 5) ? `missions suspectes (${m.M.length} missions, ${m.F.length} factions)` : null,
+    summary: m => `${m.M.length} missions, ${m.F.length} factions` });
+  return { version: r.version, source: r.source, missions: r.data.M.length, factions: r.data.F.length, changed: r.changed };
 }
 
 // ---------- SC Trade Tools : prix relevés par la communauté ----------
@@ -105,7 +120,9 @@ const meta = (await readJson('meta.json')) || {};
 const now = new Date().toISOString();
 let failed = false;
 try { const m = await updateMining(); meta.mining = { ...m, updated: m.changed ? now : (meta.mining?.updated || now) }; delete meta.mining.changed; }
-catch (e) { failed = true; console.error('ÉCHEC scmdb :', e.message); }
+catch (e) { failed = true; console.error('ÉCHEC scmdb minage :', e.message); }
+try { const m = await updateMissions(); meta.missions = { ...m, updated: m.changed ? now : (meta.missions?.updated || now) }; delete meta.missions.changed; }
+catch (e) { failed = true; console.error('ÉCHEC scmdb missions :', e.message); }
 if (process.env.SCTT_ENABLED === 'true') {
   try { meta.sctrade = { ...(await updateSctrade()), updated: now }; }
   catch (e) { failed = true; console.error('ÉCHEC SC Trade Tools :', e.message); }
