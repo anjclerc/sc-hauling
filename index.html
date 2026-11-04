@@ -260,6 +260,10 @@ a.lnkloc:hover{color:var(--accent);border-bottom-color:var(--accent)}
 .about a:hover{text-decoration:underline}
 #updBar{position:sticky;top:0;z-index:30;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:9px 16px;background:var(--accent2);color:#111;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.4)}
 #updBar[hidden]{display:none}
+#tokenHint{font-size:12px;color:var(--accent2)}
+#tokenHint[hidden]{display:none}
+#tokenHint a{color:var(--accent2);font-weight:600}
+#tokenHint button{background:none;border:0;color:var(--muted);cursor:pointer;font:inherit;padding:0 4px}
 .sctt{font-size:11px;color:var(--muted);margin-top:2px;font-weight:400}
 #updBar .btn{background:#111;color:#fff;border-color:#111}
 #updBar .btn.sec{background:transparent;color:#111;border-color:#111}
@@ -276,6 +280,7 @@ a.lnkloc:hover{color:var(--accent);border-bottom-color:var(--accent)}
 <header>
   <h1>SC <span>Hauling</span></h1>
   <div id="dataStatus">Chargement…</div>
+  <div id="tokenHint" hidden>🔑 <a href="#" id="tokenHintGo">Ajoutez votre token UEX gratuit</a><span> : UEX sait alors quelle application l'interroge.</span> <button id="tokenHintX" title="Masquer pendant 30 jours">✕</button></div>
   <button class="btn sec small" id="btnRefresh">↻ Actualiser les prix</button>
   <nav>
     <button data-tab="contracts">Contrats / Route <span class="cnt" id="contractCount" hidden>0</span></button>
@@ -487,7 +492,7 @@ a.lnkloc:hover{color:var(--accent);border-bottom-color:var(--accent)}
         <input type="password" id="sToken" autocomplete="off">
       </label>
       <p class="hint">Créé sur uexcorp.space → My Apps. Stocké uniquement dans ce navigateur (ou lu depuis <code>config.js</code> s'il est à côté du fichier).</p>
-      <p class="hint"><b>Optionnel</b> : les prix UEX sont publics, l'application fonctionne aussi sans token. <a href="#" id="openWelcome">Comment obtenir un token ?</a></p>
+      <p class="hint"><b>Recommandé</b> (gratuit) : l'application fonctionne aussi sans token, mais avec le vôtre, UEX sait quelle application l'interroge et compte vos requêtes à part. Merci de les aider ainsi ! <a href="#" id="openWelcome">Comment obtenir un token ?</a></p>
       <div class="row" style="margin-top:10px">
         <button class="btn" id="btnSaveSettings">Enregistrer</button>
         <button class="btn sec" id="btnTestApi">Tester la connexion</button>
@@ -608,11 +613,14 @@ let state = { terminals:{}, commodities:{}, prices:[], vehicles:[], fleet: LS.ge
 let checks = LS.get('checks', []);
 let filters = Object.assign({ship:'', cargo:46, budget:0, priceMode:'last'}, LS.get('filters', {}));
 // Version de la page : à changer à chaque publication (date-heure, comparée comme du texte).
-const APP_VERSION = '2026-11-04T14:44';
+const APP_VERSION = '2026-11-04T15:03';
 const SITE_URL = 'https://anjclerc.github.io/sc-hauling/';
 // Dictionnaire français → anglais (textes affichés). Les clés sont comparées espaces normalisés.
 const I18N_EN = {
 // ---- Barre du haut / onglets ----
+"Ajoutez votre token UEX gratuit":"Add your free UEX token",": UEX sait alors quelle application l'interroge.":": UEX then knows which app is calling it.","Masquer pendant 30 jours":"Hide for 30 days",
+"Recommandé":"Recommended","(gratuit) : l'application fonctionne aussi sans token, mais avec le vôtre, UEX sait quelle application l'interroge et compte vos requêtes à part. Merci de les aider ainsi !":"(free): the app also works without a token, but with yours UEX knows which app is calling it and counts your requests separately. Thanks for helping them!",
+"Limite de requêtes UEX atteinte, réessayez dans une minute.":"UEX request limit reached, try again in a minute.","Avec votre propre token UEX (Réglages), vos requêtes sont comptées à part.":"With your own UEX token (Settings), your requests are counted separately.",
 "Dernier prix relevé sur SC Trade Tools":"Latest price reported on SC Trade Tools","écart avec UEX":"difference vs UEX",
 "SCTT = dernier prix relevé par la communauté de":"SCTT = latest price reported by the community of",
 "Données de minage : scmdb.net, version":"Mining data: scmdb.net, version",
@@ -892,7 +900,9 @@ async function api(path, opts={}){
   const headers = Object.assign({}, opts.headers||{});
   if(settings.token) headers['Authorization'] = 'Bearer ' + settings.token;
   const r = await fetch(API + path, Object.assign({}, opts, {headers}));
+  if(r.status===429) throw new Error(settings.token ? 'Limite de requêtes UEX atteinte, réessayez dans une minute.' : 'Limite de requêtes UEX atteinte, réessayez dans une minute. Avec votre propre token UEX (Réglages), vos requêtes sont comptées à part.');
   let j; try{ j = await r.json(); }catch(e){ throw new Error('Réponse invalide ('+r.status+')'); }
+  if(j.status === 'requests_limit_reached') throw new Error(settings.token ? 'Limite de requêtes UEX atteinte, réessayez dans une minute.' : 'Limite de requêtes UEX atteinte, réessayez dans une minute. Avec votre propre token UEX (Réglages), vos requêtes sont comptées à part.');
   if(j.status !== 'ok') throw new Error((j.status||'erreur') + (j.message ? ' — '+j.message : '') + ' ['+r.status+']');
   return j.data;
 }
@@ -2345,7 +2355,15 @@ $('#btnSaveTravel').addEventListener('click', ()=>{
   LS.set('settings', settings); computeResources(); toast('Paramètres de trajet enregistrés.');
 });
 $('#sLang').addEventListener('change', e=>{ settings.lang = e.target.value; LS.set('settings', settings); location.reload(); });
-$('#btnSaveSettings').addEventListener('click', ()=>{ settings.token = $('#sToken').value.trim(); LS.set('settings', settings); toast('Réglages enregistrés.'); });
+$('#btnSaveSettings').addEventListener('click', ()=>{ settings.token = $('#sToken').value.trim(); LS.set('settings', settings); toast('Réglages enregistrés.'); updateTokenHint(); });
+// Rappel discret dans la barre du haut tant qu'aucun token n'est enregistré (masquable 30 jours)
+function updateTokenHint(){
+  let hiddenUntil = 0; try{ hiddenUntil = +LS.get('tokenHintHide', 0) || 0; }catch(e){}
+  $('#tokenHint').hidden = !!settings.token || Date.now() < hiddenUntil;
+}
+$('#tokenHintGo').addEventListener('click', e=>{ e.preventDefault(); showTab('settings'); const f = $('#sToken'); f.scrollIntoView({block:'center'}); f.focus(); });
+$('#tokenHintX').addEventListener('click', ()=>{ LS.set('tokenHintHide', Date.now() + 30*864e5); updateTokenHint(); });
+updateTokenHint();
 $('#btnSaveThresholds').addEventListener('click', ()=>{ settings.minNet = num($('#sMinNet').value)||0; settings.tolerance = num($('#sTolerance').value)||0; settings.retestDays = num($('#sRetest').value)||14; $('#retestDaysTxt').textContent = settings.retestDays; LS.set('settings', settings); renderChecks(); computeResources(); toast('Seuils enregistrés.'); });
 $('#btnTestApi').addEventListener('click', async ()=>{
   settings.token = $('#sToken').value.trim();
