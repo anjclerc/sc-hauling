@@ -254,6 +254,9 @@ a.lnkloc:hover{color:var(--accent);border-bottom-color:var(--accent)}
 .pill.hot{color:#06222e;background:var(--good);border-color:var(--good);font-weight:700}
 .pill.warm{color:var(--accent);border-color:var(--accent)}
 .lclegend{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--muted);margin:0 0 8px}
+.about p{margin:6px 0}
+.about a{text-decoration:none}
+.about a:hover{text-decoration:underline}
 </style>
 </head>
 <body>
@@ -446,6 +449,13 @@ a.lnkloc:hover{color:var(--accent);border-bottom-color:var(--accent)}
 
 <!-- ================= SETTINGS ================= -->
 <section class="tab" id="tab-settings">
+  <div class="panel about">
+    <h2>À propos</h2>
+    <p><b>SC Hauling</b> — d'une idée de <b>Akumetsu86</b>, fait par <b>Claude</b> (IA d'Anthropic).</p>
+    <p>Un grand merci à <a href="https://uexcorp.space" target="_blank" rel="noopener"><b>UEX</b></a> et à sa communauté de joueurs, qui relèvent les prix du commerce en jeu et les partagent gratuitement avec leur API. Sans eux, cette application n'existerait pas.</p>
+    <p>Merci aussi à <a href="https://scmdb.net" target="_blank" rel="noopener"><b>scmdb.net</b></a> pour les données de minage (signatures et lieux des minerais).</p>
+    <p class="hint">Projet de fan non officiel. Star Citizen® est une marque de Cloud Imperium Rights LLC.</p>
+  </div>
   <div class="grid2">
     <div class="panel">
       <h2>Accès API UEX</h2>
@@ -713,7 +723,11 @@ const I18N_EN = {
 "Ne plus suivre cette route et supprimer tout son historique ?":"Stop tracking this route and delete its whole history?","Supprimer ce contrôle de l'historique ?":"Delete this check from the history?",
 "à l'instant":"just now","fiche(s) importée(s).":"sheet(s) imported.","Fichier invalide.":"Invalid file.",
 // ---- Réglages ----
-"Accès API UEX":"UEX API access","Token de l'application (Bearer)":"Application token (Bearer)",
+"Accès API UEX":"UEX API access","À propos":"About",
+"— d'une idée de":"— an idea by",", fait par":", made by","(IA d'Anthropic).":"(Anthropic's AI).",
+"Un grand merci à":"Many thanks to","et à sa communauté de joueurs, qui relèvent les prix du commerce en jeu et les partagent gratuitement avec leur API. Sans eux, cette application n'existerait pas.":"and its player community, who record in-game trade prices and share them for free through their API. Without them, this app would not exist.",
+"Merci aussi à":"Thanks also to","pour les données de minage (signatures et lieux des minerais).":"for the mining data (ore signatures and locations).",
+"Projet de fan non officiel. Star Citizen® est une marque de Cloud Imperium Rights LLC.":"Unofficial fan project. Star Citizen® is a trademark of Cloud Imperium Rights LLC.","Token de l'application (Bearer)":"Application token (Bearer)",
 "Créé sur uexcorp.space → My Apps. Stocké uniquement dans ce navigateur (ou lu depuis":"Created on uexcorp.space → My Apps. Stored only in this browser (or read from","s'il est à côté du fichier).":"if it is next to the file).",
 "Optionnel":"Optional",": les prix UEX sont publics, l'application fonctionne aussi sans token.":": UEX prices are public, the app also works without a token.","Comment obtenir un token ?":"How to get a token?",
 "Enregistrer":"Save","Tester la connexion":"Test connection","Test en cours…":"Testing…","Seuils de rentabilité (verdict des contrôles)":"Profitability thresholds (check verdict)",

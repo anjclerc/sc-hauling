@@ -41,4 +41,14 @@ Your contracts, checks and settings are stored in your browser. They are never s
 
 ---
 
+## Crédits / Credits
+
+🇫🇷 D'une idée de **Akumetsu86**, fait par **Claude** (IA d'Anthropic).
+🇬🇧 An idea by **Akumetsu86**, made by **Claude** (Anthropic's AI).
+
+🙏 Un grand merci à **[UEX](https://uexcorp.space)** et à sa communauté de joueurs, qui relèvent les prix du commerce en jeu et les partagent gratuitement avec leur API. Merci aussi à **[scmdb.net](https://scmdb.net)** pour les données de minage.
+🙏 Many thanks to **[UEX](https://uexcorp.space)** and its player community, who record in-game trade prices and share them for free through their API. Thanks also to **[scmdb.net](https://scmdb.net)** for the mining data.
+
+---
+
 Données / Data: prix / prices © [UEX](https://uexcorp.space) · minage / mining © [scmdb.net](https://scmdb.net). Star Citizen® est une marque de / is a trademark of Cloud Imperium Rights LLC. Projet de fan non officiel / unofficial fan project.
