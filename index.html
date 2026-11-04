@@ -709,7 +709,7 @@ let state = { terminals:{}, commodities:{}, prices:[], vehicles:[], fleet: LS.ge
 let checks = LS.get('checks', []);
 let filters = Object.assign({ship:'', cargo:46, budget:0, priceMode:'last'}, LS.get('filters', {}));
 // Version de la page : à changer à chaque publication (date-heure, comparée comme du texte).
-const APP_VERSION = '2026-11-04T16:57';
+const APP_VERSION = '2026-11-04T17:00';
 const SITE_URL = 'https://anjclerc.github.io/sc-hauling/';
 // Dictionnaire français → anglais (textes affichés). Les clés sont comparées espaces normalisés.
 const I18N_EN = {
@@ -2284,7 +2284,10 @@ function sigPrice(name, best){
   return {ref:out(ref), raw:out(raw), ids:[ref, raw].filter(Boolean).map(c=>c.id)};
 }
 // Navigation entre les onglets Ressources et Signatures
-function focusEl(el){ if(!el) return; el.scrollIntoView({block:'center'}); el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }
+// Fait défiler pour que le haut de l'élément (son en-tête) arrive en haut de l'écran, sous le bandeau éventuel
+function scrollToEl(el, smooth){ if(!el) return; const bar = $('#updBar'), off = (bar && !bar.hidden ? bar.offsetHeight : 0) + 12;
+  window.scrollTo({top: Math.max(0, el.getBoundingClientRect().top + window.scrollY - off), behavior: smooth ? 'smooth' : 'auto'}); }
+function focusEl(el){ if(!el) return; scrollToEl(el); el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }
 function sigKeyFor(name){
   try{ if(!MINING) return null; }catch(e){ return null; }
   const n = normEl(name), lc = name.toLowerCase().replace(/\s*\((ore|raw)\)/,''), TORD = {ship:0, roc:1, fps:2};
@@ -2848,7 +2851,7 @@ function goMission(i){
   if(+$('#msFac').value !== m.f){ $('#msFac').value = m.f; LS.set('msFac', MS.F[m.f]); }
   $('#msSearch').value = ''; $('#msSys').value = ''; LS.set('msSys', '');
   renderMissions().then(()=>{ const el = $('#ms-'+i); if(!el) return; el.closest('details.mssec')?.setAttribute('open',''); el.open = true;
-    el.scrollIntoView({block:'center', behavior:'smooth'}); el.classList.add('flash'); setTimeout(()=>el.classList.remove('flash'), 1800); });
+    scrollToEl(el, true); el.classList.add('flash'); setTimeout(()=>el.classList.remove('flash'), 1800); });
 }
 $('#msFac').addEventListener('change', e=>{ LS.set('msFac', MS.F[+e.target.value]); renderMissions(); });
 $('#msSys').addEventListener('change', e=>{ LS.set('msSys', e.target.value); renderMissions(); });
@@ -2972,7 +2975,7 @@ function goMissionBlueprints(i){
 function goBlueprint(i){
   if(!BP || !BP.B[i]) return;
   bpMission = null; setMsMode('bp'); $('#bpSearch').value = BP.B[i].n; $('#bpType').value = ''; $('#bpSrc').value = '';
-  renderBlueprints().then(()=>{ const el = $('#bp-'+i); if(!el) return; el.open = true; el.scrollIntoView({block:'center', behavior:'smooth'}); el.classList.add('flash'); setTimeout(()=>el.classList.remove('flash'), 1800); });
+  renderBlueprints().then(()=>{ const el = $('#bp-'+i); if(!el) return; el.open = true; scrollToEl(el, true); el.classList.add('flash'); setTimeout(()=>el.classList.remove('flash'), 1800); });
 }
 $$('.msmode button').forEach(b=>b.addEventListener('click', ()=>{ setMsMode(b.dataset.msmode); renderMissions(); }));
 $('#bpSearch').addEventListener('input', ()=>renderBlueprints());
