@@ -269,6 +269,7 @@ a.lnkloc:hover{color:var(--accent);border-bottom-color:var(--accent)}
 .bpt th,.bpt td{border-bottom:1px solid var(--line);padding:5px 6px;text-align:left;vertical-align:top}
 .bpt th{color:var(--muted);font-weight:500;font-size:12px}
 .bpt .lnk3{background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:6px;padding:2px 8px;cursor:pointer;font:inherit;font-size:12px;margin:1px 4px 1px 0}
+.bpt a.lnk3{display:inline-block;text-decoration:none}
 .bpt .lnk3:hover{border-color:var(--accent);color:var(--accent)}
 .mssec{margin:0 0 14px}
 .mssec > summary{cursor:pointer;font-weight:600;font-size:14px;padding:6px 0}
@@ -677,7 +678,7 @@ let state = { terminals:{}, commodities:{}, prices:[], vehicles:[], fleet: LS.ge
 let checks = LS.get('checks', []);
 let filters = Object.assign({ship:'', cargo:46, budget:0, priceMode:'last'}, LS.get('filters', {}));
 // Version de la page : à changer à chaque publication (date-heure, comparée comme du texte).
-const APP_VERSION = '2026-11-04T16:22';
+const APP_VERSION = '2026-11-04T16:26';
 const SITE_URL = 'https://anjclerc.github.io/sc-hauling/';
 // Dictionnaire français → anglais (textes affichés). Les clés sont comparées espaces normalisés.
 const I18N_EN = {
@@ -693,7 +694,7 @@ const I18N_EN = {
 "Aucune mission ne le donne dans les données actuelles (butin, Wikelo, événement ou pas encore obtenable).":"No mission gives it in the current data (loot, Wikelo, event, or not obtainable yet).",
 "Chargement des blueprints…":"Loading blueprints…","Données des blueprints indisponibles (connexion au site nécessaire).":"Blueprint data unavailable (connection to the site required).",
 "Aucun blueprint ne correspond.":"No matching blueprint.","Données :":"Data:",". Prix d'achat : UEX (la qualité n'est pas garantie).":". Buy prices: UEX (quality not guaranteed).",
-"Blueprints possibles :":"Possible blueprints:","Voir ce terminal (achat)":"See this terminal (buy)","Voir les blueprints de cette mission":"See this mission's blueprints","Voir tous les blueprints":"See all blueprints","Blueprints de la mission":"Blueprints of mission","Coût d'entrée :":"Buy-in:","(à payer pour accepter la mission)":"(to pay when accepting the mission)",
+"Blueprints possibles :":"Possible blueprints:","Voir ce terminal (achat)":"See this terminal (buy)","pas vendu en terminal":"not sold at terminals","🛒 Marché des joueurs":"🛒 Player market","Annonces de joueurs sur UEX":"Player listings on UEX","Voir les blueprints de cette mission":"See this mission's blueprints","Voir tous les blueprints":"See all blueprints","Blueprints de la mission":"Blueprints of mission","Coût d'entrée :":"Buy-in:","(à payer pour accepter la mission)":"(to pay when accepting the mission)",
 "Équipement à pied":"FPS gear","Vaisseau":"Ship","Objets de mission":"Mission items","Armure":"Armour","Armes":"Weapons","Munitions":"Ammo","Refroidisseur":"Cooler","Générateur":"Power plant","Bouclier":"Shield","Moteur quantique":"Quantum drive","Laser de minage":"Mining laser","Rayon tracteur":"Tractor beam","Module de minage":"Mining module","Conteneur de minerai":"Ore pod","Récupération":"Salvage",
 "🎯 Missions":"🎯 Missions","Missions selon votre rang":"Missions for your rank",
 "Choisissez une faction et votre rang actuel : la page montre les missions que vous pouvez accepter maintenant, puis celles à débloquer, avec ce qu'il manque (rang ou missions à finir avant). Cochez « J'ai fini cette mission » pour débloquer la suite.":"Pick a faction and your current rank: the page shows the missions you can accept now, then the ones to unlock and what is missing (rank or missions to finish first). Tick “I finished this mission” to unlock the next ones.",
@@ -944,6 +945,7 @@ const I18N_EN_PRE = [
   [/(\d+) blueprints?\b(?! de)/g, (m,n)=>`${n} blueprint${n>1?'s':''}`],
   [/(\d+) affichés : affinez la recherche/g, '$1 shown: refine your search'],
   [/💰 dès /g, '💰 from '],
+  [/⚠ relevé /g, '⚠ reported '],
   [/\+ (\d+) autres : tout voir/g, '+ $1 more: see all'],
   [/coût ([\d\s,.\u202f\u00a0]+) aUEC/g, 'cost $1 aUEC'],
   [/(\d+) disponibles? pour moi/g, '$1 available to me'],
@@ -2808,8 +2810,10 @@ function bpWhere(kind, name){
     // Les 2 terminaux les moins chers : un clic ouvre leur page Lieu (Ressources ne montre que les marchandises revendables avec bénéfice)
     const buys = state.prices.filter(p=>cids.includes(p.id_commodity) && p.price_buy>0 && state.terminals[p.id_terminal]).sort((a,b)=>a.price_buy-b.price_buy);
     const seen = new Set();
-    buys.filter(p=>!seen.has(p.id_terminal) && seen.add(p.id_terminal)).slice(0,2).forEach(p=>{ const t = state.terminals[p.id_terminal];
-      out.push(`<button class="lnk3" data-golc="t:${t.id}" title="Voir ce terminal (achat)">💰 ${fmt(p.price_buy)} aUEC/SCU · ${esc(termName(t))}</button>`); });
+    buys.filter(p=>!seen.has(p.id_terminal) && seen.add(p.id_terminal)).slice(0,2).forEach(p=>{ const t = state.terminals[p.id_terminal], h = (Date.now()/1000 - p.date_modified)/3600, old = h > 72;
+      out.push(`<button class="lnk3" data-golc="t:${t.id}" title="Voir ce terminal (achat)"${old ? ' style="opacity:.6"' : ''}>💰 ${fmt(p.price_buy)} aUEC/SCU · ${esc(termName(t))}</button>${old ? ` <span class="warnc">⚠ relevé ${agoH(h)}</span>` : ''}`); });
+    if(!buys.length) out.push('<span class="muted">pas vendu en terminal</span>');
+    out.push(`<a class="lnk3" href="https://uexcorp.space/marketplace/" target="_blank" rel="noopener" title="Annonces de joueurs sur UEX">🛒 Marché des joueurs</a>`);
   }
   return out.length ? out.join(' ') : '<span class="muted">—</span>';
 }
