@@ -6,7 +6,7 @@
 //   S[i] = [nom interne, nom affiché, [noms des rangs], [réputation minimale de chaque rang]]
 //   F[i] = nom de la faction
 //   M[i] = { t: titre, f: faction, ty: type, ca: catégorie, s: échelle (-1 = aucune), r0: rang min, r1: rang max (null = aucun),
-//            u: [récompense min, max] aUEC, bi: coût d'entrée (aUEC), sy: systèmes, n: nombre de variantes, rep: réputation gagnée,
+//            u: [récompense min, max] aUEC, bi: coût d'entrée (aUEC), ac: où l'accepter, lo: lieux de la mission (15 max, loN = total), sy: systèmes, n: nombre de variantes, rep: réputation gagnée,
 //            il: illégale, once: une seule fois, solo: non partageable,
 //            pre: { n: nombre de missions à finir, g: [missions qui débloquent] } | { ev: événement, pts: points },
 //            intro: [missions d'introduction à finir], un: [missions débloquées], lk: [blocages de réputation], bp: nb de pools de blueprints }
@@ -45,7 +45,7 @@ export function buildMissions(md, version) {
     let g = gByKey.get(key);
     if (!g) {
       g = { t: title, f, ty: clean(c.missionType), ca: c.category, s, r0, r1, u: [Infinity, 0], sy: new Set(), n: 0, rep: 0,
-            il: 0, once: 0, solo: 0, _pre: [], _intro: new Set(), _give: new Set(), lk: new Set(), bp: 0, bi: 0, _bps: new Set() };
+            il: 0, once: 0, solo: 0, _pre: [], _intro: new Set(), _give: new Set(), lk: new Set(), bp: 0, bi: 0, _bps: new Set(), ac: new Set(), lo: new Set() };
       gByKey.set(key, g); groups.push(g);
     }
     g.n++;
@@ -53,6 +53,8 @@ export function buildMissions(md, version) {
     for (const sy of (c.systems || c.availableSystems || [])) g.sy.add(sy);
     if (c.illegal) g.il = 1;
     if (c.buyIn > g.bi) g.bi = c.buyIn;
+    for (const l of (c.prerequisites?.location || [])) if (l?.name && l.navIcon !== 'Star') g.ac.add(clean(l.name));   // un système entier n'est pas un lieu précis   // où accepter la mission
+    for (const id of [...(c.locations || []), ...(c.destinations || [])]) { const n = clean(md.locationPools?.[id]?.name); if (n) g.lo.add(n); }   // où elle se déroule
     if (c.onceOnly) g.once = 1;
     if (c.canBeShared === false) g.solo = 1;
     const fr = md.factionRewardsPools?.[c.factionRewardsIndex];
@@ -77,6 +79,8 @@ export function buildMissions(md, version) {
     if (g.rep) o.rep = g.rep;
     if (g.il) o.il = 1;
     if (g.bi) o.bi = g.bi;
+    if (g.ac.size) o.ac = [...g.ac].sort();
+    if (g.lo.size) { const lo = [...g.lo].sort(); o.lo = lo.slice(0, 15); if (lo.length > 15) o.loN = lo.length; }
     if (g.once) o.once = 1;
     if (g.solo) o.solo = 1;
     if (g.bp) o.bp = g.bp;

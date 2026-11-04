@@ -526,7 +526,7 @@ details.uexsend label.chk input{width:auto}
       <label>Faction<select id="msFac"></select></label>
       <span id="msRanks" style="display:contents"></span>
       <label>Système<select id="msSys"><option value="">Tous</option><option>Stanton</option><option>Pyro</option><option>Nyx</option></select></label>
-      <label>Rechercher une mission<input id="msSearch" placeholder="ex. Ambush" autocomplete="off"></label>
+      <label>Rechercher une mission<input id="msSearch" placeholder="ex. Ambush, Fallow Field" autocomplete="off"></label>
     </div>
     <div class="mssum" id="msSum"></div>
     </div>
@@ -709,7 +709,7 @@ let state = { terminals:{}, commodities:{}, prices:[], vehicles:[], fleet: LS.ge
 let checks = LS.get('checks', []);
 let filters = Object.assign({ship:'', cargo:46, budget:0, priceMode:'last'}, LS.get('filters', {}));
 // Version de la page : à changer à chaque publication (date-heure, comparée comme du texte).
-const APP_VERSION = '2026-11-04T16:49';
+const APP_VERSION = '2026-11-04T16:57';
 const SITE_URL = 'https://anjclerc.github.io/sc-hauling/';
 // Dictionnaire français → anglais (textes affichés). Les clés sont comparées espaces normalisés.
 const I18N_EN = {
@@ -741,7 +741,7 @@ const I18N_EN = {
 "Équipement à pied":"FPS gear","Vaisseau":"Ship","Objets de mission":"Mission items","Armure":"Armour","Armes":"Weapons","Munitions":"Ammo","Refroidisseur":"Cooler","Générateur":"Power plant","Bouclier":"Shield","Moteur quantique":"Quantum drive","Laser de minage":"Mining laser","Rayon tracteur":"Tractor beam","Module de minage":"Mining module","Conteneur de minerai":"Ore pod","Récupération":"Salvage",
 "🎯 Missions / BP":"🎯 Missions / BP","Missions et blueprints":"Missions and blueprints","Missions selon votre rang":"Missions for your rank",
 "Choisissez une faction et votre rang actuel : la page montre les missions que vous pouvez accepter maintenant, puis celles à débloquer, avec ce qu'il manque (rang ou missions à finir avant). Cochez « J'ai fini cette mission » pour débloquer la suite.":"Pick a faction and your current rank: the page shows the missions you can accept now, then the ones to unlock and what is missing (rank or missions to finish first). Tick “I finished this mission” to unlock the next ones.",
-"Faction":"Faction","Système":"System","Rechercher une mission":"Search a mission","ex. Ambush":"e.g. Ambush","Chargement des missions…":"Loading missions…","Votre rang —":"Your rank —",
+"Faction":"Faction","Système":"System","Rechercher une mission":"Search a mission","ex. Ambush, Fallow Field":"e.g. Ambush, Fallow Field","Mission à accepter uniquement ici":"Mission can only be accepted here","À accepter uniquement à :":"Can only be accepted at:","Lieux de la mission :":"Mission locations:","Chargement des missions…":"Loading missions…","Votre rang —":"Your rank —",
 "Rang requis :":"Rank required:","Finir d'abord une mission parmi :":"First finish one mission among:","Événement :":"Event:","Mission d'introduction à finir :":"Introduction mission to finish:",
 "illégale":"illegal","une seule fois":"once only","solo":"solo","blueprint":"blueprint","aucun rang requis":"no rank required","et plus":"and above",
 "Rang :":"Rank:","Systèmes :":"Systems:","Nécessite une mission parmi :":"Requires one mission among:","Introduction :":"Introduction:","Débloque :":"Unlocks:",
@@ -2786,6 +2786,7 @@ function msItemHtml(m, i, st, pre, curF){
     return '';
   }).join('<br>');
   const pills = [
+    m.ac ? `<span class="pill acc" title="Mission à accepter uniquement ici">📍 ${esc(m.ac.slice(0,3).join(', '))}${m.ac.length>3?' …':''}</span>` : '',
     m.bi ? `<span class="pill warn">coût ${fmt(m.bi)} aUEC</span>` : '',
     m.il ? '<span class="pill ill">illégale</span>' : '',
     m.once ? '<span class="pill warn">une seule fois</span>' : '',
@@ -2799,6 +2800,8 @@ function msItemHtml(m, i, st, pre, curF){
     <div class="mbody">
       <div><span class="muted">Rang :</span> ${range}${m.s>=0 ? ` <span class="muted">(${esc(MS.S[m.s][1])})</span>` : ''}</div>
       ${m.bi ? `<div><span class="muted">Coût d'entrée :</span> <b>${fmt(m.bi)} aUEC</b> <span class="muted">(à payer pour accepter la mission)</span></div>` : ''}
+      ${m.ac ? `<div><span class="muted">À accepter uniquement à :</span> <b>${esc(m.ac.join(', '))}</b></div>` : ''}
+      ${m.lo ? `<div><span class="muted">Lieux de la mission :</span> ${esc(m.lo.join(', '))}${m.loN ? ` <span class="muted">(+${m.loN - m.lo.length})</span>` : ''}</div>` : ''}
       <div><span class="muted">Systèmes :</span> ${m.sy.length ? esc(m.sy.join(', ')) : '—'}${m.n>1 ? ` <span class="muted">· ${m.n} variantes</span>` : ''}</div>
       ${m.pre && m.pre.g ? `<div><span class="muted">${m.pre.n>1 ? 'Nécessite '+m.pre.n+' missions parmi :' : 'Nécessite une mission parmi :'}</span> ${msLinks(m.pre.g, cur)}</div>` : ''}
       ${m.intro ? `<div><span class="muted">Introduction :</span> ${msLinks(m.intro, cur)}</div>` : ''}
@@ -2819,7 +2822,7 @@ async function renderMissions(){
   const scopes = [...new Set(MS.M.filter(m=>m.f===f && m.s>=0).map(m=>m.s))];
   $('#msRanks').innerHTML = scopes.map(si=>`<label>Votre rang — ${esc(MS.S[si][1])}<select data-msscope="${si}">${MS.S[si][2].map((n,r)=>`<option value="${r}">${esc(n)} (${fmt(MS.S[si][3][r])} rep)</option>`).join('')}</select></label>`).join('');
   scopes.forEach(si=>{ $(`#msRanks select[data-msscope="${si}"]`).value = msMyRank(f, si); });
-  const list = MS.M.map((m,i)=>({m,i,st:msStatus(m)})).filter(x=>x.m.f===f && (!sys || x.m.sy.includes(sys)) && (!q || x.m.t.toLowerCase().includes(q) || x.m.ty.toLowerCase().includes(q)));
+  const list = MS.M.map((m,i)=>({m,i,st:msStatus(m)})).filter(x=>x.m.f===f && (!sys || x.m.sy.includes(sys)) && (!q || x.m.t.toLowerCase().includes(q) || x.m.ty.toLowerCase().includes(q) || (x.m.ac||[]).some(l=>l.toLowerCase().includes(q)) || (x.m.lo||[]).some(l=>l.toLowerCase().includes(q))));
   const by = st => list.filter(x=>x.st.st===st);
   const ok = by('ok'), locked = by('locked'), over = by('over');
   const sortR = (a,b)=> (b.m.u?.[1]||0)-(a.m.u?.[1]||0) || a.m.t.localeCompare(b.m.t);
