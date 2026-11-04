@@ -467,13 +467,15 @@ a.lnkloc:hover{color:var(--accent);border-bottom-color:var(--accent)}
     <p><b>SC Hauling</b> — d'une idée de <b>Akumetsu86</b>, fait par <b>Claude</b> (IA d'Anthropic).</p>
     <p>Un grand merci à <a href="https://uexcorp.space" target="_blank" rel="noopener"><b>UEX</b></a> et à sa communauté de joueurs, qui relèvent les prix du commerce en jeu et les partagent gratuitement avec leur API. Sans eux, cette application n'existerait pas.</p>
     <p>Merci aussi à <a href="https://scmdb.net" target="_blank" rel="noopener"><b>scmdb.net</b></a> pour les données de minage (signatures et lieux des minerais).</p>
+    <p>Et merci à <a href="https://sc-trade.tools" target="_blank" rel="noopener"><b>SC Trade Tools</b></a> et à sa communauté, dont les relevés de prix servent à comparer avec ceux d'UEX.</p>
     <p class="muted">Version <span id="appVer"></span> — <button class="btn sec small" id="btnCheckUpd">Vérifier les mises à jour</button></p>
     <p class="muted" id="dataInfo"></p>
     <h4 class="sec" style="margin-top:14px">Confidentialité</h4>
     <ul class="privacy">
       <li><b>Aucun cookie, aucun pistage</b> : pas de statistiques de visite, pas de publicité, aucun script chargé depuis un autre site.</li>
       <li><b>Vos données restent dans votre navigateur</b> : réglages, token, contrats, contrôles et épingles sont enregistrés uniquement sur cet appareil et ne sont envoyés nulle part. Vider les données du site dans le navigateur les efface.</li>
-      <li><b>Seul site contacté : UEX</b> (api.uexcorp.uk), pour lire les prix, les terminaux et les distances. Votre token, si vous en avez mis un, n'est envoyé qu'à UEX.</li>
+      <li><b>Sites contactés : UEX</b> (api.uexcorp.uk), pour lire les prix, les terminaux et les distances. Votre token, si vous en avez mis un, n'est envoyé qu'à UEX.</li>
+      <li><b>Et le site de l'application</b> (anjclerc.github.io), pour vérifier s'il existe une nouvelle version et charger les données de minage (scmdb) et de comparaison (SC Trade Tools) déjà préparées. La page ne contacte jamais directement scmdb ni SC Trade Tools.</li>
       <li>Comme tout site web, l'hébergeur (GitHub Pages) et UEX voient l'adresse IP de votre connexion lorsqu'ils répondent.</li>
     </ul>
     <p class="hint">Projet de fan non officiel. Star Citizen® est une marque de Cloud Imperium Rights LLC.</p>
@@ -606,7 +608,7 @@ let state = { terminals:{}, commodities:{}, prices:[], vehicles:[], fleet: LS.ge
 let checks = LS.get('checks', []);
 let filters = Object.assign({ship:'', cargo:46, budget:0, priceMode:'last'}, LS.get('filters', {}));
 // Version de la page : à changer à chaque publication (date-heure, comparée comme du texte).
-const APP_VERSION = '2026-11-04T14:33';
+const APP_VERSION = '2026-11-04T14:42';
 const SITE_URL = 'https://anjclerc.github.io/sc-hauling/';
 // Dictionnaire français → anglais (textes affichés). Les clés sont comparées espaces normalisés.
 const I18N_EN = {
@@ -760,11 +762,11 @@ const I18N_EN = {
 "Accès API UEX":"UEX API access","À propos":"About",
 "— d'une idée de":"— an idea by",", fait par":", made by","(IA d'Anthropic).":"(Anthropic's AI).",
 "Un grand merci à":"Many thanks to","et à sa communauté de joueurs, qui relèvent les prix du commerce en jeu et les partagent gratuitement avec leur API. Sans eux, cette application n'existerait pas.":"and its player community, who record in-game trade prices and share them for free through their API. Without them, this app would not exist.",
-"Merci aussi à":"Thanks also to","pour les données de minage (signatures et lieux des minerais).":"for the mining data (ore signatures and locations).",
+"Merci aussi à":"Thanks also to","Et merci à":"And thanks to","et à sa communauté, dont les relevés de prix servent à comparer avec ceux d'UEX.":"and its community, whose price reports are used for comparison with UEX.","pour les données de minage (signatures et lieux des minerais).":"for the mining data (ore signatures and locations).",
 "Projet de fan non officiel. Star Citizen® est une marque de Cloud Imperium Rights LLC.":"Unofficial fan project. Star Citizen® is a trademark of Cloud Imperium Rights LLC.",
 "Confidentialité":"Privacy","Aucun cookie, aucun pistage":"No cookies, no tracking",": pas de statistiques de visite, pas de publicité, aucun script chargé depuis un autre site.":": no visitor statistics, no ads, no script loaded from another site.",
 "Vos données restent dans votre navigateur":"Your data stays in your browser",": réglages, token, contrats, contrôles et épingles sont enregistrés uniquement sur cet appareil et ne sont envoyés nulle part. Vider les données du site dans le navigateur les efface.":": settings, token, contracts, checks and pins are stored only on this device and are never sent anywhere. Clearing the site data in your browser erases them.",
-"Seul site contacté : UEX":"Only site contacted: UEX","(api.uexcorp.uk), pour lire les prix, les terminaux et les distances. Votre token, si vous en avez mis un, n'est envoyé qu'à UEX.":"(api.uexcorp.uk), to read prices, terminals and distances. Your token, if you entered one, is only sent to UEX.",
+"Sites contactés : UEX":"Sites contacted: UEX","Et le site de l'application":"And the app's own site","(anjclerc.github.io), pour vérifier s'il existe une nouvelle version et charger les données de minage (scmdb) et de comparaison (SC Trade Tools) déjà préparées. La page ne contacte jamais directement scmdb ni SC Trade Tools.":"(anjclerc.github.io), to check for a new version and load the prepared mining (scmdb) and comparison (SC Trade Tools) data. The page never contacts scmdb or SC Trade Tools directly.","(api.uexcorp.uk), pour lire les prix, les terminaux et les distances. Votre token, si vous en avez mis un, n'est envoyé qu'à UEX.":"(api.uexcorp.uk), to read prices, terminals and distances. Your token, if you entered one, is only sent to UEX.",
 "Comme tout site web, l'hébergeur (GitHub Pages) et UEX voient l'adresse IP de votre connexion lorsqu'ils répondent.":"Like any website, the host (GitHub Pages) and UEX see your connection's IP address when they respond.","Token de l'application (Bearer)":"Application token (Bearer)",
 "Créé sur uexcorp.space → My Apps. Stocké uniquement dans ce navigateur (ou lu depuis":"Created on uexcorp.space → My Apps. Stored only in this browser (or read from","s'il est à côté du fichier).":"if it is next to the file).",
 "Optionnel":"Optional",": les prix UEX sont publics, l'application fonctionne aussi sans token.":": UEX prices are public, the app also works without a token.","Comment obtenir un token ?":"How to get a token?",
