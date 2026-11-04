@@ -709,7 +709,7 @@ let state = { terminals:{}, commodities:{}, prices:[], vehicles:[], fleet: LS.ge
 let checks = LS.get('checks', []);
 let filters = Object.assign({ship:'', cargo:46, budget:0, priceMode:'last'}, LS.get('filters', {}));
 // Version de la page : à changer à chaque publication (date-heure, comparée comme du texte).
-const APP_VERSION = '2026-11-04T16:48';
+const APP_VERSION = '2026-11-04T16:49';
 const SITE_URL = 'https://anjclerc.github.io/sc-hauling/';
 // Dictionnaire français → anglais (textes affichés). Les clés sont comparées espaces normalisés.
 const I18N_EN = {
@@ -737,7 +737,7 @@ const I18N_EN = {
 "Aucune mission ne le donne dans les données actuelles (butin, Wikelo, événement ou pas encore obtenable).":"No mission gives it in the current data (loot, Wikelo, event, or not obtainable yet).",
 "Chargement des blueprints…":"Loading blueprints…","Données des blueprints indisponibles (connexion au site nécessaire).":"Blueprint data unavailable (connection to the site required).",
 "Aucun blueprint ne correspond.":"No matching blueprint.","Données :":"Data:",". Prix d'achat : UEX (la qualité n'est pas garantie).":". Buy prices: UEX (quality not guaranteed).",
-"Blueprints possibles :":"Possible blueprints:","Suivre cette mission":"Follow this mission","des roches (estimation)":"of rocks (estimate)","Suivre ce blueprint":"Follow this blueprint","Ne plus suivre":"Unfollow","Voir ce terminal (achat)":"See this terminal (buy)","pas vendu en terminal":"not sold at terminals","Voir les blueprints de cette mission":"See this mission's blueprints","Voir tous les blueprints":"See all blueprints","Blueprints de la mission":"Blueprints of mission","Coût d'entrée :":"Buy-in:","(à payer pour accepter la mission)":"(to pay when accepting the mission)",
+"Blueprints possibles :":"Possible blueprints:","Suivre cette mission":"Follow this mission","Niveau de stock affiché":"Stock level shown","Niveau d'inventaire affiché":"Inventory level shown","(facultatif)":"(optional)","Tailles de caisses (SCU, facultatif)":"Box sizes (SCU, optional)","ex. 1, 2, 4, 8, 16":"e.g. 1, 2, 4, 8, 16","des roches (estimation)":"of rocks (estimate)","Suivre ce blueprint":"Follow this blueprint","Ne plus suivre":"Unfollow","Voir ce terminal (achat)":"See this terminal (buy)","pas vendu en terminal":"not sold at terminals","Voir les blueprints de cette mission":"See this mission's blueprints","Voir tous les blueprints":"See all blueprints","Blueprints de la mission":"Blueprints of mission","Coût d'entrée :":"Buy-in:","(à payer pour accepter la mission)":"(to pay when accepting the mission)",
 "Équipement à pied":"FPS gear","Vaisseau":"Ship","Objets de mission":"Mission items","Armure":"Armour","Armes":"Weapons","Munitions":"Ammo","Refroidisseur":"Cooler","Générateur":"Power plant","Bouclier":"Shield","Moteur quantique":"Quantum drive","Laser de minage":"Mining laser","Rayon tracteur":"Tractor beam","Module de minage":"Mining module","Conteneur de minerai":"Ore pod","Récupération":"Salvage",
 "🎯 Missions / BP":"🎯 Missions / BP","Missions et blueprints":"Missions and blueprints","Missions selon votre rang":"Missions for your rank",
 "Choisissez une faction et votre rang actuel : la page montre les missions que vous pouvez accepter maintenant, puis celles à débloquer, avec ce qu'il manque (rang ou missions à finir avant). Cochez « J'ai fini cette mission » pour débloquer la suite.":"Pick a faction and your current rank: the page shows the missions you can accept now, then the ones to unlock and what is missing (rank or missions to finish first). Tick “I finished this mission” to unlock the next ones.",
@@ -985,6 +985,7 @@ const I18N_EN_RE = [
 ];
 // Appliqués en premier, avant le dictionnaire (phrases avec des nombres au milieu)
 const I18N_EN_PRE = [
+  [/ · caisses ([\d,]+)/g, ' · boxes $1'],
   [/Qualité ≥ (\d+) :/g, 'Quality ≥ $1:'],
   [/⭐ Suivies \((\d+)\)/g, '⭐ Followed ($1)'],
   [/⭐ Suivis \((\d+)\)/g, '⭐ Followed ($1)'],
@@ -1359,6 +1360,13 @@ function histRows(g, sel){
   }).join('');
 }
 
+// Niveau de stock et tailles de caisses affichés au terminal (facultatifs, envoyés à UEX avec le relevé)
+function obsExtraHtml(c, side){
+  const st = c.obs['status'+side] || '', bx = c.obs['boxes'+side] || '';
+  return `<label>${side==='Buy' ? 'Niveau de stock affiché' : 'Niveau d\'inventaire affiché'} (facultatif)<select data-f="obs.status${side}"><option value="">—</option>${Object.entries(STATUS).map(([k,v])=>`<option value="${k}" ${String(st)===k?'selected':''}>${esc(v)}</option>`).join('')}</select></label>
+        <label>Tailles de caisses (SCU, facultatif)<input data-f="obs.boxes${side}" value="${esc(bx)}" placeholder="ex. 1, 2, 4, 8, 16"></label>`;
+}
+function cleanBoxes(v){ const ok = [1,2,4,8,16,24,32]; const a = [...new Set(String(v||'').split(/[^0-9]+/).map(Number).filter(n=>ok.includes(n)))].sort((x,y)=>x-y); return a.length ? a.join(',') : null; }
 function editorHtml(g, c){
   const k = calcCheck(c), u = c.uex || {};
   return `<div class="editor" data-entry="${c.id}">
@@ -1376,6 +1384,7 @@ function editorHtml(g, c){
           <span class="uex">UEX ce jour-là : ${fmt(u.buy)} · <span data-role="dbuy">${pct(k.dBuy)}</span></span></label>
         <label>SCU disponibles au terminal<input data-f="obs.stock" value="${esc(c.obs.stock)}" inputmode="numeric" placeholder="${u.stock||''}">
           <span class="uex">UEX : ${u.stock?fmt(u.stock):'?'} SCU</span></label>
+        ${obsExtraHtml(c, 'Buy')}
       </div>
       <div class="step">
         <h4>③ Relevé à l'arrivée (vente)</h4>
@@ -1383,6 +1392,7 @@ function editorHtml(g, c){
         <label>Prix de vente réel /SCU<input data-f="obs.sell" value="${esc(c.obs.sell)}" inputmode="numeric" placeholder="${u.sell??''}">
           <span class="uex">UEX ce jour-là : ${fmt(u.sell)} · <span data-role="dsell">${pct(k.dSell)}</span></span></label>
         <label>Demande max. (SCU, optionnel)<input data-f="obs.demand" value="${esc(c.obs.demand)}" inputmode="numeric"></label>
+        ${obsExtraHtml(c, 'Sell')}
       </div>
       <div class="step">
         <h4>④ Vaisseau & frais du voyage chargé</h4>
@@ -1542,10 +1552,14 @@ async function submitToUex(c, btn){
   if(!settings.token || !settings.secret){ toast('Pour envoyer vos relevés, ajoutez votre token et votre secret key UEX dans Réglages.', true); return; }
   const test = ed.querySelector('[data-role=uextest]').checked;
   const sides = [];
-  if(num(c.obs.buy)!=null){ const pr = {id_commodity:c.cid, price_buy:num(c.obs.buy)}; if(num(c.obs.stock)!=null) pr.scu_buy = num(c.obs.stock); sides.push({k:'buy', id_terminal:c.oid, name:c.origin, pr}); }
-  if(num(c.obs.sell)!=null){ const pr = {id_commodity:c.cid, price_sell:num(c.obs.sell)}; if(num(c.obs.demand)!=null) pr.scu_sell = num(c.obs.demand); sides.push({k:'sell', id_terminal:c.did, name:c.dest, pr}); }
+  if(num(c.obs.buy)!=null){ const pr = {id_commodity:c.cid, price_buy:num(c.obs.buy)}; if(num(c.obs.stock)!=null) pr.scu_buy = num(c.obs.stock);
+    if(+c.obs.statusBuy) pr.status_buy = +c.obs.statusBuy; const bx = cleanBoxes(c.obs.boxesBuy); if(bx) pr.container_sizes = bx;
+    sides.push({k:'buy', id_terminal:c.oid, name:c.origin, pr}); }
+  if(num(c.obs.sell)!=null){ const pr = {id_commodity:c.cid, price_sell:num(c.obs.sell)}; if(num(c.obs.demand)!=null) pr.scu_sell = num(c.obs.demand);
+    if(+c.obs.statusSell) pr.status_sell = +c.obs.statusSell; const bx = cleanBoxes(c.obs.boxesSell); if(bx) pr.container_sizes = bx;
+    sides.push({k:'sell', id_terminal:c.did, name:c.dest, pr}); }
   if(!sides.length){ toast('Aucun prix relevé à envoyer.', true); return; }
-  const list = sides.map(x=>`${x.k==='buy'?'achat':'vente'} de ${c.commodity} à ${x.name} : ${fmt(x.pr.price_buy||x.pr.price_sell)} aUEC/SCU`).join('\n');
+  const list = sides.map(x=>`${x.k==='buy'?'achat':'vente'} de ${c.commodity} à ${x.name} : ${fmt(x.pr.price_buy||x.pr.price_sell)} aUEC/SCU${(x.pr.status_buy||x.pr.status_sell) ? ' · '+STATUS[x.pr.status_buy||x.pr.status_sell] : ''}${x.pr.container_sizes ? ' · caisses '+x.pr.container_sizes : ''}`).join('\n');
   if(!confirm((test ? 'TEST (rien ne sera enregistré) — ' : '') + `Envoyer à UEX, sous votre compte :\n${list}\n\nN'envoyez que des prix lus vous-même au terminal.`)) return;
   btn.disabled = true; out.textContent = 'Envoi…';
   const done = [], errs = [];
