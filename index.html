@@ -608,7 +608,7 @@ let state = { terminals:{}, commodities:{}, prices:[], vehicles:[], fleet: LS.ge
 let checks = LS.get('checks', []);
 let filters = Object.assign({ship:'', cargo:46, budget:0, priceMode:'last'}, LS.get('filters', {}));
 // Version de la page : à changer à chaque publication (date-heure, comparée comme du texte).
-const APP_VERSION = '2026-11-04T14:42';
+const APP_VERSION = '2026-11-04T14:44';
 const SITE_URL = 'https://anjclerc.github.io/sc-hauling/';
 // Dictionnaire français → anglais (textes affichés). Les clés sont comparées espaces normalisés.
 const I18N_EN = {
@@ -2461,7 +2461,7 @@ setTimeout(loadExtraData, 300);
 $('#appVer').textContent = APP_VERSION;
 async function checkUpdate(manual){
   const now = Date.now();
-  if(!manual && now - (checkUpdate._last||0) < 10*60e3) return;   // au plus une fois toutes les 10 min
+  if(!manual && now - (checkUpdate._last||0) < 60e3) return;   // au plus une fois par minute
   checkUpdate._last = now;
   let v;
   try{
@@ -2485,7 +2485,7 @@ $('#updGo').addEventListener('click', ()=>{ location.href = location.pathname + 
 $('#updLater').addEventListener('click', ()=>{ try{ sessionStorage.setItem('sch.updLater', $('#updBar').dataset.v||''); }catch(e){} $('#updBar').hidden = true; });
 $('#btnCheckUpd').addEventListener('click', ()=>checkUpdate(true));
 setTimeout(()=>checkUpdate(), 4000);
-setInterval(()=>checkUpdate(), 60*60e3);
+setInterval(()=>checkUpdate(), 10*60e3);   // toutes les 10 min, et à chaque retour sur l'onglet
 document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState === 'visible') checkUpdate(); });
 window.addEventListener('focus', ()=>checkUpdate());
 try{ const m = sessionStorage.getItem('sch.importMsg'); if(m){ sessionStorage.removeItem('sch.importMsg'); setTimeout(()=>{ showTab('settings'); toast(m); }, 300); } }catch(e){}
