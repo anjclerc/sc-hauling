@@ -678,7 +678,7 @@ let state = { terminals:{}, commodities:{}, prices:[], vehicles:[], fleet: LS.ge
 let checks = LS.get('checks', []);
 let filters = Object.assign({ship:'', cargo:46, budget:0, priceMode:'last'}, LS.get('filters', {}));
 // Version de la page : à changer à chaque publication (date-heure, comparée comme du texte).
-const APP_VERSION = '2026-11-04T16:28';
+const APP_VERSION = '2026-11-04T16:30';
 const SITE_URL = 'https://anjclerc.github.io/sc-hauling/';
 // Dictionnaire français → anglais (textes affichés). Les clés sont comparées espaces normalisés.
 const I18N_EN = {
@@ -694,7 +694,7 @@ const I18N_EN = {
 "Aucune mission ne le donne dans les données actuelles (butin, Wikelo, événement ou pas encore obtenable).":"No mission gives it in the current data (loot, Wikelo, event, or not obtainable yet).",
 "Chargement des blueprints…":"Loading blueprints…","Données des blueprints indisponibles (connexion au site nécessaire).":"Blueprint data unavailable (connection to the site required).",
 "Aucun blueprint ne correspond.":"No matching blueprint.","Données :":"Data:",". Prix d'achat : UEX (la qualité n'est pas garantie).":". Buy prices: UEX (quality not guaranteed).",
-"Blueprints possibles :":"Possible blueprints:","Voir ce terminal (achat)":"See this terminal (buy)","pas vendu en terminal":"not sold at terminals","🛒 Marché des joueurs":"🛒 Player market","Annonces de joueurs sur UEX":"Player listings on UEX","Voir les blueprints de cette mission":"See this mission's blueprints","Voir tous les blueprints":"See all blueprints","Blueprints de la mission":"Blueprints of mission","Coût d'entrée :":"Buy-in:","(à payer pour accepter la mission)":"(to pay when accepting the mission)",
+"Blueprints possibles :":"Possible blueprints:","Voir ce terminal (achat)":"See this terminal (buy)","pas vendu en terminal":"not sold at terminals","Voir les blueprints de cette mission":"See this mission's blueprints","Voir tous les blueprints":"See all blueprints","Blueprints de la mission":"Blueprints of mission","Coût d'entrée :":"Buy-in:","(à payer pour accepter la mission)":"(to pay when accepting the mission)",
 "Équipement à pied":"FPS gear","Vaisseau":"Ship","Objets de mission":"Mission items","Armure":"Armour","Armes":"Weapons","Munitions":"Ammo","Refroidisseur":"Cooler","Générateur":"Power plant","Bouclier":"Shield","Moteur quantique":"Quantum drive","Laser de minage":"Mining laser","Rayon tracteur":"Tractor beam","Module de minage":"Mining module","Conteneur de minerai":"Ore pod","Récupération":"Salvage",
 "🎯 Missions / BP":"🎯 Missions / BP","Missions et blueprints":"Missions and blueprints","Missions selon votre rang":"Missions for your rank",
 "Choisissez une faction et votre rang actuel : la page montre les missions que vous pouvez accepter maintenant, puis celles à débloquer, avec ce qu'il manque (rang ou missions à finir avant). Cochez « J'ai fini cette mission » pour débloquer la suite.":"Pick a faction and your current rank: the page shows the missions you can accept now, then the ones to unlock and what is missing (rank or missions to finish first). Tick “I finished this mission” to unlock the next ones.",
@@ -2813,7 +2813,6 @@ function bpWhere(kind, name){
     buys.filter(p=>!seen.has(p.id_terminal) && seen.add(p.id_terminal)).slice(0,2).forEach(p=>{ const t = state.terminals[p.id_terminal], h = (Date.now()/1000 - p.date_modified)/3600, old = h > 72;
       out.push(`<button class="lnk3" data-golc="t:${t.id}" title="Voir ce terminal (achat)"${old ? ' style="opacity:.6"' : ''}>💰 ${fmt(p.price_buy)} aUEC/SCU · ${esc(termName(t))}</button>${old ? ` <span class="warnc">⚠ relevé ${agoH(h)}</span>` : ''}`); });
     if(!buys.length) out.push('<span class="muted">pas vendu en terminal</span>');
-    out.push(`<a class="lnk3" href="https://uexcorp.space/marketplace/" target="_blank" rel="noopener" title="Annonces de joueurs sur UEX">🛒 Marché des joueurs</a>`);
   }
   return out.length ? out.join(' ') : '<span class="muted">—</span>';
 }
