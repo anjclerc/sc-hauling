@@ -1,0 +1,4 @@
+# Contient le token UEX personnel : ne jamais publier
+# Contains your personal UEX token: never publish it
+config.js
+*.avant-*.html

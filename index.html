@@ -1,0 +1,2325 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SC Hauling — Ressources</title>
+<script src="config.js"></script>
+<style>
+:root{
+  --bg:#0b0f14; --panel:#121922; --panel2:#18212c; --line:#243241; --text:#d9e4ee; --muted:#7f93a6;
+  --accent:#36c5f0; --accent2:#f0b429; --good:#3ecf8e; --warn:#f0b429; --bad:#ef5b5b;
+  --mono:ui-monospace,"Cascadia Mono",Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 "Segoe UI",system-ui,sans-serif}
+a{color:var(--accent)}
+header{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;padding:14px 20px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#101821,#0b0f14)}
+header h1{margin:0;font-size:18px;letter-spacing:.06em;text-transform:uppercase}
+header h1 span{color:var(--accent)}
+#dataStatus{font-size:12px;color:var(--muted)}
+nav{display:flex;gap:4px;margin-left:auto}
+nav button{background:none;border:1px solid transparent;color:var(--muted);padding:7px 14px;border-radius:6px;cursor:pointer;font:inherit}
+nav button.on{color:var(--text);border-color:var(--line);background:var(--panel)}
+nav button .cnt{background:var(--accent2);color:#111;border-radius:9px;padding:0 6px;font-size:11px;margin-left:4px}
+main{padding:16px 20px;max-width:1600px;margin:0 auto}
+.tab{display:none}.tab.on{display:block}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px}
+.filters{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px 12px;align-items:end}
+label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}
+label.chk{flex-direction:row;align-items:center;gap:6px;color:var(--text);font-size:13px}
+input,select,textarea{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:7px 8px;font:inherit;width:100%}
+label.chk input{width:auto}
+input:focus,select:focus,textarea:focus{outline:1px solid var(--accent);border-color:var(--accent)}
+button.btn{background:var(--accent);color:#06222e;border:0;border-radius:6px;padding:8px 14px;font:inherit;font-weight:600;cursor:pointer}
+button.btn.sec{background:var(--panel2);color:var(--text);border:1px solid var(--line);font-weight:500}
+button.btn.small{padding:4px 9px;font-size:12px}
+button.btn.danger{background:none;border:1px solid var(--bad);color:var(--bad)}
+button:disabled{opacity:.5;cursor:default}
+/* ---- Liste des routes (lignes sur PC, cartes sur mobile) ---- */
+.route{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1.3fr) minmax(0,1.1fr) minmax(0,.7fr);grid-template-areas:"com com act act" "dep arr ben tps";
+  gap:10px 18px;align-items:start;padding:12px 14px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;margin-bottom:10px}
+.route:hover{border-color:#35506a}
+.route .c-com{grid-area:com;align-self:center}.route .c-dep{grid-area:dep}.route .c-arr{grid-area:arr}.route .c-ben{grid-area:ben}.route .c-tps{grid-area:tps}
+.route .c-arr,.route .c-ben,.route .c-tps{border-left:1px solid var(--line);padding-left:16px}
+.route .lbl{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.nw{white-space:nowrap}
+.route .name{font-weight:600}
+.route .com{font-weight:600;font-size:15px}
+.route .price{font-family:var(--mono);font-size:16px;margin-top:4px}
+.route .price small,.route .big small{font-family:"Segoe UI",system-ui,sans-serif;font-size:11px;color:var(--muted);font-weight:400}
+.route .big{font-family:var(--mono);font-size:18px;font-weight:700}
+.route .sub{font-size:11px;color:var(--muted);margin-top:2px}
+.boxes{margin-top:8px;font-size:11px}
+.boxes .bl{color:var(--muted);margin-bottom:3px}
+.boxes .bl b{color:var(--text);font-weight:600}
+.boxes .chips{display:flex;flex-wrap:wrap;gap:3px}
+.box{display:inline-block;min-width:22px;text-align:center;padding:1px 3px;border-radius:4px;border:1px solid var(--line);color:#3c4c5c;font-family:var(--mono)}
+.box.on{color:var(--text);border-color:#3a5570;background:#1c2b3a}
+.box.max{color:#06222e;background:var(--accent);border-color:var(--accent);font-weight:700}
+.route.res{cursor:pointer}
+.route.res .tog{color:var(--accent);display:inline-block;width:14px}
+.route.res .hintclick{font-size:12px}
+.route.res.open{border-color:var(--accent)}
+.rdetail{min-width:0;grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;cursor:default;border-top:1px solid var(--line);padding-top:12px}
+.dtab td{vertical-align:middle}
+.dtab td.pl{white-space:normal;min-width:170px}
+.dtab .chips{display:inline-flex;flex-wrap:nowrap;gap:2px}
+.dtab .box{min-width:20px;font-size:10px;padding:0 2px}
+.dtab tr.best td{background:#15281f}
+.dtab tr.worstrow td{background:#2a2414}
+.dtab tr.fullrow td{opacity:.55}
+.dtab tbody tr{cursor:default}
+@media (max-width:1100px){ .rdetail{grid-template-columns:minmax(0,1fr)} }
+.route .worst{margin-top:10px;padding-top:8px;border-top:1px dashed var(--line)}
+.warnc{color:var(--warn)}
+.route .cost{font-size:13px;margin-top:4px}
+.route .cost b{font-family:var(--mono);font-size:14px;color:var(--accent2)}
+.route .cost small{font-size:11px;color:var(--muted)}
+.route .act{grid-area:act;display:flex;justify-content:flex-end;align-items:center;gap:10px}
+.sortbar{display:flex;gap:8px;align-items:center}
+.sortbar select{width:auto}
+details.fbox>summary{cursor:pointer;font-weight:600;list-style:none;display:flex;justify-content:space-between;gap:10px;align-items:center}
+details.fbox>summary::-webkit-details-marker{display:none}
+details.fbox>summary .fsum{font-weight:400;font-size:12px;color:var(--muted);text-align:right}
+details.fbox>summary::after{content:"▾";color:var(--muted)}
+details.fbox[open]>summary::after{content:"▴"}
+details.fbox[open]>summary{margin-bottom:12px}
+@media (max-width:760px){
+  .route{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"com act" "dep arr" "ben tps";padding:12px;gap:12px}
+  .route .c-ben{border-left:0;padding-left:0}
+  .route .c-arr,.route .c-tps{padding-left:12px}
+  .filters{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #routesPanel .row.top{flex-direction:column;align-items:stretch}
+  .sortbar select{flex:1}
+}
+.loc{color:var(--muted);font-size:11px}
+.pill{display:inline-block;border-radius:10px;padding:1px 7px;font-size:11px;border:1px solid var(--line);color:var(--muted)}
+.pill.good{color:var(--good);border-color:#2a6b52}.pill.warn{color:var(--warn);border-color:#6b5a2a}.pill.bad{color:var(--bad);border-color:#6b2a2a}
+.pill.ill{color:#ff8fd0;border-color:#6b2a5a}
+.pos{color:var(--good)}.neg{color:var(--bad)}
+.muted{color:var(--muted)}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.check{border:1px solid var(--line);border-radius:10px;background:var(--panel);margin-bottom:14px}
+.check>summary{list-style:none;cursor:pointer;padding:12px 14px;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+.check>summary::-webkit-details-marker{display:none}
+.check .body{padding:0 14px 14px}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.step{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:12px}
+.step h4{margin:0 0 8px;font-size:13px;color:var(--accent)}
+.step .uex{font-size:11px;color:var(--muted);margin-top:3px}
+.step label{margin-bottom:8px}
+.nowbox{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:13px;line-height:1.6}
+h4.sec{margin:6px 0 8px;font-size:13px;color:var(--accent)}
+.histwrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px}
+.hist{border-collapse:collapse;width:100%;font-size:13px}
+.hist th,.hist td{padding:6px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+.hist th{color:var(--muted);font-weight:500;font-size:12px}
+.hist .num{text-align:right;font-family:var(--mono)}
+.hist th.num{font-family:inherit}
+.hist tbody tr{cursor:pointer}
+.hist tbody tr:hover td{background:#16202b}
+.hist tbody tr.sel td{background:#1b2a3a}
+.hist tbody tr:last-child td{border-bottom:0}
+.editor{border-top:1px solid var(--line);padding-top:12px}
+.results{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:12px}
+.kpi{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px}
+.kpi .k{font-size:11px;color:var(--muted)}.kpi .v{font-family:var(--mono);font-size:17px;margin-top:2px}
+.kpi .v .pill,.kpi .v .verdict{font-family:"Segoe UI",system-ui,sans-serif;vertical-align:middle;margin:2px 4px 2px 0}
+.verdict{font-weight:700;padding:4px 10px;border-radius:6px;font-size:13px}
+.verdict.good{background:#173a2c;color:var(--good)}.verdict.warn{background:#3a3217;color:var(--warn)}.verdict.bad{background:#3a1717;color:var(--bad)}.verdict.none{background:var(--panel2);color:var(--muted)}
+.toast{position:fixed;right:16px;bottom:16px;background:var(--panel2);border:1px solid var(--line);padding:10px 14px;border-radius:8px;max-width:420px;display:none;z-index:9}
+.toast.err{border-color:var(--bad)}
+.sorthead{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:10px;font-size:12px;color:var(--muted)}
+.sorthead button,.sighead button{background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:6px;padding:4px 10px;cursor:pointer;font:inherit;font-size:12px;text-align:left}
+.sorthead button.on,.sighead button.on{border-color:var(--accent);color:var(--accent);font-weight:600}
+.sighead{display:grid;grid-template-columns:320px 90px 120px minmax(0,1fr) auto;gap:10px;align-items:center;padding:0 13px 8px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.sighead button{justify-self:start;text-transform:uppercase;letter-spacing:.05em;font-size:11px;padding:3px 8px}
+@media (max-width:700px){ .sighead{display:flex;flex-wrap:wrap} .sighead span{display:none} }
+#toTop{position:fixed;right:16px;bottom:16px;z-index:8;width:44px;height:44px;border-radius:50%;border:1px solid var(--accent);background:var(--panel2);color:var(--accent);font-size:20px;cursor:pointer;box-shadow:0 2px 8px #0008;display:none}
+#toTop:hover{background:var(--accent);color:#06222e}
+#toTop.on{display:block}
+.hint{font-size:12px;color:var(--muted);margin:6px 0 0}
+h2{font-size:15px;margin:0 0 10px}
+.empty{padding:30px;text-align:center;color:var(--muted)}
+@media (max-width:700px){
+  main{padding:12px}
+  header{padding:12px;gap:8px 12px}
+  #dataStatus{order:3;width:100%}
+  nav{margin-left:0;order:4;width:100%}
+  nav button{flex:1;padding:9px 6px}
+  #btnRefresh{margin-left:auto}
+  .toast{left:12px;right:12px;max-width:none}
+}
+.modal{position:fixed;inset:0;background:rgba(5,8,12,.78);display:flex;align-items:flex-start;justify-content:center;padding:40px 16px;z-index:20;overflow-y:auto}
+.modal[hidden]{display:none}
+.modal-box{background:var(--panel);border:1px solid var(--accent);border-radius:12px;padding:20px 22px;max-width:620px;width:100%}
+.modal-box p{margin:10px 0}
+.steps-list{margin:8px 0 14px;padding-left:22px;line-height:1.7}
+.steps-list li{margin-bottom:2px}
+/* ---- Route choisie dans le détail d'une ressource ---- */
+nav{flex-wrap:wrap}
+.route .act{flex-wrap:wrap}
+.accent{color:var(--accent)}
+.pill.acc{color:var(--accent);border-color:#2a5a6b}
+.dtab tbody tr[data-pick]{cursor:pointer}
+.dtab tbody tr[data-pick]:hover td{background:#16202b}
+.dtab tr.pick td{background:#123044 !important;box-shadow:inset 0 1px 0 var(--accent),inset 0 -1px 0 var(--accent)}
+.dtab td.rd{width:22px;padding-right:0}
+.radio{display:inline-block;width:13px;height:13px;border-radius:50%;border:2px solid #3a5570;vertical-align:middle}
+.radio.on{border-color:var(--accent);background:radial-gradient(var(--accent) 0 45%,transparent 50%)}
+/* ---- Contrats ---- */
+.ctab td input{padding:4px 6px}
+.ctab tr.done td{opacity:.45}
+.bar{height:10px;border-radius:5px;background:var(--panel);border:1px solid var(--line);overflow:hidden;position:relative}
+.bar>i{display:block;height:100%;background:var(--accent)}
+.bar.over>i{background:var(--bad)}
+.bar.full>i{background:var(--warn)}
+.pairs{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}
+.pair{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.pair.over{border-color:var(--bad)}
+.pair .ends{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:8px;align-items:center;margin-bottom:8px}
+.pair .ends .to{text-align:right}
+.pair .arrow{color:var(--accent);font-size:18px}
+.pair .sum{display:flex;justify-content:space-between;font-size:12px;margin-top:5px;gap:8px}
+.pair ul{margin:6px 0 0;padding-left:18px;font-size:12px;color:var(--muted)}
+.itin{list-style:none;margin:0;padding:0;counter-reset:st}
+.itin li{display:grid;grid-template-columns:34px minmax(0,1fr) minmax(130px,220px);gap:10px;align-items:center;padding:9px 0;border-bottom:1px dashed var(--line)}
+.itin li:last-child{border-bottom:0}
+.itin .n{width:28px;height:28px;border-radius:50%;background:var(--panel2);border:1px solid var(--accent);color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px}
+.itin .acts{font-size:12px;margin-top:3px;line-height:1.6}
+.itin .up{color:var(--accent)}.itin .down{color:var(--good)}
+.itin .leg{font-size:11px;color:var(--accent);margin-bottom:2px}
+.itin .leg.unk{color:var(--warn)}
+.itin .ld{font-size:11px;color:var(--muted);text-align:right;margin-top:3px;font-family:var(--mono)}
+@media (max-width:700px){ .itin li{grid-template-columns:30px minmax(0,1fr)} .itin li>.lw{grid-column:2} }
+/* ---- Signatures ---- */
+.sigs{display:flex;flex-direction:column;gap:6px}
+.sig{background:var(--panel2);border:1px solid var(--line);border-radius:8px}
+.sig>.hd{display:grid;grid-template-columns:320px 90px 120px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 12px;cursor:pointer}
+.sig.open{border-color:var(--accent)}
+.sig .hd>div:first-child{display:flex;align-items:center;gap:6px;white-space:nowrap;min-width:0}
+.sig .nm{font-weight:600}
+.sig .base{font-family:var(--mono);font-size:15px}
+button.lnk{background:var(--panel);border:1px solid var(--line);border-radius:6px;cursor:pointer;font-size:13px;padding:1px 6px;vertical-align:middle}
+button.lnk:hover{border-color:var(--accent)}
+@keyframes flashk{0%,60%{box-shadow:0 0 0 3px var(--accent2)}100%{box-shadow:none}}
+.flash{animation:flashk 2s ease-out}
+.sig .px{font-family:var(--mono);font-size:13px;color:var(--good);line-height:1.25}
+.sig .px small{display:block;font-size:11px;color:var(--muted)}
+.sig .mult{display:flex;flex-wrap:wrap;gap:4px}
+.sig .mult span{font-family:var(--mono);font-size:11px;padding:1px 6px;border-radius:9px;border:1px solid var(--line);color:var(--muted)}
+.sig .mult span.hit{background:var(--accent);color:#06222e;border-color:var(--accent);font-weight:700}
+.sig.hit{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.sig .bd{padding:0 12px 12px}
+.rar-legendary{color:#f0b429;border-color:#6b5a2a}.rar-epic{color:#c77dff;border-color:#5a2a6b}.rar-rare{color:#4ea8ff;border-color:#2a4a6b}
+.rar-uncommon{color:#3ecf8e;border-color:#2a6b52}.rar-common{color:#9fb0c0}
+.pctbar{display:inline-block;width:80px;height:6px;border-radius:3px;background:var(--panel);margin-left:8px;vertical-align:middle;overflow:hidden}
+.pctbar>i{display:block;height:100%;background:var(--accent)}
+button.pin{background:var(--panel);border:1px solid var(--line);border-radius:6px;cursor:pointer;font-size:15px;padding:2px 6px;filter:grayscale(1);opacity:.8}
+button.pin:hover{opacity:1;filter:none;border-color:var(--accent2)}
+button.pin.on{filter:none;opacity:1;border-color:var(--accent2);background:#2a2414}
+.route.res.pinned,.sig.pinned{border-left:3px solid var(--accent2)}
+.hist tr.top td{background:#15281f}
+.hist tr.top td:first-child{box-shadow:inset 3px 0 0 var(--good)}
+.pill.top{color:#06222e;background:var(--good);border-color:var(--good);font-weight:700}
+.bestline{margin:0 0 8px;padding:8px 10px;border:1px solid #2a6b52;background:#15281f;border-radius:8px;font-size:13px}
+.hist tr.grp td{background:#0f1a24;color:var(--muted);font-size:12px;padding-top:9px}
+.hist tr.grp td b{color:var(--accent)}
+.hist tbody tr.grp:hover td{background:#0f1a24}
+.tabs2{display:flex;gap:4px;flex-wrap:wrap}
+.tabs2 button{background:var(--panel2);border:1px solid var(--line);color:var(--muted);border-radius:6px;padding:5px 10px;cursor:pointer;font:inherit;font-size:12px}
+.tabs2 button.on{color:var(--text);border-color:var(--accent)}
+@media (max-width:700px){ .sig>.hd{grid-template-columns:minmax(0,1fr) auto} .sig .hd>div:first-child{flex-wrap:wrap} .sig .mult{grid-column:1/-1} }
+/* ---- Page Lieu ---- */
+a.lnkloc{color:inherit;text-decoration:none;border-bottom:1px dotted #5a7a96;cursor:pointer}
+a.lnkloc:hover{color:var(--accent);border-bottom-color:var(--accent)}
+.lchead h2{font-size:18px;margin:0 0 4px}
+.lctags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.lctags .pill{font-size:12px;padding:2px 9px}
+.lcrel{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px;font-size:12px;color:var(--muted)}
+.lcrel button{background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:6px;padding:4px 10px;cursor:pointer;font:inherit;font-size:12px}
+.lcrel button:hover{border-color:var(--accent);color:var(--accent)}
+.lctab td{vertical-align:middle}
+.lctab td.pl{white-space:normal;min-width:150px}
+.lctab .box{min-width:20px;font-size:10px;padding:0 2px}
+.lctab .chips{display:inline-flex;gap:2px}
+.lctab tr.hot td{background:#15281f}
+.lctab tr.hot td:first-child{box-shadow:inset 3px 0 0 var(--good)}
+.lctab tr.warm td{background:#14222b}
+.lctab tr.warm td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
+.lctab tr.cold td{opacity:.6}
+.lctab tbody tr{cursor:default}
+.pill.hot{color:#06222e;background:var(--good);border-color:var(--good);font-weight:700}
+.pill.warm{color:var(--accent);border-color:var(--accent)}
+.lclegend{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--muted);margin:0 0 8px}
+</style>
+</head>
+<body>
+<header>
+  <h1>SC <span>Hauling</span></h1>
+  <div id="dataStatus">Chargement…</div>
+  <button class="btn sec small" id="btnRefresh">↻ Actualiser les prix</button>
+  <nav>
+    <button data-tab="contracts">Contrats / Route <span class="cnt" id="contractCount" hidden>0</span></button>
+    <button data-tab="resources" class="on">Ressources</button>
+    <button data-tab="signatures">Signatures</button>
+    <button data-tab="location">📍 Lieu</button>
+    <button data-tab="checks">Contrôles <span class="cnt" id="checkCount" hidden>0</span></button>
+    <button data-tab="settings">Réglages</button>
+  </nav>
+</header>
+
+<main>
+<!-- ================= CHECKS ================= -->
+<section class="tab" id="tab-checks">
+  <div class="panel">
+    <h2>Routes suivies et historique des contrôles</h2>
+    <p class="hint" style="margin-top:0">
+      1) Faites le trajet <b>à vide</b> jusqu'au terminal de départ et notez le prix d'achat réel et le stock disponible.
+      2) Relevez le prix de vente réel à l'arrivée.
+      3) Renseignez vos frais : l'application calcule le bénéfice réel et donne un verdict.
+      Chaque contrôle est gardé dans l'historique de la route ; une route validée passe <b>« à recontrôler »</b> après <span id="retestDaysTxt">14</span> jours.
+    </p>
+  </div>
+  <div id="checksList"></div>
+</section>
+
+<!-- ================= RESSOURCES ================= -->
+<section class="tab on" id="tab-resources">
+  <div class="panel">
+    <h2>Meilleur achat et meilleure vente par ressource</h2>
+    <p class="hint" style="margin-top:-4px;margin-bottom:10px">Cliquez sur une carte pour voir tous les lieux d'achat et de vente. Dans cette liste, <b>cliquez sur un lieu d'achat et un lieu de vente</b> pour calculer votre propre route. <b>📌 épingle</b> une ressource en haut de la liste. « Contrôler » crée une fiche pour la route affichée.</p>
+    <div class="filters">
+      <label><b style="color:var(--accent)">Point de départ (où je suis)</b>
+        <input id="rStart" list="locList" placeholder="ex. Port Tressler" autocomplete="off">
+      </label>
+      <label>Rechercher une ressource
+        <input type="text" id="rSearch" placeholder="ex. Laranite, Quartz">
+      </label>
+      <label>Vaisseau
+        <select id="fShip"></select>
+      </label>
+      <label>Chargement (SCU)
+        <input type="number" id="rCargo" min="1">
+      </label>
+      <label>Budget (aUEC, 0 = illimité)
+        <input type="number" id="fBudget" min="0" step="1000" value="0">
+      </label>
+      <label>Prix utilisés
+        <select id="fPriceMode">
+          <option value="last">Derniers relevés</option>
+          <option value="avg">Moyennes UEX</option>
+        </select>
+      </label>
+      <label>Système de départ (achat)
+        <select id="rSysFrom"></select>
+      </label>
+      <label>Système d'arrivée (vente)
+        <select id="rSysTo"></select>
+      </label>
+      <label>Données max. (h, 0 = illimité)
+        <input type="number" id="rMaxAge" min="0" value="72">
+      </label>
+      <label>Marchandises illégales
+        <select id="rIllegal">
+          <option value="hide">Exclues</option>
+          <option value="show">Affichées</option>
+          <option value="only">Uniquement les illégales</option>
+        </select>
+      </label>
+      <label>Trier par
+        <select id="rSort">
+          <option value="scu">Bénéfice par SCU</option>
+          <option value="load">Bénéfice par chargement plein</option>
+          <option value="worst">Pire des cas (par SCU)</option>
+          <option value="roi">Rentabilité (ROI)</option>
+          <option value="sell">Meilleur prix de vente</option>
+          <option value="sig">Signature de scan</option>
+          <option value="name">Nom</option>
+        </select>
+      </label>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <label class="chk"><input type="checkbox" id="rNoFull" checked> Ignorer les ventes où l'inventaire est plein</label>
+      <label class="chk"><input type="checkbox" id="rStationsOnly"> Stations spatiales uniquement (achat et vente)</label>
+      <label class="chk"><input type="checkbox" id="rHideSo"> Masquer les ressources « vente seule » (minerais non achetables)</label>
+    </div>
+    <p class="hint" id="rInfo"></p>
+  </div>
+  <div class="panel">
+    <div class="row" style="justify-content:space-between;margin-bottom:10px"><h2 style="margin:0">Ressources <span class="muted" id="resCount"></span></h2><button class="btn sec small" id="resCloseAll">▴ Tout refermer</button></div>
+    <div class="sorthead" id="resHead">Trier par : <button data-s="name">Nom</button><button data-s="ben" title="Bénéfice selon le choix « Trier par » des filtres (par SCU par défaut)">Bénéfice</button><button data-s="sell">Vente</button><button data-s="sig">Signature</button></div>
+    <div id="resList"></div>
+  </div>
+</section>
+
+<!-- ================= CONTRATS DE HAULING ================= -->
+<section class="tab" id="tab-contracts">
+  <div class="panel">
+    <h2>Contrats de hauling</h2>
+    <p class="hint" style="margin-top:-4px;margin-bottom:10px">Ajoutez vos contrats : l'application additionne les SCU par trajet (récupération → livraison), les compare à la soute de votre vaisseau et propose un ordre de passage.</p>
+    <div class="filters">
+      <label>Vaisseau<select id="cShip"></select></label>
+      <label>Capacité de la soute (SCU)<input type="number" id="cCargo" min="1"></label>
+      <label><b style="color:var(--accent)">Point de départ (où je suis)</b><input id="cStart" list="locList" placeholder="ex. Port Tressler" autocomplete="off"></label>
+    </div>
+    <h4 class="sec" style="margin-top:14px">Ajouter un contrat</h4>
+    <form id="cForm" class="filters" autocomplete="off">
+      <label>Nom / n° du contrat (optionnel)<input id="cName" placeholder="ex. Covalex #12"></label>
+      <label>Lieu de récupération<input id="cFrom" list="locList" required placeholder="ex. Everus Harbor"></label>
+      <label>Lieu de livraison<input id="cTo" list="locList" required placeholder="ex. Port Tressler"></label>
+      <label>SCU<input type="number" id="cScu" min="1" required></label>
+      <label>Prix d'achat /SCU (optionnel)<input type="number" id="cBuy" min="0" placeholder="aUEC"></label>
+      <label>Prix de vente /SCU (optionnel)<input type="number" id="cSell" min="0" placeholder="aUEC"></label>
+      <button class="btn" type="submit">+ Ajouter</button>
+    </form>
+    <datalist id="locList"></datalist>
+    <details class="fbox" style="margin-top:14px" id="locBox">
+      <summary>Lieux absents d'UEX (OLP, PAF, missions…) <span class="fsum" id="locBoxSum"></span></summary>
+      <p class="hint" style="margin-top:0">Ces lieux sont proposés dans la saisie des contrats. Leur distance est estimée depuis une station UEX de la même planète (marquée « ≈ »).</p>
+      <form id="xForm" class="filters" autocomplete="off">
+        <label>Nom du lieu<input id="xName" required placeholder="ex. Attritus PAF-II"></label>
+        <label>Près de (système › planète)<select id="xPlanet" required></select></label>
+        <label>Type<select id="xKind"><option value="outpost">Au sol (avant-poste)</option><option value="station">En orbite (station)</option><option value="city">Ville</option></select></label>
+        <button class="btn sec" type="submit">+ Ajouter le lieu</button>
+      </form>
+      <div id="xList" style="margin-top:10px"></div>
+    </details>
+  </div>
+  <div class="panel">
+    <div class="row" style="justify-content:space-between;margin-bottom:10px">
+      <h2 style="margin:0">Mes contrats <span class="muted" id="cCount"></span></h2>
+      <button class="btn sec small" id="cClearDone">Supprimer les contrats livrés</button>
+    </div>
+    <div id="cList"></div>
+  </div>
+  <div class="panel">
+    <h2>Charge par trajet <span class="muted" style="font-weight:400;font-size:13px">— contrats en cours, regroupés par paire de lieux</span></h2>
+    <div id="cPairs"></div>
+  </div>
+  <div class="panel">
+    <h2>Itinéraire optimisé <span class="muted" style="font-weight:400;font-size:13px">— le plus court en temps, sans jamais dépasser la soute</span></h2>
+    <div id="cItin"></div>
+  </div>
+</section>
+
+<!-- ================= SIGNATURES ================= -->
+<section class="tab" id="tab-signatures">
+  <div class="panel">
+    <h2>Signatures de scan des ressources</h2>
+    <p class="hint" style="margin-top:-4px;margin-bottom:10px">Entrez la valeur lue au scanner pour identifier la roche. La signature d'un groupe = signature de base × nombre de roches. Cliquez sur une ressource pour voir où la trouver, <b>📌</b> pour l'épingler en haut.</p>
+    <div class="filters">
+      <label>Valeur du scan<input type="number" id="sgValue" placeholder="ex. 7770" min="0"></label>
+      <label>Rechercher une ressource<input id="sgSearch" placeholder="ex. Agricium"></label>
+      <label>Système<select id="sgSys"><option value="">Tous</option><option>Stanton</option><option>Pyro</option><option>Nyx</option></select></label>
+      <label>Sous-système<select id="sgSub"><option value="">Tous</option></select></label>
+      <label>Tri des lieux<select id="sgSort"><option value="sys">Par système › sous-système</option><option value="pct">Par part max.</option></select></label>
+      <div><span class="muted" style="font-size:12px;display:block;margin-bottom:4px">Type de minage</span><div class="tabs2" id="sgType">
+        <button data-t="all">Tout</button><button data-t="ship" class="on">🚀 Vaisseau</button><button data-t="roc">🚜 ROC</button><button data-t="fps">⛏ À pied</button>
+      </div></div>
+    </div>
+    <p class="hint" id="sgInfo"></p>
+  </div>
+  <div class="panel">
+    <div class="row" style="justify-content:flex-end;margin-bottom:10px"><button class="btn sec small" id="sgCloseAll">▴ Tout refermer</button></div>
+    <div class="sighead" id="sgHead"><button data-s="name">Ressource</button><button data-s="sig">Signature</button><button data-s="sell">Vente /SCU</button><span>Groupes (nb de roches)</span><span>Lieux</span></div>
+    <div class="sigs" id="sgList"></div>
+    <p class="hint" id="sgSource"></p>
+  </div>
+</section>
+
+<!-- ================= LIEU ================= -->
+<section class="tab" id="tab-location">
+  <div class="panel">
+    <h2>Lieu</h2>
+    <p class="hint" style="margin-top:-4px;margin-bottom:10px">Cliquez sur le nom d'un terminal dans <b>Ressources</b> pour voir tout ce qui s'y achète et s'y vend, ou sur un lieu de minage dans <b>Signatures</b> pour voir ses minerais et leur pourcentage d'apparition. Vous pouvez aussi le chercher ici.</p>
+    <div class="filters">
+      <label>Rechercher un lieu<input id="lcSearch" list="lcList" placeholder="ex. ARC-L1, Lorville, Ita" autocomplete="off"></label>
+    </div>
+    <datalist id="lcList"></datalist>
+    <div class="lcrel" id="lcRecent"></div>
+  </div>
+  <div id="lcBody"><div class="panel empty">Aucun lieu choisi pour l'instant.</div></div>
+</section>
+
+<!-- ================= SETTINGS ================= -->
+<section class="tab" id="tab-settings">
+  <div class="grid2">
+    <div class="panel">
+      <h2>Accès API UEX</h2>
+      <label>Token de l'application (Bearer)
+        <input type="password" id="sToken" autocomplete="off">
+      </label>
+      <p class="hint">Créé sur uexcorp.space → My Apps. Stocké uniquement dans ce navigateur (ou lu depuis <code>config.js</code> s'il est à côté du fichier).</p>
+      <p class="hint"><b>Optionnel</b> : les prix UEX sont publics, l'application fonctionne aussi sans token. <a href="#" id="openWelcome">Comment obtenir un token ?</a></p>
+      <div class="row" style="margin-top:10px">
+        <button class="btn" id="btnSaveSettings">Enregistrer</button>
+        <button class="btn sec" id="btnTestApi">Tester la connexion</button>
+      </div>
+      <p class="hint" id="apiTestResult"></p>
+    </div>
+    <div class="panel">
+      <h2>Langue / Language</h2>
+      <label>Langue de l'interface
+        <select id="sLang">
+          <option value="auto">Automatique (langue du navigateur)</option>
+          <option value="fr">Français</option>
+          <option value="en">English</option>
+        </select>
+      </label>
+      <p class="hint">Automatique : français si votre navigateur est en français, anglais sinon.</p>
+    </div>
+    <div class="panel">
+      <h2>Seuils de rentabilité (verdict des contrôles)</h2>
+      <label>Profit net minimum par voyage (aUEC)
+        <input type="number" id="sMinNet" min="0" step="1000">
+      </label>
+      <label style="margin-top:10px">Écart de prix toléré vs UEX (%)
+        <input type="number" id="sTolerance" min="0" max="100">
+      </label>
+      <p class="hint">Au-delà de cet écart, la fiche signale que les données UEX ne sont plus fiables pour cette route.</p>
+      <label style="margin-top:10px">Recontrôler une route validée après (jours)
+        <input type="number" id="sRetest" min="1">
+      </label>
+      <div class="row" style="margin-top:10px">
+        <button class="btn" id="btnSaveThresholds">Enregistrer</button>
+      </div>
+    </div>
+    <div class="panel">
+      <h2>Estimation du temps de trajet</h2>
+      <p class="hint" style="margin-top:0">Temps = arrêt au départ + saut quantique (distance ÷ vitesse + préparation) + arrêt à l'arrivée + chargement/déchargement. Ajustez ces valeurs à votre vaisseau et à votre façon de jouer.</p>
+      <div class="filters" style="margin-top:8px">
+        <label>Vitesse quantique (km/s)<input type="number" id="sQtSpeed" min="1000" step="10000"></label>
+        <label>Préparation par saut (min)<input type="number" id="sQtSpool" min="0" step="0.5"></label>
+        <label>Arrêt en station (min)<input type="number" id="sOvStation" min="0"></label>
+        <label>Arrêt en ville (min)<input type="number" id="sOvCity" min="0"></label>
+        <label>Arrêt en avant-poste (min)<input type="number" id="sOvOutpost" min="0"></label>
+        <label>Charger + décharger (min / 100 SCU)<input type="number" id="sLoad" min="0" step="0.5"></label>
+        <label>Traversée d'un trou de ver (min)<input type="number" id="sJump" min="0" step="0.5"></label>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn" id="btnSaveTravel">Enregistrer</button>
+      </div>
+    </div>
+    <div class="panel">
+      <h2>Données</h2>
+      <p class="hint" id="cacheInfo"></p>
+      <div class="row" style="margin-top:10px">
+        <button class="btn sec" id="btnExport">Exporter mes contrôles (JSON)</button>
+        <label class="btn sec" style="display:inline-block;cursor:pointer;color:var(--text);font-size:14px">Importer…<input type="file" id="importFile" accept=".json" hidden></label>
+        <button class="btn danger" id="btnClearCache">Vider le cache API</button>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+<div class="modal" id="welcome" hidden>
+  <div class="modal-box">
+    <h2>Bienvenue sur SC Hauling</h2>
+    <p class="hint" style="margin-top:0">Cette application lit les prix du commerce de Star Citizen publiés par <b>UEX</b> (uexcorp.space) et vous montre, pour chaque ressource, où l'acheter, où la vendre, le meilleur et le pire scénario.</p>
+    <p><b>Pas besoin de token pour commencer</b> : les prix sont publics. Un token UEX personnel est conseillé (UEX peut limiter les accès anonymes) et ne prend que 2 minutes :</p>
+    <ol class="steps-list">
+      <li>Allez sur <a href="https://uexcorp.space" target="_blank" rel="noopener">uexcorp.space</a> et connectez-vous (ou créez un compte gratuit).</li>
+      <li>Ouvrez la page <b>Mes applications</b> : <a href="https://uexcorp.space/api/apps" target="_blank" rel="noopener">uexcorp.space/api/apps</a>.</li>
+      <li>Créez une nouvelle application (nom au choix, par exemple « SC Hauling ») et enregistrez.</li>
+      <li>Dans la fiche de l'application, copiez le <b>Jeton Bearer</b> (une longue suite de lettres et de chiffres).</li>
+      <li>Collez-le ci-dessous puis cliquez sur <b>Enregistrer</b>.</li>
+    </ol>
+    <label>Votre token UEX
+      <input type="password" id="wToken" autocomplete="off" placeholder="collez votre jeton Bearer ici">
+    </label>
+    <p class="hint" id="wResult"></p>
+    <div class="row" style="margin-top:12px">
+      <button class="btn" id="wSave">Enregistrer et continuer</button>
+      <button class="btn sec" id="wSkip">Continuer sans token</button>
+    </div>
+    <p class="hint">Le token reste dans votre navigateur. Ne le partagez pas : chaque joueur crée le sien. Vous pourrez le changer plus tard dans <b>Réglages</b>.</p>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<button id="toTop" title="Remonter tout en haut">▲</button>
+
+<script>
+"use strict";
+const API = 'https://api.uexcorp.uk/2.0/';
+const CFG = (typeof window.UEX_CONFIG === 'object' && window.UEX_CONFIG) || {};
+const LS = {
+  get(k, d){ try{ const v = localStorage.getItem('sch.'+k); return v==null ? d : JSON.parse(v); }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem('sch.'+k, JSON.stringify(v)); return true; }catch(e){ return false; } },
+  del(k){ try{ localStorage.removeItem('sch.'+k); }catch(e){} }
+};
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+/* ================= LANGUE ================= */
+// Automatique : français si le navigateur est en français, anglais sinon. Forçable dans Réglages.
+const LANG = (()=>{ let pref = 'auto'; try{ pref = (JSON.parse(localStorage.getItem('sch.settings')||'{}').lang) || 'auto'; }catch(e){}
+  if(pref==='fr' || pref==='en') return pref;
+  const nl = (navigator.languages && navigator.languages[0]) || navigator.language || 'fr';
+  return /^fr/i.test(nl) ? 'fr' : 'en'; })();
+const LOC = LANG==='en' ? 'en-US' : 'fr-CH';
+document.documentElement.lang = LANG;
+const nf = new Intl.NumberFormat(LOC, {maximumFractionDigits:0});
+const nf1 = new Intl.NumberFormat(LOC, {maximumFractionDigits:1});
+const fmt = v => (v==null || isNaN(v)) ? '—' : nf.format(v);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const num = v => { if(v===''||v==null) return null; const n = Number(String(v).replace(/\s|'/g,'').replace(',','.')); return isNaN(n) ? null : n; };
+
+let settings = Object.assign({token: CFG.token || '', secret: CFG.secretKey || '', minNet: 20000, tolerance: 10, retestDays: 14,
+  qtSpeed: 200000, qtSpool: 1, ovStation: 8, ovCity: 15, ovOutpost: 10, loadPer100: 5, jumpMin: 5}, LS.get('settings', {}));
+if(!settings.token && CFG.token) settings.token = CFG.token;
+let state = { terminals:{}, commodities:{}, prices:[], vehicles:[], fleet: LS.get('fleet', []), distances: LS.get('distances', {}), routes:[], sort: LS.get('sort', {key:'margin',dir:-1}), loadedAt:null };
+let checks = LS.get('checks', []);
+let filters = Object.assign({ship:'', cargo:46, budget:0, priceMode:'last'}, LS.get('filters', {}));
+// Dictionnaire français → anglais (textes affichés). Les clés sont comparées espaces normalisés.
+const I18N_EN = {
+// ---- Barre du haut / onglets ----
+"Contrats / Route":"Contracts / Route","Ressources":"Resources","Signatures":"Signatures","📍 Lieu":"📍 Location","Contrôles":"Checks","Réglages":"Settings",
+"↻ Actualiser les prix":"↻ Refresh prices","Chargement…":"Loading…","Chargement des données UEX…":"Loading UEX data…","Chargement des prix UEX…":"Loading UEX prices…",
+"terminaux ·":"terminals ·","à bord :":"on board:","(de":"(from","min (cache 30 min). Distances mémorisées :":"min ago (30 min cache). Stored distances:",
+"Prix UEX chargés il y a":"UEX prices loaded","Remonter tout en haut":"Back to top","Erreur API :":"API error:",
+"Impossible de charger les données UEX :":"Could not load UEX data:","API indisponible, données en cache utilisées :":"API unavailable, using cached data:",
+"API indisponible, prix en cache utilisés :":"API unavailable, using cached prices:","Réponse invalide (":"Invalid response (",
+// ---- Ressources ----
+"Meilleur achat et meilleure vente par ressource":"Best buy and best sell per resource",
+"Cliquez sur une carte pour voir tous les lieux d'achat et de vente. Dans cette liste,":"Click a card to see every place to buy and sell. In that list,",
+"cliquez sur un lieu d'achat et un lieu de vente":"click a buy location and a sell location",
+"pour calculer votre propre route.":"to calculate your own route.","📌 épingle":"📌 pins",
+"une ressource en haut de la liste. « Contrôler » crée une fiche pour la route affichée.":"a resource to the top of the list. “Check” creates a check sheet for the displayed route.",
+"Point de départ (où je suis)":"Starting point (where I am)","Point de départ":"Starting point","Rechercher une ressource":"Search a resource","Vaisseau":"Ship",
+"Chargement (SCU)":"Load (SCU)","Budget (aUEC, 0 = illimité)":"Budget (aUEC, 0 = unlimited)","Prix utilisés":"Prices used","Derniers relevés":"Latest reports","Moyennes UEX":"UEX averages",
+"Système de départ (achat)":"Departure system (buy)","Système d'arrivée (vente)":"Arrival system (sell)","Données max. (h, 0 = illimité)":"Max data age (h, 0 = unlimited)",
+"Marchandises illégales":"Illegal commodities","Exclues":"Excluded","Affichées":"Shown","Uniquement les illégales":"Illegal only",
+"Trier par :":"Sort by:","Trier par":"Sort by","Bénéfice par SCU":"Profit per SCU","Bénéfice par chargement plein":"Profit per full load","Pire des cas (par SCU)":"Worst case (per SCU)",
+"Rentabilité (ROI)":"Return (ROI)","Meilleur prix de vente":"Best sell price","Signature de scan":"Scan signature","Nom":"Name",
+"Ignorer les ventes où l'inventaire est plein":"Ignore sales where inventory is full","Stations spatiales uniquement (achat et vente)":"Space stations only (buy and sell)",
+"Masquer les ressources « vente seule » (minerais non achetables)":"Hide “sell only” resources (ores you cannot buy)",
+"▴ Tout refermer":"▴ Collapse all","Bénéfice":"Profit","Vente":"Sell","Signature":"Signature",
+"Bénéfice selon le choix « Trier par » des filtres (par SCU par défaut)":"Profit according to the “Sort by” filter (per SCU by default)",
+"Chargement de":"Load of","en vente seule":"sell only","sans bénéfice possible, masquées":"with no possible profit, hidden","Aucune ressource ne correspond.":"No resource matches.",
+"Épingler en haut":"Pin to top","Désépingler":"Unpin","cliquez pour refermer":"click to collapse","cliquez pour voir tous les lieux":"click to see all locations",
+"cliquez pour voir tous les lieux de vente":"click to see all sell locations","Voir la signature de scan":"See the scan signature",
+"Achat choisi":"Chosen buy","Moins cher à l'achat":"Cheapest to buy","Vente choisie":"Chosen sell","Plus cher à la vente":"Best sell price",
+"stock relevé":"reported stock","(indicatif)":"(indicative)","inconnu":"unknown","lieux d'achat":"buy locations","lieu d'achat":"buy location","lieux de vente":"sell locations","lieu de vente":"sell location",
+"Caisses à l'achat":"Boxes at buy","Caisses à la vente":"Boxes at sell","inconnues":"unknown","saut":"jump",
+"— route choisie":"— chosen route","aUEC / chargement plein":"aUEC / full load","meilleure route :":"best route:","Achat total":"Total buy","pour":"for",
+"limité par votre budget de":"limited by your budget of","Pire des cas":"Worst case","aUEC / chargement plein · achat total":"aUEC / full load · total buy",
+"achat le plus cher :":"most expensive buy:","· vente la moins chère :":"· cheapest sell:","perte possible si vous vous trompez de terminal":"possible loss if you pick the wrong terminal",
+"Trajet total":"Total trip","pour rejoindre":"to reach","dont":"incl.","départ «":"start «","» introuvable":"» not found","introuvable":"not found",
+"distance en cours…":"distance loading…","distance inconnue":"distance unknown","(même planète)":"(same planet)","départ → achat → vente":"start → buy → sell","achat + vol + vente":"buy + flight + sell",
+", chargement compris":", loading included","route choisie":"chosen route","↺ Meilleure route":"↺ Best route","Revenir à la meilleure route":"Back to the best route",
+"🔁 à recontrôler":"🔁 to recheck","✔ validée":"✔ validated","✖ rejetée":"✖ rejected","en cours":"in progress","✔ Dans ma route":"✔ In my route","➕ Ma route":"➕ My route",
+"Retirer cette route de mes contrats":"Remove this route from my contracts","Ajouter cette route (achat → vente) à l'onglet Contrats / Route":"Add this route (buy → sell) to the Contracts / Route tab",
+"Contrôler":"Check","Achat":"Buy","Aucun terminal ne le vend":"No terminal sells it","S'obtient en minant ou en récupérant, puis se revend.":"Obtained by mining or salvaging, then sold.",
+"Valeur d'un chargement":"Value of a load","SCU vendus à":"SCU sold at","Vente la moins chère":"Cheapest sell","Trajet":"Trip","dépend de l'endroit où vous minez":"depends on where you mine",
+"vente seule":"sell only","Où acheter ·":"Where to buy ·","Où vendre ·":"Where to sell ·","lieux":"locations","lieu":"location",
+"cliquez pour choisir · marge si vendu à":"click to choose · margin if sold at","cliquez pour choisir · marge si acheté à":"click to choose · margin if bought at",
+"Terminal":"Terminal","Caisses":"Boxes","Charger":"Load","Livrer":"Deliver","Achat /SCU":"Buy /SCU","Vente /SCU":"Sell /SCU","Marge /SCU":"Margin /SCU","Caisses acceptées":"Accepted boxes","Stock":"Stock","Données":"Data","Inventaire":"Inventory","Écart":"Difference",
+"meilleur":"best","plein":"full","Acheter ici":"Buy here","Vendre ici":"Sell here","inventaire ?":"inventory ?","inventaire":"inventory",
+"très bas":"very low","bas":"low","moyen":"medium","haut":"high","très haut":"very high","vide":"empty","prix ·":"prices ·","prix":"prices","Vide":"Empty","Très bas":"Very low","Bas":"Low","Moyen":"Medium","Haut":"High","Très haut":"Very high","Plein":"Full",
+"Station":"Station","Ville":"City","Avant-poste":"Outpost","illégal":"illegal",
+"retiré de ta route.":"removed from your route.","ajouté à ta route :":"added to your route:","Voir l'onglet Contrats / Route.":"See the Contracts / Route tab.",
+"n'apparaît pas dans Ressources avec les filtres actuels (aucune route achat → vente rentable).":"does not appear in Resources with the current filters (no profitable buy → sell route).",
+// ---- Contrats ----
+"Contrats de hauling":"Hauling contracts","Ajoutez vos contrats : l'application additionne les SCU par trajet (récupération → livraison), les compare à la soute de votre vaisseau et propose un ordre de passage.":"Add your contracts: the app adds up the SCU per trip (pickup → delivery), compares them with your ship's hold and suggests a stop order.",
+"Capacité de la soute (SCU)":"Hold capacity (SCU)","Ajouter un contrat":"Add a contract","Nom / n° du contrat (optionnel)":"Contract name / no. (optional)","Lieu de récupération":"Pickup location","Lieu de livraison":"Delivery location",
+"Prix d'achat /SCU (optionnel)":"Buy price /SCU (optional)","Prix de vente /SCU (optionnel)":"Sell price /SCU (optional)","+ Ajouter":"+ Add",
+"Lieux absents d'UEX (OLP, PAF, missions…)":"Locations missing from UEX (OLP, PAF, missions…)","Ces lieux sont proposés dans la saisie des contrats. Leur distance est estimée depuis une station UEX de la même planète (marquée « ≈ »).":"These locations are offered when entering contracts. Their distance is estimated from a UEX station on the same planet (marked “≈”).",
+"Nom du lieu":"Location name","Près de (système › planète)":"Near (system › planet)","Près de":"Near","Type":"Type","Au sol (avant-poste)":"On the ground (outpost)","En orbite (station)":"In orbit (station)","+ Ajouter le lieu":"+ Add location",
+"Mes contrats":"My contracts","Supprimer les contrats livrés":"Delete delivered contracts","Charge par trajet":"Load per trip","— contrats en cours, regroupés par paire de lieux":"— active contracts, grouped by location pair",
+"Itinéraire optimisé":"Optimized itinerary","— le plus court en temps, sans jamais dépasser la soute":"— the fastest, never exceeding the hold",
+"Aucun contrat en cours.":"No active contract.","Aucun contrat livré.":"No delivered contract.","Aucun contrat. Ajoutez-en un ci-dessus.":"No contract. Add one above.",
+"Indiquez la capacité de la soute.":"Enter the hold capacity.","Renseignez la récupération, la livraison et les SCU.":"Fill in pickup, delivery and SCU.",
+"Ce lieu est déjà connu d'UEX.":"This location is already known to UEX.","contrat(s) livré(s) ?":"delivered contract(s)?","Supprimer":"Delete","Contrat":"Contract",
+"1er arrêt : allez-y depuis votre position":"1st stop: fly there from your position","vous y êtes déjà":"you are already there","même lieu":"same location","de vol":"of flight",
+"Lieu inconnu d'UEX : le premier trajet est estimé. Ajoutez-le dans « Lieux absents d'UEX ».":"Location unknown to UEX: the first leg is estimated. Add it under “Locations missing from UEX”.",
+"distances en cours de récupération…":"fetching distances…","intégré":"built-in","rentre en 1 voyage":"fits in 1 trip","surcharge +":"overload +","voyages":"trips","voyage":"trip",
+"beaucoup de contrats : meilleur ordre trouvé en recherche limitée":"many contracts: best order found with a limited search",
+"certains contrats dépassent la soute : découpés en plusieurs voyages":"some contracts exceed the hold: split into several trips",
+"indiquez votre « Point de départ » pour compter le premier trajet":"enter your “Starting point” to count the first leg",
+"au total (vol + arrêts + chargement)":"in total (flight + stops + loading)","arrêts":"stops","de gagné par rapport à l'ordre simple":"saved compared with the simple order",
+"charge maximale":"peak load","achat":"buy","vente":"sell","bénéfice":"profit","aUEC à avancer)":"aUEC to front)","⏸ Pas de place pour":"⏸ No room for",
+": à reprendre plus tard":": pick up later","à distance inconnue (lieu absent d'UEX) : estimé":"at unknown distance (location missing from UEX): estimated",
+"distance inconnue, estimée ≈":"distance unknown, estimated ≈","trajet":"leg","trajets":"legs","en cours ·":"active ·","livré":"delivered","Livré":"Delivered",
+"en orbite":"in orbit","au sol":"on the ground","ville":"city","Récupération":"Pickup","Livraison":"Delivery","SCU":"SCU","Actions":"Actions",
+// ---- Signatures ----
+"Signatures de scan des ressources":"Resource scan signatures",
+"Entrez la valeur lue au scanner pour identifier la roche. La signature d'un groupe = signature de base × nombre de roches. Cliquez sur une ressource pour voir où la trouver,":"Enter the value read on your scanner to identify the rock. A cluster's signature = base signature × number of rocks. Click a resource to see where to find it,",
+"pour l'épingler en haut.":"to pin it to the top.","Valeur du scan":"Scan value","Système":"System","Sous-système":"Subsystem","Tous":"All","Tout":"All",
+"Tri des lieux":"Sort locations","Par système › sous-système":"By system › subsystem","Par part max.":"By max share","Type de minage":"Mining type",
+"🚀 Vaisseau":"🚀 Ship","⛏ À pied":"⛏ On foot","Ressource":"Resource","Groupes (nb de roches)":"Clusters (no. of rocks)","Lieux":"Locations",
+"Toutes les roches minables au ROC ont la même signature":"All ROC-mineable rocks share the same signature","Tous les gisements minables à pied ont la même signature":"All hand-mineable deposits share the same signature",
+"par gisement.":"per deposit.","Aucune correspondance exacte pour":"No exact match for",". Le plus proche :":". Closest:","(écart":"(difference",
+"). Un groupe mixte additionne les signatures de roches différentes.":"). A mixed cluster adds up the signatures of different rocks.","roches":"rocks","roche":"rock",
+"Légendaire":"Legendary","Épique":"Epic","Rare":"Rare","Peu commune":"Uncommon","Commune":"Common",
+"Planète":"Planet","Lune":"Moon","Ceinture":"Belt","Amas":"Cluster","Grotte":"Cave","Événement":"Event","Spécial":"Special","Autres":"Others","Espace profond":"Deep space","Ceintures de Pyro":"Pyro belts",
+"toutes les bases minières":"all mining bases","tous les amas, RAB et RMB":"all clusters, RABs and RMBs","même composition que Terminus Ring (Pyro)":"same composition as Terminus Ring (Pyro)",
+"Lieu":"Location","Système › sous-système":"System › subsystem","Part max.":"Max share","Dans quelle roche":"Which rock","% des roches)":"% of rocks)","contenu dans":"inside","dans":"inside",
+"Meilleur":"Best","Meilleurs":"Best","endroit":"location","endroits":"locations",
+"💰 Meilleure vente":"💰 Best sale","(moyenne)":"(average)","raffiné :":"refined:","brut :":"raw:","Raffiné :":"Refined:","Brut :":"Raw:","brut":"raw","(moyenne UEX)":"(UEX average)","Prix de vente UEX non disponible":"UEX sell price not available",
+"« Part max. » = probabilité de la roche à cet endroit × teneur maximale de":"“Max share” = probability of the rock at this location × maximum content of","dans cette roche.":"in this rock.",
+"Données de minage :":"Mining data:","version":"version",". Récupération 2 000 par panneau (salvage).":". Salvage 2,000 per panel.","Données de minage absentes.":"Mining data missing.",
+"Voir dans l'onglet Ressources":"See in the Resources tab","Voir dans Ressources":"See in Resources",
+// ---- Page Lieu ----
+"Cliquez sur le nom d'un terminal dans":"Click a terminal name in","pour voir tout ce qui s'y achète et s'y vend, ou sur un lieu de minage dans":"to see everything bought and sold there, or a mining location in",
+"pour voir ses minerais et leur pourcentage d'apparition. Vous pouvez aussi le chercher ici.":"to see its ores and their spawn percentage. You can also search for it here.",
+"Rechercher un lieu":"Search a location","ex. ARC-L1, Lorville, Ita":"e.g. ARC-L1, Lorville, Ita","Récents :":"Recent:",
+"Aucun lieu choisi pour l'instant.":"No location selected yet.","Aucun lieu choisi pour l'instant. Cliquez sur un nom de lieu dans Ressources ou Signatures.":"No location selected yet. Click a location name in Resources or Signatures.",
+"Ce terminal n'existe plus dans les données UEX.":"This terminal no longer exists in the UEX data.","Lieu de minage inconnu.":"Unknown mining location.","Lieu introuvable :":"Location not found:",
+"caisses jusqu'à":"boxes up to","⛽ Ravitaillement":"⛽ Refuel","🔧 Réparation":"🔧 Repair","Quai de chargement":"Loading dock","Ascenseur de fret":"Freight elevator","Port d'amarrage":"Docking port",
+"Chargement auto":"Auto-load","Centre de fret":"Cargo center","Raffinerie":"Refinery","Sans questions (NQA)":"No questions asked (NQA)","Point de saut":"Jump point",
+"Au même endroit :":"Same place:","Minage ici :":"Mining here:","Chargement plein =":"Full load =",
+". Filtres d'âge des données et d'inventaire plein repris de l'onglet Ressources.":". Data age and full-inventory filters taken from the Resources tab.",
+"À acheter ici":"To buy here","À vendre ici":"To sell here","ressource":"resource","ressources":"resources","dont":"of which","intéressante":"interesting","intéressantes":"interesting",
+"★ Meilleur achat":"★ Best buy","Bon achat":"Good buy","★ Meilleure vente":"★ Best sale","Bonne vente":"Good sale",
+"le moins cher de tous les terminaux, revente rentable":"cheapest of all terminals, profitable resale","à 5 % du moins cher, revente rentable":"within 5% of the cheapest, profitable resale",
+"le prix le plus haut de tous les terminaux":"highest price of all terminals","à 5 % du meilleur prix":"within 5% of the best price","Marge = prix ici − achat le moins cher ailleurs":"Margin = price here − cheapest buy elsewhere",
+"Achat ici /SCU":"Buy here /SCU","Vente ici /SCU":"Sell here /SCU","Chargement plein":"Full load","Meilleure revente":"Best resale","Moins cher ailleurs":"Cheapest elsewhere",
+"Meilleure vente ailleurs":"Best sale elsewhere","Moins cher à l'achat":"Cheapest to buy","aucun":"none","pas de revente rentable":"no profitable resale",
+"achat ailleurs plus cher":"buying elsewhere costs more","inventaire plein":"inventory full","minage":"mining","ne s'achète nulle part":"cannot be bought anywhere",
+"Rien ne s'achète à ce terminal.":"Nothing can be bought at this terminal.","Rien ne se vend à ce terminal.":"Nothing can be sold at this terminal.",
+"Terminaux de commerce ici :":"Trade terminals here:","🚀 Minage en vaisseau":"🚀 Ship mining","🚜 Minage au ROC":"🚜 ROC mining","⛏ Minage à pied":"⛏ Hand mining",
+"Apparition (part max.)":"Spawn (max share)","Valeur indicative":"Indicative value","★ intéressant":"★ interesting",
+"Prix de vente × part max. : valeur moyenne d'un SCU de roche":"Sell price × max share: average value of one SCU of rock",
+"« Apparition » = probabilité de la roche à cet endroit × teneur maximale du minerai dans cette roche. ★ = les 3 meilleures valeurs indicatives (prix de vente UEX × apparition) de chaque type de minage.":"“Spawn” = probability of the rock at this location × maximum ore content in that rock. ★ = the 3 best indicative values (UEX sell price × spawn) for each mining type.",
+"Aucun minerai répertorié ici.":"No ore listed here.","Voir tous les minerais de ce lieu":"See every ore at this location",
+"Voir tout ce qui s'achète et se vend ici":"See everything bought and sold here","Voir tout ce qui s'achète et se vend ici (page Lieu)":"See everything bought and sold here (Location page)",
+// ---- Contrôles ----
+"Routes suivies et historique des contrôles":"Tracked routes and check history","1) Faites le trajet":"1) Fly","à vide":"empty",
+"jusqu'au terminal de départ et notez le prix d'achat réel et le stock disponible. 2) Relevez le prix de vente réel à l'arrivée. 3) Renseignez vos frais : l'application calcule le bénéfice réel et donne un verdict. Chaque contrôle est gardé dans l'historique de la route ; une route validée passe":"to the departure terminal and note the real buy price and available stock. 2) Note the real sell price at arrival. 3) Enter your costs: the app calculates the real profit and gives a verdict. Each check is kept in the route history; a validated route becomes",
+"« à recontrôler »":"“to recheck”","après":"after","jours.":"days.","jours":"days",
+"Aucune route suivie pour l'instant. Dans l'onglet":"No tracked route yet. In the",", cliquez sur « Contrôler » sur une route.":" tab, click “Check” on a route.",
+"En cours":"In progress","Validée":"Validated","Rejetée":"Rejected","🔁 À recontrôler":"🔁 To recheck","contrôle":"check","contrôles":"checks","dernier":"last",
+"Prix UEX du jour :":"Today's UEX prices:","marge":"margin","bénéfice estimé":"estimated profit","par rapport à votre contrôle du":"compared with your check of",
+"Toujours intéressante selon UEX":"Still worthwhile according to UEX","Marge en baisse selon UEX":"Margin dropping according to UEX","Plus rentable selon UEX":"No longer profitable according to UEX",
+"données UEX":"UEX data","de moins d'1 h":"less than 1 h old","cette route n'apparaît plus dans les prix UEX actuels (marchandise retirée d'un des terminaux ?). À vérifier en jeu.":"this route no longer appears in current UEX prices (commodity removed from one of the terminals?). Check in game.",
+"Historique des contrôles":"Check history","— cliquez sur une ligne pour la revoir":"— click a row to review it","Date":"Date","Bénéfice net":"Net profit","Verdict":"Verdict","Statut":"Status",
+"Supprimer ce contrôle":"Delete this check","🔁 Nouveau contrôle":"🔁 New check","pré-rempli avec les prix UEX du jour et vos derniers frais":"pre-filled with today's UEX prices and your last costs",
+"Ne plus suivre cette route":"Stop tracking this route","Contrôle du":"Check of","ancien contrôle":"older check",
+"① Vol à vide vers le départ":"① Empty flight to departure","Coût du vol à vide (carburant, aUEC)":"Empty flight cost (fuel, aUEC)","Durée du vol à vide (min)":"Empty flight duration (min)",
+"② Relevé au départ (achat)":"② Reading at departure (buy)","Prix d'achat réel /SCU":"Real buy price /SCU","UEX ce jour-là :":"UEX that day:","SCU disponibles au terminal":"SCU available at the terminal","UEX :":"UEX:",
+"③ Relevé à l'arrivée (vente)":"③ Reading at arrival (sell)","Prix de vente réel /SCU":"Real sell price /SCU","Demande max. (SCU, optionnel)":"Max demand (SCU, optional)",
+"④ Vaisseau & frais du voyage chargé":"④ Ship & loaded-trip costs","Capacité cargo (SCU)":"Cargo capacity (SCU)","Carburant / frais du trajet (aUEC)":"Fuel / trip costs (aUEC)",
+"Autres frais (réparation, location…)":"Other costs (repair, rental…)","Durée du voyage achat → vente (min, estimée)":"Trip duration buy → sell (min, estimated)","Notes":"Notes",
+"✔ Valider la route":"✔ Validate route","✖ Rejeter":"✖ Reject","Remettre en cours":"Set back in progress",
+"SCU transportables":"Carriable SCU","Prix achat / vente":"Buy / sell price","Revenu de vente":"Sales revenue","Bénéfice / SCU":"Profit / SCU","Bénéfice net / voyage":"Net profit / trip",
+"Net 1er voyage (avec vol à vide)":"Net 1st trip (incl. empty flight)","ROI net":"Net ROI","Durée du voyage":"Trip duration","Écart vs estimation UEX":"Difference vs UEX estimate",
+"Rentable":"Profitable","Limite":"Borderline","Non rentable":"Not profitable","À compléter":"To complete","Prix UEX dépassés":"UEX prices outdated",
+"vol à vide amorti dès le 1er voyage":"empty flight paid off from the 1st trip","vol à vide amorti en":"empty flight paid off in","% vs UEX":"% vs UEX",
+"Un contrôle est déjà en cours pour cette route.":"A check is already in progress for this route.","Nouveau contrôle ajouté à l'historique de la route.":"New check added to the route history.",
+"Route suivie : faites le vol à vide vers":"Route tracked: fly empty to","Le dernier contrôle est encore en cours : complétez-le.":"The last check is still in progress: complete it.",
+"Nouveau contrôle créé avec les prix UEX du jour.":"New check created with today's UEX prices.","Route validée. Elle sera signalée « à recontrôler » dans":"Route validated. It will be flagged “to recheck” in",
+"Ne plus suivre cette route et supprimer tout son historique ?":"Stop tracking this route and delete its whole history?","Supprimer ce contrôle de l'historique ?":"Delete this check from the history?",
+"à l'instant":"just now","fiche(s) importée(s).":"sheet(s) imported.","Fichier invalide.":"Invalid file.",
+// ---- Réglages ----
+"Accès API UEX":"UEX API access","Token de l'application (Bearer)":"Application token (Bearer)",
+"Créé sur uexcorp.space → My Apps. Stocké uniquement dans ce navigateur (ou lu depuis":"Created on uexcorp.space → My Apps. Stored only in this browser (or read from","s'il est à côté du fichier).":"if it is next to the file).",
+"Optionnel":"Optional",": les prix UEX sont publics, l'application fonctionne aussi sans token.":": UEX prices are public, the app also works without a token.","Comment obtenir un token ?":"How to get a token?",
+"Enregistrer":"Save","Tester la connexion":"Test connection","Test en cours…":"Testing…","Seuils de rentabilité (verdict des contrôles)":"Profitability thresholds (check verdict)",
+"Profit net minimum par voyage (aUEC)":"Minimum net profit per trip (aUEC)","Écart de prix toléré vs UEX (%)":"Tolerated price difference vs UEX (%)",
+"Au-delà de cet écart, la fiche signale que les données UEX ne sont plus fiables pour cette route.":"Beyond this difference, the sheet flags that UEX data is no longer reliable for this route.",
+"Recontrôler une route validée après (jours)":"Recheck a validated route after (days)","Estimation du temps de trajet":"Trip time estimate",
+"Temps = arrêt au départ + saut quantique (distance ÷ vitesse + préparation) + arrêt à l'arrivée + chargement/déchargement. Ajustez ces valeurs à votre vaisseau et à votre façon de jouer.":"Time = stop at departure + quantum jump (distance ÷ speed + spool) + stop at arrival + loading/unloading. Adjust these values to your ship and play style.",
+"Vitesse quantique (km/s)":"Quantum speed (km/s)","Préparation par saut (min)":"Spool per jump (min)","Arrêt en station (min)":"Stop at a station (min)","Arrêt en ville (min)":"Stop in a city (min)",
+"Arrêt en avant-poste (min)":"Stop at an outpost (min)","Charger + décharger (min / 100 SCU)":"Load + unload (min / 100 SCU)","Traversée d'un trou de ver (min)":"Wormhole crossing (min)",
+"Données":"Data","Exporter mes contrôles (JSON)":"Export my checks (JSON)","Importer…":"Import…","Vider le cache API":"Clear API cache",
+"Réglages enregistrés.":"Settings saved.","Seuils enregistrés.":"Thresholds saved.","Paramètres de trajet enregistrés.":"Trip settings saved.","Token enregistré.":"Token saved.",
+"Aucun token : l'application fonctionne en accès public.":"No token: the app works with public access.","✔ Token valide, UEX répond.":"✔ Valid token, UEX responds.",
+"✖ Token refusé par UEX (":"✖ Token rejected by UEX (","). Vérifiez que vous avez copié le « Jeton Bearer » en entier.":"). Make sure you copied the whole “Bearer token”.","✖ Impossible de joindre UEX :":"✖ Cannot reach UEX:",
+"Distances indisponibles :":"Distances unavailable:","Langue / Language":"Language","Langue de l'interface":"Interface language","Automatique (langue du navigateur)":"Automatic (browser language)",
+"Automatique : français si votre navigateur est en français, anglais sinon.":"Automatic: French if your browser is in French, English otherwise.",
+// ---- Accueil ----
+"Bienvenue sur SC Hauling":"Welcome to SC Hauling","Cette application lit les prix du commerce de Star Citizen publiés par":"This app reads the Star Citizen trade prices published by",
+"(uexcorp.space) et vous montre, pour chaque ressource, où l'acheter, où la vendre, le meilleur et le pire scénario.":"(uexcorp.space) and shows you, for each resource, where to buy it, where to sell it, and the best and worst case.",
+"Pas besoin de token pour commencer":"No token needed to start",": les prix sont publics. Un token UEX personnel est conseillé (UEX peut limiter les accès anonymes) et ne prend que 2 minutes :":": prices are public. A personal UEX token is recommended (UEX may limit anonymous access) and takes only 2 minutes:",
+"Allez sur":"Go to","et connectez-vous (ou créez un compte gratuit).":"and log in (or create a free account).","Ouvrez la page":"Open the","Mes applications":"My applications",
+"Créez une nouvelle application (nom au choix, par exemple « SC Hauling ») et enregistrez.":"Create a new application (any name, for example “SC Hauling”) and save.",
+"Dans la fiche de l'application, copiez le":"On the application page, copy the","Jeton Bearer":"Bearer token","(une longue suite de lettres et de chiffres).":"(a long string of letters and numbers).",
+"Collez-le ci-dessous puis cliquez sur":"Paste it below then click","Votre token UEX":"Your UEX token","collez votre jeton Bearer ici":"paste your Bearer token here",
+"Enregistrer et continuer":"Save and continue","Continuer sans token":"Continue without token",
+"Le token reste dans votre navigateur. Ne le partagez pas : chaque joueur crée le sien. Vous pourrez le changer plus tard dans":"The token stays in your browser. Do not share it: each player creates their own. You can change it later in",
+"Collez d'abord votre token, ou choisissez « Continuer sans token ».":"Paste your token first, or choose “Continue without token”.","Vérification…":"Checking…",
+"page":"page","— Saisie manuelle —":"— Manual entry —","ex. Port Tressler":"e.g. Port Tressler","ex. Everus Harbor":"e.g. Everus Harbor","ex. Covalex #12":"e.g. Covalex #12","ex. Attritus PAF-II":"e.g. Attritus PAF-II",
+"ex. Laranite, Quartz":"e.g. Laranite, Quartz","ex. 7770":"e.g. 7770","ex. Agricium":"e.g. Agricium"
+};
+// Motifs avec nombres ou accords (appliqués avant le dictionnaire)
+const I18N_EN_RE = [
+  [/mis à jour il y a (\d+) min/g, 'updated $1 min ago'],
+  [/il y a (\d+) (h|j|min)(?![\p{L}])/gu, (m,n,u)=>`${n} ${u==='j'?'d':u} ago`],
+  [/(\d+) lieux? d'achat/g, (m,n)=>`${n} buy location${n>1?'s':''}`],
+  [/(\d+) lieux? de vente/g, (m,n)=>`${n} sell location${n>1?'s':''}`],
+  [/(\d+) lieux?\b/g, (m,n)=>`${n} location${n>1?'s':''}`],
+  [/(\d+) contrôles?\b/g, (m,n)=>`${n} check${n>1?'s':''}`],
+  [/(\d+) ressources?\b/g, (m,n)=>`${n} resource${n>1?'s':''}`],
+  [/dont (\d+) intéressantes?/g, (m,n)=>`${n} worth it`],
+  [/(\d+) roches?\b/g, (m,n)=>`${n} rock${n>1?'s':''}`],
+  [/(\d+) voyages?\b/g, (m,n)=>`${n} trip${n>1?'s':''}`],
+  [/(\d+) arrêts?\b/g, (m,n)=>`${n} stop${n>1?'s':''}`],
+  [/(\d+) trajets?\b/g, (m,n)=>`${n} leg${n>1?'s':''}`],
+  [/en (\d+) voyages/g, 'in $1 trips'],
+  [/dans (\d+) jours\./g, 'in $1 days.'],
+  [/(\d+) en cours\b/g, '$1 active'],
+  [/(\d) j\b/g, '$1 d'],
+  [/(\d+) h (\d\d)\b/g, '$1 h $2'],
+];
+// Appliqués en dernier, après le dictionnaire
+const I18N_EN_POST = [
+  [/(^|\s)à (?=[\p{Lu}\p{N}])/gu, '$1at '],
+];
+
+const I18N = (()=>{
+  if(LANG!=='en') return null;
+  const norm = s => s.replace(/\s+/g, ' ');
+  const dict = new Map();
+  Object.entries(I18N_EN).forEach(([k, v])=>{ k = norm(k).trim(); if(k && k!==v) dict.set(k, v); });
+  const keys = [...dict.keys()].sort((a,b)=>b.length-a.length);
+  const escRe = x => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const big = new RegExp(keys.map(escRe).join('|'), 'gu');
+  const isL = c => c!=null && /\p{L}/u.test(c), isLN = c => c!=null && /[\p{L}\p{N}]/u.test(c);
+  function tr(text){
+    if(text==null) return text;
+    const n = norm(String(text)), t = n.trim();
+    if(!t || !/\p{L}/u.test(t)) return text;
+    if(dict.has(t)) return n.replace(t, dict.get(t));
+    // 1) phrases et mots connus (les plus longs d'abord), 2) motifs avec nombres, 3) « à » restant
+    let out = n.replace(/mis à jour il y a (\d+) min/g, 'updated $1 min ago').replace(/d'il y a (\d+) (h|j)(?![\p{L}])/gu, (m,x,u)=>`from ${x} ${u==='j'?'d':u} ago`);
+    out = out.replace(big, (m, off, str)=>{
+      if(isL(m[0]) && isLN(str[off-1])) return m;          // pas au milieu d'un mot
+      if(isL(m[m.length-1]) && isL(str[off+m.length])) return m;
+      return dict.get(m);
+    });
+    I18N_EN_RE.forEach(([re, r])=>{ out = out.replace(re, r); });
+    I18N_EN_POST.forEach(([re, r])=>{ out = out.replace(re, r); });
+    return out===n ? text : out;
+  }
+  const SKIP = {SCRIPT:1, STYLE:1, TEXTAREA:1};
+  const ATTR = ['title', 'placeholder'];
+  function el(e){ ATTR.forEach(a=>{ const v = e.getAttribute && e.getAttribute(a); if(v){ const t2 = tr(v); if(t2!==v) e.setAttribute(a, t2); } }); }
+  function text(n){ if(n.parentNode && SKIP[n.parentNode.nodeName]) return; const v = n.nodeValue, t2 = tr(v); if(t2!==v) n.nodeValue = t2; }
+  function walk(root){
+    if(root.nodeType===3){ text(root); return; }
+    if(root.nodeType!==1 || SKIP[root.nodeName]) return;
+    el(root);
+    const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT, {acceptNode: x => SKIP[x.nodeName] ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT});
+    let x; while((x = w.nextNode())) x.nodeType===3 ? text(x) : el(x);
+  }
+  return {tr, walk};
+})();
+if(I18N){
+  document.title = I18N.tr(document.title);
+  I18N.walk(document.body);
+  new MutationObserver(ms=>{ for(const m of ms){
+    if(m.type==='characterData') I18N.walk(m.target);
+    else if(m.type==='attributes'){ const v = m.target.getAttribute(m.attributeName), t2 = I18N.tr(v); if(v && t2!==v) m.target.setAttribute(m.attributeName, t2); }
+    else m.addedNodes.forEach(n=>I18N.walk(n));
+  } }).observe(document.body, {childList:true, subtree:true, characterData:true, attributes:true, attributeFilter:['title','placeholder']});
+  const _confirm = window.confirm.bind(window); window.confirm = msg => _confirm(I18N.tr(String(msg)));
+}
+
+function toast(msg, err){ const t=$('#toast'); t.textContent=msg; t.className='toast'+(err?' err':''); t.style.display='block'; clearTimeout(toast._t); toast._t=setTimeout(()=>t.style.display='none', err?7000:3500); }
+
+async function api(path, opts={}){
+  const headers = Object.assign({}, opts.headers||{});
+  if(settings.token) headers['Authorization'] = 'Bearer ' + settings.token;
+  const r = await fetch(API + path, Object.assign({}, opts, {headers}));
+  let j; try{ j = await r.json(); }catch(e){ throw new Error('Réponse invalide ('+r.status+')'); }
+  if(j.status !== 'ok') throw new Error((j.status||'erreur') + (j.message ? ' — '+j.message : '') + ' ['+r.status+']');
+  return j.data;
+}
+
+async function cached(key, path, ttlMin, force){
+  const c = LS.get('cache.'+key);
+  if(!force && c && (Date.now()-c.t) < ttlMin*60000) return {data:c.d, t:c.t};
+  try{
+    const d = await api(path);
+    LS.set('cache.'+key, {t:Date.now(), d});
+    return {data:d, t:Date.now()};
+  }catch(e){
+    if(c){ toast('API indisponible, données en cache utilisées : '+e.message, true); return {data:c.d, t:c.t}; }
+    throw e;
+  }
+}
+
+function slimPrices(rows){
+  return rows.map(p=>({id_commodity:p.id_commodity,id_terminal:p.id_terminal,price_buy:p.price_buy,price_buy_avg:p.price_buy_avg,price_sell:p.price_sell,price_sell_avg:p.price_sell_avg,scu_buy:p.scu_buy,scu_buy_avg:p.scu_buy_avg,scu_sell:p.scu_sell,scu_sell_stock:p.scu_sell_stock,status_buy:p.status_buy,status_sell:p.status_sell,container_sizes:p.container_sizes,date_modified:p.date_modified}));
+}
+
+async function loadAll(force){
+  $('#dataStatus').textContent = 'Chargement des données UEX…';
+  try{
+    const [t, c, p, v] = await Promise.all([
+      cached('terminals', 'terminals?type=commodity', 12*60, force),
+      cached('commodities', 'commodities', 12*60, force),
+      (async()=>{
+        const k='prices'; const cc = LS.get('cache.'+k);
+        if(!force && cc && Date.now()-cc.t < 30*60000) return {data:cc.d,t:cc.t};
+        try{ const d = slimPrices(await api('commodities_prices_all')); LS.set('cache.'+k,{t:Date.now(),d}); return {data:d,t:Date.now()}; }
+        catch(e){ if(cc){ toast('API indisponible, prix en cache utilisés : '+e.message,true); return {data:cc.d,t:cc.t}; } throw e; }
+      })(),
+      cached('vehicles', 'vehicles', 24*60, force)
+    ]);
+    state.terminals = {}; t.data.forEach(x=> state.terminals[x.id] = x);
+    state.commodities = {}; c.data.forEach(x=> state.commodities[x.id] = x);
+    state.prices = p.data;
+    state.vehicles = v.data.filter(x=>x.scu>0).sort((a,b)=>a.name.localeCompare(b.name));
+    state.loadedAt = p.t;
+    fillSelects();
+    computeResources();
+    updateStatus();
+    renderChecks();
+    renderContracts();
+    renderSignatures();
+    fillLcList();
+    if($('#tab-location').classList.contains('on')) renderLocation();
+  }catch(e){
+    $('#dataStatus').innerHTML = '<span class="neg">Erreur API : '+esc(e.message)+'</span>';
+    toast('Impossible de charger les données UEX : '+e.message, true);
+  }
+}
+
+function updateStatus(){
+  const age = state.loadedAt ? Math.round((Date.now()-state.loadedAt)/60000) : null;
+  $('#dataStatus').textContent = `${Object.keys(state.terminals).length} terminaux · ${state.prices.length} prix · mis à jour il y a ${age} min`;
+  $('#cacheInfo').textContent = `Prix UEX chargés il y a ${age} min (cache 30 min). Distances mémorisées : ${Object.keys(state.distances).length}.`;
+}
+
+function termName(t){ return t ? (t.nickname || t.displayname || t.name) : '?'; }
+function termLoc(t){
+  if(!t) return '';
+  const parts = [t.star_system_name, t.planet_name, t.moon_name || (t.orbit_name !== t.planet_name ? t.orbit_name : null), t.space_station_name || t.city_name || t.outpost_name];
+  return parts.filter((v,i,a)=>v && a.indexOf(v)===i).join(' › ');
+}
+function termKind(t){ return t.id_space_station>0 || t.space_station_name ? 'station' : (t.id_city>0 || t.city_name ? 'city' : 'outpost'); }
+const KIND_LABEL = {station:'Station', city:'Ville', outpost:'Avant-poste'};
+function kindOk(t, sel){ return !sel || sel.split(',').includes(termKind(t)); }
+function maxContainer(csv){ if(!csv) return null; const a = String(csv).split(',').map(Number).filter(n=>!isNaN(n)); return a.length ? Math.max(...a) : null; }
+
+function fillSelects(){
+  const systems = [...new Set(Object.values(state.terminals).filter(t=>t.is_available_live).map(t=>t.star_system_name).filter(Boolean))].sort();
+  const sysOpts = '<option value="">Tous</option>' + systems.map(s=>`<option>${esc(s)}</option>`).join('');
+  const rs = LS.get('resFilters', {});
+  $('#rSysFrom').innerHTML = sysOpts; $('#rSysFrom').value = rs.sysFrom ?? rs.sys ?? '';
+  $('#rSysTo').innerHTML = sysOpts; $('#rSysTo').value = rs.sysTo ?? rs.sys ?? '';
+  fillLocList();
+  const shipOpts = '<option value="">— Saisie manuelle —</option>' + state.vehicles.map(v=>`<option value="v${v.id}">${esc(v.name)} — ${nf.format(v.scu)} SCU</option>`).join('');
+  $('#fShip').innerHTML = shipOpts; $('#cShip').innerHTML = shipOpts;
+  applyFiltersToForm();
+}
+function applyFiltersToForm(){
+  $('#fShip').value = filters.ship || ''; $('#rCargo').value = filters.cargo; $('#fBudget').value = filters.budget; $('#fPriceMode').value = filters.priceMode;
+  $('#cShip').value = filters.ship || ''; $('#cCargo').value = filters.cargo;
+}
+function currentShip(){ const v = filters.ship && state.vehicles.find(x=>'v'+x.id===filters.ship); return v||null; }
+
+function distKey(a,b){ return a<b ? a+'-'+b : b+'-'+a; }
+
+function jumpExtra(sysA, sysB){ return sysA && sysB && sysA!==sysB ? (+settings.jumpMin||0) + (+settings.qtSpool||0) : 0; }
+function estTime(o, d, distGm, scu){
+  if(distGm==null) return null;
+  const s = settings, ov = t => ({station:+s.ovStation, city:+s.ovCity, outpost:+s.ovOutpost})[termKind(t)] || 0;
+  const qt = distGm>0 ? distGm*1e6/(+s.qtSpeed||200000)/60 + (+s.qtSpool||0) : 0;
+  return ov(o) + ov(d) + qt + jumpExtra(o.star_system_name, d.star_system_name) + scu/100*(+s.loadPer100||0);
+}
+function applyDist(r){
+  const v = state.distances[r.dk];
+  r.distApprox = false;
+  if(v!=null && v>=0) r.dist = v;
+  else if(r.o.planet_name && r.o.planet_name===r.d.planet_name && r.o.star_system_name===r.d.star_system_name){ r.dist = 1; r.distApprox = true; }
+  else r.dist = null;
+  r.distPending = v==null;
+  r.time = estTime(r.o, r.d, r.dist, r.scu);
+}
+// Trajet du point de départ (partagé avec Contrats) jusqu'au terminal d'achat
+function startLeg(o){
+  const name = LS.get('contractStart', ''); if(!name) return null;
+  let st; try{ st = locTerm(name); }catch(e){ return null; }
+  if(!st) return {unknown:true, name};
+  let gm = null, approx = false, pending = false;
+  if(st.id===o.id){ gm = st._proxy ? 1 : 0; approx = !!st._proxy; }
+  else {
+    const v = state.distances[distKey(st.id, o.id)];
+    if(v!=null && v>=0){ gm = v; approx = !!st._proxy; }
+    else if(st.planet_name && st.planet_name===o.planet_name && st.star_system_name===o.star_system_name){ gm = 1; approx = true; }
+    else pending = v==null;
+  }
+  const time = gm==null ? null : (gm>0 ? gm*1e6/(+settings.qtSpeed||200000)/60 + (+settings.qtSpool||0) : 0) + jumpExtra(st.star_system_name, o.star_system_name);
+  return {name, st, gm, approx, pending, time};
+}
+function fmtMin(m){ if(m==null) return '—'; m = Math.round(m); return m<60 ? m+' min' : Math.floor(m/60)+' h '+String(m%60).padStart(2,'0'); }
+
+const STATUS = {1:'Vide',2:'Très bas',3:'Bas',4:'Moyen',5:'Haut',6:'Très haut',7:'Plein'};
+function ageBadge(h){ const cls = h<24?'good':h<72?'warn':'bad'; const txt = h<1? '<1 h' : h<48 ? Math.round(h)+' h' : Math.round(h/24)+' j'; return `<span class="pill ${cls}">${txt}</span>`; }
+
+let distBusy = false, distDisabled = false;
+async function fetchDistance(o, d){
+  const dk = distKey(o,d);
+  if(state.distances[dk]!=null) return state.distances[dk];
+  const data = await api(`terminals_distances?id_terminal_origin=${o}&id_terminal_destination=${d}`);
+  const v = data && data.distance!=null ? Number(data.distance) : -1;
+  state.distances[dk] = v; LS.set('distances', state.distances);
+  return v;
+}
+/* ================= CONTRÔLES : routes suivies + historique ================= */
+const DAY = 86400000;
+const keyOf = c => c.key || (c.key = c.cid+':'+c.oid+':'+c.did);
+state.sel = {};
+function groups(){
+  const m = new Map();
+  for(const c of checks){ const k = keyOf(c); if(!m.has(k)) m.set(k, []); m.get(k).push(c); }
+  const days = +settings.retestDays || 14;
+  const arr = [...m.entries()].map(([key, list])=>{
+    list.sort((a,b)=>b.created-a.created);
+    const last = list[0], ageDays = (Date.now()-last.created)/DAY;
+    return {key, list, last, ageDays, due: last.status!=='pending' && last.status!=='ko' && ageDays >= days};
+  });
+  arr.sort((a,b)=> (b.due-a.due) || ((b.last.status==='pending')-(a.last.status==='pending')) || (b.last.created-a.last.created));
+  return arr;
+}
+function groupOf(key){ return groups().find(g=>g.key===key); }
+function saveChecks(){
+  LS.set('checks', checks);
+  const n = groups().filter(g=>g.due || g.last.status==='pending').length;
+  const el = $('#checkCount'); el.hidden = !n; el.textContent = n;
+}
+function agoTxt(ms){ const d = (Date.now()-ms)/DAY; if(d < 1/24) return "à l'instant"; if(d < 1) return 'il y a '+Math.round(d*24)+' h'; return 'il y a '+Math.round(d)+' j'; }
+function dateTxt(ms){ return new Date(ms).toLocaleDateString(LOC,{day:'2-digit',month:'2-digit',year:'2-digit'})+' '+new Date(ms).toLocaleTimeString(LOC,{hour:'2-digit',minute:'2-digit'}); }
+
+function currentUex(c){
+  const avg = filters.priceMode==='avg';
+  const b = state.prices.find(p=>p.id_commodity===c.cid && p.id_terminal===c.oid);
+  const s = state.prices.find(p=>p.id_commodity===c.cid && p.id_terminal===c.did);
+  if(!b || !s) return null;
+  const buy = avg ? (b.price_buy_avg||b.price_buy) : b.price_buy, sell = avg ? (s.price_sell_avg||s.price_sell) : s.price_sell;
+  if(!(buy>0) || !(sell>0)) return null;
+  return {buy, sell, stock: b.scu_buy>0 ? b.scu_buy : (b.scu_buy_avg||0), statusSell: s.status_sell, age: (Date.now()/1000 - Math.min(b.date_modified, s.date_modified))/3600};
+}
+function uexEstimate(params, u){
+  let scu = num(params.cargo)||0; const budget = num(params.budget)||0;
+  if(budget>0) scu = Math.min(scu, Math.floor(budget/u.buy));
+  const fees = (num(params.fuelCost)||0) + (num(params.otherCost)||0);
+  return {scu, profit: scu*(u.sell-u.buy), net: scu*(u.sell-u.buy) - fees};
+}
+
+function addEntry(base, r){
+  // base : dernier contrôle de la route (ou null) ; r : route actuelle de la liste (ou null)
+  const ship = currentShip();
+  const c = base ? JSON.parse(JSON.stringify(base)) : {
+    cid:r.cid, commodity:r.commodity, oid:r.o.id, did:r.d.id, origin:r.origin, dest:r.dest, oloc:termLoc(r.o), dloc:termLoc(r.d),
+    params:{ ship: ship?ship.name:'', cargo: filters.cargo, budget: filters.budget, emptyCost:'', emptyMin:'', fuelCost:'', otherCost:'', tripMin: r.time!=null ? String(Math.round(r.time)) : '' }
+  };
+  c.id = 'c'+Date.now(); c.created = Date.now(); c.status = 'pending'; c.notes = ''; delete c.submitted;
+  c.obs = {buy:'', stock:'', sell:'', demand:''};
+  keyOf(c);
+  if(r){ c.uex = {buy:r.buy, sell:r.sell, stock:r.stock, statusSell:r.statusSell, profit:r.profit, scu:r.scu}; c.dist = r.dist; }
+  else { const u = currentUex(c); if(u){ const e = uexEstimate(c.params, u); c.uex = {buy:u.buy, sell:u.sell, stock:u.stock, statusSell:u.statusSell, profit:e.profit, scu:e.scu}; } }
+  checks.unshift(c); state.sel[c.key] = c.id; saveChecks();
+  return c;
+}
+function createCheck(r){
+  const g = groupOf(r.id);
+  if(g && g.last.status==='pending'){ state.sel[g.key] = g.last.id; showTab('checks'); renderChecks(g.key); toast('Un contrôle est déjà en cours pour cette route.'); return; }
+  addEntry(g ? g.last : null, r);
+  showTab('checks'); renderChecks(r.id);
+  toast(g ? 'Nouveau contrôle ajouté à l\'historique de la route.' : 'Route suivie : faites le vol à vide vers '+r.origin);
+}
+function retest(key){
+  const g = groupOf(key); if(!g) return;
+  if(g.last.status==='pending'){ state.sel[key] = g.last.id; rerenderGroup(key); toast('Le dernier contrôle est encore en cours : complétez-le.'); return; }
+  const r = state.routes.find(x=>x.id===key);
+  addEntry(g.last, r||null);
+  rerenderGroup(key);
+  toast('Nouveau contrôle créé avec les prix UEX du jour.');
+}
+
+function calcCheck(c){
+  const o = c.obs, p = c.params, u = c.uex || {};
+  const buy = num(o.buy) ?? u.buy, sell = num(o.sell) ?? u.sell;
+  const stock = num(o.stock);
+  const demand = num(o.demand);
+  const cargo = num(p.cargo) || 0, budget = num(p.budget) || 0;
+  let scu = cargo;
+  if(budget>0 && buy>0) scu = Math.min(scu, Math.floor(budget/buy));
+  if(stock!=null && stock>0) scu = Math.min(scu, stock);
+  if(demand!=null && demand>0) scu = Math.min(scu, demand);
+  scu = Math.max(0, scu);
+  const cost = scu*buy, revenue = scu*sell, gross = revenue - cost;
+  const fees = (num(p.fuelCost)||0) + (num(p.otherCost)||0);
+  const net = gross - fees;
+  const emptyCost = num(p.emptyCost)||0;
+  const netFirst = net - emptyCost;
+  const roi = cost>0 ? net/cost*100 : null;
+  const dBuy = num(o.buy)!=null && u.buy ? (num(o.buy)-u.buy)/u.buy*100 : null;
+  const dSell = num(o.sell)!=null && u.sell ? (num(o.sell)-u.sell)/u.sell*100 : null;
+  const complete = num(o.buy)!=null && num(o.sell)!=null;
+  const breakEvenTrips = net>0 && emptyCost>0 ? emptyCost/net : null;
+  let verdict = {cls:'none', txt:'À compléter'};
+  if(complete){
+    if(net<=0) verdict = {cls:'bad', txt:'Non rentable'};
+    else if(net < settings.minNet) verdict = {cls:'warn', txt:'Limite'};
+    else verdict = {cls:'good', txt:'Rentable'};
+  }
+  const drift = [dBuy,dSell].some(d=>d!=null && Math.abs(d)>settings.tolerance);
+  return {buy,sell,stock,scu,cost,revenue,gross,fees,net,netFirst,roi,dBuy,dSell,complete,verdict,drift,breakEvenTrips};
+}
+
+function pct(d){ if(d==null) return ''; const cls = Math.abs(d)>settings.tolerance ? 'neg' : 'muted'; return `<span class="${cls}">${d>0?'+':''}${nf1.format(d)} % vs UEX</span>`; }
+
+const ST = {pending:['warn','En cours'], ok:['good','Validée'], ko:['bad','Rejetée']};
+
+function nowHtml(g){
+  const last = g.last, u = currentUex(last);
+  if(!u) return `<b>Prix UEX du jour :</b> <span class="muted">cette route n'apparaît plus dans les prix UEX actuels (marchandise retirée d'un des terminaux ?). À vérifier en jeu.</span>`;
+  const e = uexEstimate(last.params, u);
+  const lastDone = g.list.find(c=>calcCheck(c).complete);
+  let cmp = '';
+  if(lastDone){
+    const ref = calcCheck(lastDone).net, d = e.net - ref, pc = ref ? d/Math.abs(ref)*100 : 0;
+    cmp = ` · <span class="${d>=0?'pos':'neg'}">${d>=0?'+':''}${fmt(d)} aUEC (${d>=0?'+':''}${nf1.format(pc)} %)</span> par rapport à votre contrôle du ${new Date(lastDone.created).toLocaleDateString(LOC)}`;
+  }
+  const ok = e.net > 0 && e.net >= settings.minNet;
+  return `<b>Prix UEX du jour :</b> achat ${fmt(u.buy)} · vente ${fmt(u.sell)} → marge <span class="pos">${fmt(u.sell-u.buy)} /SCU</span> ·
+    bénéfice estimé <b class="${e.net>0?'pos':'neg'}">${fmt(e.net)} aUEC</b> pour ${fmt(e.scu)} SCU${cmp}
+    <div style="margin-top:6px"><span class="verdict ${ok?'good':(e.net>0?'warn':'bad')}">${ok?'Toujours intéressante selon UEX':(e.net>0?'Marge en baisse selon UEX':'Plus rentable selon UEX')}</span>
+    <span class="muted" style="font-size:12px"> données UEX ${u.age<1?'de moins d\'1 h':'d\'il y a '+(u.age<48?Math.round(u.age)+' h':Math.round(u.age/24)+' j')}</span></div>`;
+}
+
+function histRows(g, sel){
+  return g.list.map(c=>{
+    const k = calcCheck(c), st = ST[c.status];
+    return `<tr data-entry="${c.id}" class="${c===sel?'sel':''}">
+      <td>${dateTxt(c.created)}</td>
+      <td class="num">${num(c.obs.buy)!=null?fmt(num(c.obs.buy)):'—'}</td>
+      <td class="num">${num(c.obs.sell)!=null?fmt(num(c.obs.sell)):'—'}</td>
+      <td class="num">${fmt(k.scu)}</td>
+      <td class="num ${k.complete?(k.net>=0?'pos':'neg'):''}">${k.complete?fmt(k.net):'—'}</td>
+      <td><span class="verdict ${k.verdict.cls}" style="font-size:11px;padding:2px 7px">${k.verdict.txt}</span></td>
+      <td><span class="pill ${st[0]}">${st[1]}</span></td>
+      <td><button class="btn danger small" data-act="delentry" title="Supprimer ce contrôle">×</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function editorHtml(g, c){
+  const k = calcCheck(c), u = c.uex || {};
+  return `<div class="editor" data-entry="${c.id}">
+    <h4 class="sec">Contrôle du ${dateTxt(c.created)} ${c===g.last?'':'<span class="pill">ancien contrôle</span>'}</h4>
+    <div class="steps">
+      <div class="step">
+        <h4>① Vol à vide vers le départ</h4>
+        <div class="loc" style="margin-bottom:8px">${esc(c.origin)} — ${esc(c.oloc)}</div>
+        <label>Coût du vol à vide (carburant, aUEC)<input data-f="params.emptyCost" value="${esc(c.params.emptyCost)}" inputmode="numeric"></label>
+        <label>Durée du vol à vide (min)<input data-f="params.emptyMin" value="${esc(c.params.emptyMin)}" inputmode="numeric"></label>
+      </div>
+      <div class="step">
+        <h4>② Relevé au départ (achat)</h4>
+        <label>Prix d'achat réel /SCU<input data-f="obs.buy" value="${esc(c.obs.buy)}" inputmode="numeric" placeholder="${u.buy??''}">
+          <span class="uex">UEX ce jour-là : ${fmt(u.buy)} · <span data-role="dbuy">${pct(k.dBuy)}</span></span></label>
+        <label>SCU disponibles au terminal<input data-f="obs.stock" value="${esc(c.obs.stock)}" inputmode="numeric" placeholder="${u.stock||''}">
+          <span class="uex">UEX : ${u.stock?fmt(u.stock):'?'} SCU</span></label>
+      </div>
+      <div class="step">
+        <h4>③ Relevé à l'arrivée (vente)</h4>
+        <div class="loc" style="margin-bottom:8px">${esc(c.dest)} — ${esc(c.dloc)}</div>
+        <label>Prix de vente réel /SCU<input data-f="obs.sell" value="${esc(c.obs.sell)}" inputmode="numeric" placeholder="${u.sell??''}">
+          <span class="uex">UEX ce jour-là : ${fmt(u.sell)} · <span data-role="dsell">${pct(k.dSell)}</span></span></label>
+        <label>Demande max. (SCU, optionnel)<input data-f="obs.demand" value="${esc(c.obs.demand)}" inputmode="numeric"></label>
+      </div>
+      <div class="step">
+        <h4>④ Vaisseau & frais du voyage chargé</h4>
+        <label>Capacité cargo (SCU)${c.params.ship?' — '+esc(c.params.ship):''}<input data-f="params.cargo" value="${esc(c.params.cargo)}" inputmode="numeric"></label>
+        <label>Budget (aUEC, 0 = illimité)<input data-f="params.budget" value="${esc(c.params.budget)}" inputmode="numeric"></label>
+        <label>Carburant / frais du trajet (aUEC)<input data-f="params.fuelCost" value="${esc(c.params.fuelCost)}" inputmode="numeric"></label>
+        <label>Autres frais (réparation, location…)<input data-f="params.otherCost" value="${esc(c.params.otherCost)}" inputmode="numeric"></label>
+        <label>Durée du voyage achat → vente (min, estimée)<input data-f="params.tripMin" value="${esc(c.params.tripMin)}" inputmode="numeric"></label>
+      </div>
+    </div>
+    <div class="results" data-role="results">${resultsHtml(c,k)}</div>
+    <label style="margin-top:12px">Notes<textarea data-f="notes" rows="2">${esc(c.notes)}</textarea></label>
+    <div class="row" style="margin-top:12px">
+      <button class="btn" data-act="ok">✔ Valider la route</button>
+      <button class="btn sec" data-act="ko">✖ Rejeter</button>
+      <button class="btn sec" data-act="pending">Remettre en cours</button>
+    </div>
+  </div>`;
+}
+
+function groupHtml(g, isOpen){
+  const last = g.last, kl = calcCheck(last), st = ST[last.status];
+  const sel = g.list.find(c=>c.id===state.sel[g.key]) || last;
+  return `<details class="check" data-key="${g.key}" ${isOpen?'open':''}>
+  <summary>
+    <span class="pill ${st[0]}" data-role="status">${st[1]}</span>
+    ${g.due?'<span class="pill warn">🔁 À recontrôler</span>':''}
+    <b>${esc(last.commodity)}</b>
+    <span>${esc(last.origin)} → ${esc(last.dest)}</span>
+    <span class="verdict ${kl.verdict.cls}" data-role="verdict">${kl.verdict.txt}</span>
+    <span class="muted" data-role="sumnet">${kl.complete ? 'Net '+fmt(kl.net)+' aUEC' : ''}</span>
+    <span class="muted" style="margin-left:auto;font-size:12px">${g.list.length} contrôle${g.list.length>1?'s':''} · dernier ${agoTxt(last.created)}</span>
+  </summary>
+  <div class="body">
+    <div class="nowbox">${nowHtml(g)}</div>
+    <h4 class="sec">Historique des contrôles <span class="muted" style="font-weight:400">— cliquez sur une ligne pour la revoir</span></h4>
+    <div class="histwrap"><table class="hist">
+      <thead><tr><th>Date</th><th class="num">Achat</th><th class="num">Vente</th><th class="num">SCU</th><th class="num">Bénéfice net</th><th>Verdict</th><th>Statut</th><th></th></tr></thead>
+      <tbody data-role="hist">${histRows(g, sel)}</tbody>
+    </table></div>
+    <div class="row" style="margin:10px 0 16px">
+      <button class="btn" data-act="retest">🔁 Nouveau contrôle</button>
+      <span class="hint" style="margin:0">pré-rempli avec les prix UEX du jour et vos derniers frais</span>
+      <span style="flex:1"></span>
+      <button class="btn danger small" data-act="untrack">Ne plus suivre cette route</button>
+    </div>
+    ${editorHtml(g, sel)}
+  </div></details>`;
+}
+
+function renderChecks(openKey){
+  saveChecks();
+  const wrap = $('#checksList'), gs = groups();
+  if(!gs.length){ wrap.innerHTML = '<div class="panel empty">Aucune route suivie pour l\'instant. Dans l\'onglet <b>Routes</b>, cliquez sur « Contrôler » sur une route.</div>'; return; }
+  const open = new Set($$('#checksList details[open]').map(d=>d.dataset.key)); if(openKey) open.add(openKey);
+  wrap.innerHTML = gs.map(g=>groupHtml(g, open.has(g.key))).join('');
+}
+function rerenderGroup(key){
+  const det = document.querySelector(`#checksList details[data-key="${key}"]`);
+  const g = groupOf(key);
+  saveChecks();
+  if(!det || !g){ renderChecks(); return; }
+  det.outerHTML = groupHtml(g, true);
+}
+
+function resultsHtml(c,k){
+  const kp = (label, v, cls='') => `<div class="kpi"><div class="k">${label}</div><div class="v ${cls}">${v}</div></div>`;
+  const ue = c.uex && c.uex.profit!=null ? c.uex.profit : null;
+  return [
+    kp('SCU transportables', fmt(k.scu)),
+    kp('Prix achat / vente', fmt(k.buy)+' / '+fmt(k.sell)),
+    kp('Achat total', fmt(k.cost)),
+    kp('Revenu de vente', fmt(k.revenue)),
+    kp('Bénéfice / SCU', k.buy!=null&&k.sell!=null ? fmt(k.sell-k.buy) : '—', k.sell-k.buy>=0?'pos':'neg'),
+    kp('Bénéfice net / voyage', fmt(k.net), k.net>=0?'pos':'neg'),
+    kp('Net 1er voyage (avec vol à vide)', fmt(k.netFirst), k.netFirst>=0?'pos':'neg'),
+    kp('ROI net', k.roi==null?'—':nf1.format(k.roi)+' %'),
+    kp('Durée du voyage', fmtMin(num(c.params.tripMin))),
+    kp('Écart vs estimation UEX', k.complete && ue!=null ? (k.net-ue>=0?'+':'')+fmt(k.net-ue) : '—', k.complete && ue!=null && k.net-ue<0?'neg':'pos'),
+    `<div class="kpi" style="grid-column:span 2"><div class="k">Verdict</div><div class="v"><span class="verdict ${k.verdict.cls}">${k.verdict.txt}</span>${k.drift?' <span class="pill bad">Prix UEX dépassés</span>':''}${k.breakEvenTrips!=null?` <span class="pill">${k.breakEvenTrips<=1?'vol à vide amorti dès le 1er voyage':'vol à vide amorti en '+Math.ceil(k.breakEvenTrips)+' voyages'}</span>`:''}</div></div>`
+  ].join('');
+}
+
+function setPath(obj, path, val){ const ks = path.split('.'); let o = obj; while(ks.length>1) o = o[ks.shift()]; o[ks[0]] = val; }
+
+$('#checksList').addEventListener('input', e=>{
+  const f = e.target.dataset.f; if(!f) return;
+  const ed = e.target.closest('.editor'); const c = checks.find(x=>x.id===ed.dataset.entry); if(!c) return;
+  setPath(c, f, e.target.value); saveChecks();
+  const k = calcCheck(c), det = ed.closest('details'), g = groupOf(det.dataset.key);
+  ed.querySelector('[data-role=results]').innerHTML = resultsHtml(c,k);
+  ed.querySelector('[data-role=dbuy]').innerHTML = pct(k.dBuy); ed.querySelector('[data-role=dsell]').innerHTML = pct(k.dSell);
+  det.querySelector('[data-role=hist]').innerHTML = histRows(g, c);
+  const kl = calcCheck(g.last);
+  const v = det.querySelector('[data-role=verdict]'); v.className = 'verdict '+kl.verdict.cls; v.textContent = kl.verdict.txt;
+  det.querySelector('[data-role=sumnet]').textContent = kl.complete ? 'Net '+fmt(kl.net)+' aUEC' : '';
+});
+$('#checksList').addEventListener('click', async e=>{
+  const det = e.target.closest('details'); if(!det) return;
+  const key = det.dataset.key;
+  const b = e.target.closest('button[data-act]');
+  if(!b){
+    const tr = e.target.closest('tr[data-entry]');
+    if(tr){ state.sel[key] = tr.dataset.entry; rerenderGroup(key); }
+    return;
+  }
+  const act = b.dataset.act;
+  if(act==='retest'){ retest(key); return; }
+  if(act==='untrack'){ if(confirm('Ne plus suivre cette route et supprimer tout son historique ?')){ checks = checks.filter(c=>keyOf(c)!==key); renderChecks(); } return; }
+  if(act==='delentry'){
+    const id = b.closest('tr').dataset.entry;
+    if(confirm('Supprimer ce contrôle de l\'historique ?')){ checks = checks.filter(c=>c.id!==id); delete state.sel[key]; rerenderGroup(key); }
+    return;
+  }
+  const c = checks.find(x=>x.id===b.closest('.editor').dataset.entry); if(!c) return;
+  if(act==='submit'){ await submitToUex(c, b); return; }
+  c.status = act; rerenderGroup(key);
+  if(act==='ok') toast(`Route validée. Elle sera signalée « à recontrôler » dans ${+settings.retestDays||14} jours.`);
+});
+
+async function submitToUex(c, btn){
+  if(!settings.secret){ toast('Ajoutez votre secret key UEX dans Réglages pour envoyer des relevés.', true); return; }
+  const reports = [];
+  if(num(c.obs.buy)!=null){ const pr = {id_commodity:c.cid, price_buy:num(c.obs.buy)}; if(num(c.obs.stock)!=null) pr.scu_buy = num(c.obs.stock); reports.push({id_terminal:c.oid, name:c.origin, prices:[pr]}); }
+  if(num(c.obs.sell)!=null){ const pr = {id_commodity:c.cid, price_sell:num(c.obs.sell)}; if(num(c.obs.demand)!=null) pr.scu_sell = num(c.obs.demand); reports.push({id_terminal:c.oid===c.did?c.oid:c.did, name:c.dest, prices:[pr]}); }
+  if(!reports.length){ toast('Aucun prix observé à envoyer.', true); return; }
+  if(!confirm(`Envoyer ${reports.length} relevé(s) à UEX (${reports.map(r=>r.name).join(', ')}) sous votre compte ?`)) return;
+  btn.disabled = true;
+  try{
+    for(const r of reports){
+      await api('data_submit', {method:'POST', headers:{'Content-Type':'application/json','secret-key':settings.secret}, body: JSON.stringify({id_terminal:r.id_terminal, type:'commodity', is_production:1, prices:r.prices})});
+    }
+    c.submitted = Date.now(); saveChecks();
+    toast('Relevés envoyés à UEX. Merci pour la contribution !');
+  }catch(e){ toast('Envoi refusé par UEX : '+e.message, true); }
+  btn.disabled = false;
+}
+
+/* ================= UI wiring ================= */
+function showTab(name){
+  $$('nav button').forEach(b=>b.classList.toggle('on', b.dataset.tab===name));
+  $$('.tab').forEach(t=>t.classList.toggle('on', t.id==='tab-'+name));
+  try{ sessionStorage.setItem('sch.tab', name); }catch(e){}
+  if(name==='contracts') renderContracts();
+  if(name==='signatures') renderSignatures();
+  if(name==='location') renderLocation();
+}
+$$('nav button').forEach(b=>b.addEventListener('click', ()=>showTab(b.dataset.tab)));
+
+/* ================= RESSOURCES ================= */
+let resRows = [];
+var resRev = !!(LS.get('resFilters', {}).rev);   // inverse le sens du tri
+// Tri par clé, valeurs absentes toujours en bas
+function cmpKey(f, desc){ return (a,b)=>{ const x = f(a), y = f(b); if(x==null || y==null) return (x==null)-(y==null); const d = typeof x==='string' ? x.localeCompare(y,'fr') : x-y; return desc ? -d : d; }; }
+function sigBaseFor(name){ const k = sigKeyFor(name); if(!k) return null; const r = MINING.R.find(x=>x[0]+'|'+x[1]===k), si = r && sigInfo(r); return si ? si.base : null; }
+const RES_KEY = {name:r=>r.name, scu:r=>r.margin, load:r=>r.load, roi:r=>r.roi, worst:r=>r.worst.margin, sell:r=>r.sell, sig:r=>sigBaseFor(r.name)};
+const resNatDesc = s => !['name','sig'].includes(s);
+const resGrp = s => ['scu','load','worst','roi'].includes(s) ? 'ben' : s;
+function renderResHead(){
+  const s = $('#rSort').value, desc = resNatDesc(s)!==resRev;
+  $$('#resHead button').forEach(b=>{ const on = b.dataset.s===resGrp(s); b.classList.toggle('on', on); b.textContent = b.textContent.replace(/ [▲▼]$/,'') + (on ? (desc?' ▼':' ▲') : ''); });
+}
+function computeResources(){
+  if(!state.prices.length) return;
+  const sysFrom = $('#rSysFrom').value, sysTo = $('#rSysTo').value, maxAge = num($('#rMaxAge').value)||0, q = $('#rSearch').value.trim().toLowerCase();
+  const hideSo = $('#rHideSo').checked, ill = $('#rIllegal').value, noFull = $('#rNoFull').checked, sort = $('#rSort').value, stOnly = $('#rStationsOnly').checked;
+  LS.set('resFilters', {sysFrom, sysTo, stOnly, maxAge, ill, noFull, hideSo, sort, rev:resRev});
+  const ship = currentShip();
+  $('#rInfo').textContent = `Chargement de ${fmt(filters.cargo)} SCU${ship?' ('+ship.name+')':''}${filters.budget>0?' · budget '+fmt(filters.budget)+' aUEC':''} `;
+  const avg = filters.priceMode==='avg', now = Date.now()/1000, T = state.terminals, C = state.commodities;
+  const best = {};
+  for(const p of state.prices){
+    const t = T[p.id_terminal]; if(!t || !t.is_available_live) continue;
+    if(stOnly && termKind(t)!=='station') continue;
+    if(maxAge>0 && now-p.date_modified > maxAge*3600) continue;
+    const bp = (sysFrom && t.star_system_name!==sysFrom) ? 0 : (avg ? (p.price_buy_avg||p.price_buy) : p.price_buy);
+    const sp = (sysTo && t.star_system_name!==sysTo) ? 0 : (avg ? (p.price_sell_avg||p.price_sell) : p.price_sell);
+    const e = best[p.id_commodity] ||= {cid:p.id_commodity, buy:null, sell:null, buyMax:null, sellMin:null, nb:0, ns:0, buys:[], sells:[]};
+    if(bp>0) e.buys.push({price:bp, t, p});
+    if(sp>0) e.sells.push({price:sp, t, p, full: p.status_sell===7});
+    if(bp>0){ e.nb++; if(!e.buy || bp < e.buy.price) e.buy = {price:bp, t, p}; if(!e.buyMax || bp > e.buyMax.price) e.buyMax = {price:bp, t, p}; }
+    if(sp>0 && !(noFull && p.status_sell===7)){ e.ns++; if(!e.sell || sp > e.sell.price) e.sell = {price:sp, t, p}; if(!e.sellMin || sp < e.sellMin.price) e.sellMin = {price:sp, t, p}; }
+  }
+  const rows = [], so = []; let noMargin = 0;
+  const buyable = new Set(state.prices.filter(p=>p.price_buy>0 || p.price_buy_avg>0).map(p=>p.id_commodity));
+  for(const e of Object.values(best)){
+    const c = C[e.cid]; if(!c) continue;
+    if(ill==='hide' && c.is_illegal) continue;
+    if(ill==='only' && !c.is_illegal) continue;
+    if(q && !c.name.toLowerCase().includes(q)) continue;
+    // Vente seule : ne s'achète à aucun terminal (minage, récupération…)
+    if(!buyable.has(e.cid)){
+      if(e.sell && !hideSo) so.push({sellOnly:true, cid:e.cid, name:c.name, illegal:c.is_illegal, kind:c.kind, sells:e.sells.sort((a,b)=>b.price-a.price),
+        d:e.sell.t, sell:e.sell.price, sellMin:e.sellMin, ns:e.ns, scu:filters.cargo, load:filters.cargo*e.sell.price, statusSell:e.sell.p.status_sell,
+        boxSell: boxList(e.sell.p.container_sizes, e.sell.t.max_container_size), age:(now-e.sell.p.date_modified)/3600});
+      continue;
+    }
+    // Route choisie par l'utilisateur (clic dans le détail), sinon la meilleure
+    const pk = resPick[e.cid] || {};
+    const cb = (pk.b && e.buys.find(x=>x.t.id===pk.b)) || e.buy;
+    const cs = (pk.s && e.sells.find(x=>x.t.id===pk.s)) || e.sell;
+    if(!cb || !cs || !e.buyMax || !e.sellMin) continue;
+    const pickB = cb!==e.buy, pickS = cs!==e.sell, custom = pickB || pickS;
+    const margin = cs.price - cb.price;
+    if(margin <= 0 && !custom){ noMargin++; continue; }
+    const stock = cb.p.scu_buy>0 ? cb.p.scu_buy : (cb.p.scu_buy_avg||0);
+    let scu = filters.cargo, limit = '';
+    if(filters.budget>0 && Math.floor(filters.budget/cb.price) < scu){ scu = Math.floor(filters.budget/cb.price); limit = 'budget'; }
+    // Pire des cas : achat au terminal le plus cher, vente au terminal le moins cher
+    const wMargin = e.sellMin.price - e.buyMax.price;
+    let wScu = filters.cargo; if(filters.budget>0) wScu = Math.min(wScu, Math.floor(filters.budget/e.buyMax.price));
+    const worst = { buy:e.buyMax.price, sell:e.sellMin.price, bt:e.buyMax.t, st:e.sellMin.t, margin:wMargin, scu:wScu, load:wScu*wMargin, invest:wScu*e.buyMax.price };
+    rows.push({ id: e.cid+':'+cb.t.id+':'+cs.t.id, cid:e.cid, name:c.name, illegal:c.is_illegal, kind:c.kind, limit, worst,
+      buys: e.buys.sort((a,b)=>a.price-b.price), sells: e.sells.sort((a,b)=>b.price-a.price),
+      pickB, pickS, custom, bestMargin: e.buy && e.sell ? e.sell.price - e.buy.price : null,
+      o:cb.t, d:cs.t, buy:cb.price, sell:cs.price, margin, scu, stock, nb:e.nb, ns:e.ns,
+      invest: scu*cb.price, load: scu*margin, roi: margin/cb.price*100, statusSell:cs.p.status_sell,
+      boxBuy: boxList(cb.p.container_sizes, cb.t.max_container_size), boxSell: boxList(cs.p.container_sizes, cs.t.max_container_size),
+      dk: distKey(cb.t.id, cs.t.id),
+      age: Math.max(now-cb.p.date_modified, now-cs.p.date_modified)/3600 });
+  }
+  rows.forEach(r=>{ applyDist(r); r.start = startLeg(r.o); });
+  const cmp = cmpKey(RES_KEY[sort]||RES_KEY.scu, resNatDesc(sort)!==resRev);
+  let all;
+  if(['name','sell','sig'].includes(sort)) all = rows.concat(so).sort(cmp);   // routes et vente seule mélangées
+  else { rows.sort(cmp); all = rows.concat(so.sort((a,b)=>b.sell-a.sell)); }   // vente seule en bas
+  all.sort((a,b)=>resPins.has(b.cid)-resPins.has(a.cid));
+  rows.sort((a,b)=> (resPins.has(b.cid)-resPins.has(a.cid)) || cmp(a,b)); resRows = rows;
+  renderResHead();
+  $('#resCount').textContent = `(${rows.length}${so.length?` + ${so.length} en vente seule`:''}${noMargin?` · ${noMargin} sans bénéfice possible, masquées`:''})`;
+  const gmap = new Map(groups().map(g=>[g.key, g]));
+  $('#resList').innerHTML = all.length ? all.map(r=>r.sellOnly ? soCardHtml(r) : `<div class="route res ${resOpen.has(r.cid)?'open':''} ${resPins.has(r.cid)?'pinned':''}" data-cid="${r.cid}">
+    <div class="c-com"><button class="pin ${resPins.has(r.cid)?'on':''}" data-rpin="${r.cid}" title="${resPins.has(r.cid)?'Désépingler':'Épingler en haut'}">📌</button> <span class="tog">${resOpen.has(r.cid)?'▾':'▸'}</span> <span class="com">${esc(r.name)}</span> ${(k=>k?`<button class="lnk" data-gosig="${esc(k)}" title="Voir la signature de scan">📡</button> `:'')(sigKeyFor(r.name))}${r.kind?`<span class="pill">${esc(r.kind)}</span>`:''} ${r.illegal?'<span class="pill ill">illégal</span>':''} <span class="muted hintclick">${resOpen.has(r.cid)?'cliquez pour refermer':'cliquez pour voir tous les lieux'}</span></div>
+    <div class="c-dep">
+      <div class="lbl">${r.pickB?'<span class="accent">Achat choisi</span>':'Moins cher à l\'achat'}</div>
+      <div>${tName(r.o)} <span class="pill">${KIND_LABEL[termKind(r.o)]}</span></div>
+      <div class="loc">${esc(termLoc(r.o))}</div>
+      <div class="price">${fmt(r.buy)} <small>aUEC /SCU</small></div>
+      <div class="sub">stock relevé ${r.stock?fmt(r.stock)+' SCU':'inconnu'} (indicatif) · ${r.nb} lieu${r.nb>1?'x':''} d'achat</div>
+      ${boxHtml(r.boxBuy, 'Caisses à l\'achat')}
+    </div>
+    <div class="c-arr">
+      <div class="lbl">${r.pickS?'<span class="accent">Vente choisie</span>':'Plus cher à la vente'}</div>
+      <div>${tName(r.d)} <span class="pill">${KIND_LABEL[termKind(r.d)]}</span> ${r.o.star_system_name!==r.d.star_system_name?'<span class="pill warn">saut</span>':''}</div>
+      <div class="loc">${esc(termLoc(r.d))}</div>
+      <div class="price">${fmt(r.sell)} <small>aUEC /SCU</small></div>
+      <div class="sub">${STATUS[r.statusSell]?'inventaire '+STATUS[r.statusSell].toLowerCase():'inventaire ?'} · ${r.ns} lieu${r.ns>1?'x':''} de vente</div>
+      ${boxHtml(r.boxSell, 'Caisses à la vente')}
+    </div>
+    <div class="c-ben">
+      <div class="lbl">Bénéfice${r.custom?' — route choisie':''}</div>
+      <div class="big ${r.margin>0?'pos':'neg'}">${fmt(r.margin)} <small>aUEC /SCU</small></div>
+      <div class="price ${r.load>0?'pos':'neg'}" style="margin-top:4px">${fmt(r.load)} <small>aUEC / chargement plein</small></div>
+      ${r.custom && r.bestMargin!=null ? `<div class="sub">meilleure route : ${fmt(r.bestMargin)} /SCU (${r.margin-r.bestMargin>=0?'+':''}${fmt(r.margin-r.bestMargin)})</div>` : ''}
+      <div class="cost">Achat total <span class="nw"><b>${fmt(r.invest)}</b> <small>aUEC</small></span></div>
+      <div class="sub">pour ${fmt(r.scu)} SCU · ROI ${nf1.format(r.roi)} %</div>
+      ${r.limit==='budget' ? `<div class="sub" style="color:var(--warn)">limité par votre budget de ${fmt(filters.budget)} aUEC</div>` : ''}
+      <div class="worst">
+        <div class="lbl">Pire des cas</div>
+        <div class="price ${r.worst.margin>0?'warnc':'neg'}">${r.worst.margin>0?'':'−'}${fmt(Math.abs(r.worst.margin))} <small>aUEC /SCU</small></div>
+        <div class="sub"><b class="${r.worst.load>0?'warnc':'neg'}">${r.worst.load>0?'':'−'}${fmt(Math.abs(r.worst.load))}</b> aUEC / chargement plein · achat total ${fmt(r.worst.invest)}</div>
+        <div class="sub">achat le plus cher : ${esc(termName(r.worst.bt))} à ${fmt(r.worst.buy)} · vente la moins chère : ${esc(termName(r.worst.st))} à ${fmt(r.worst.sell)}</div>
+        ${r.worst.margin<=0?'<div class="sub neg">perte possible si vous vous trompez de terminal</div>':''}
+      </div>
+    </div>
+    <div class="c-tps">
+      <div class="lbl">Trajet total</div>
+      ${(st=>!st ? `<div class="big" style="font-weight:500">${r.time!=null ? (r.distApprox?'≈ ':'')+fmtMin(r.time) : '—'}</div>`
+        : `<div class="big" style="font-weight:500">${r.time==null ? '—' : st.time!=null ? ((r.distApprox||st.approx)?'≈ ':'')+fmtMin(r.time+st.time) : fmtMin(r.time)+(st.unknown?'':' + ?')}</div>
+        <div class="sub">${st.unknown ? `<span class="warnc">départ « ${esc(st.name)} » introuvable</span>` : `dont <b>${st.time!=null ? (st.approx?'≈ ':'')+fmtMin(st.time) : (st.pending && !distDisabled ? '…' : '?')}</b> pour rejoindre ${esc(termName(r.o))}${st.gm!=null && st.gm>0 ? ' ('+(st.approx?'≈ ':'')+nf1.format(st.gm)+' Gm)' : ''}`}</div>`)(r.start)}
+      <div class="sub">${r.dist!=null ? (r.distApprox?'≈ ':'')+nf1.format(r.dist)+' Gm'+(r.distApprox?' (même planète)':'') : (r.distPending && !distDisabled ? 'distance en cours…' : 'distance inconnue')}</div>
+      <div class="sub">${r.start && !r.start.unknown ? 'départ → achat → vente' : 'achat + vol + vente'}, chargement compris</div>
+    </div>
+    <div class="act">${r.custom?`<span class="pill acc">route choisie</span><button class="btn sec small" data-reset="${r.cid}" title="Revenir à la meilleure route">↺ Meilleure route</button>`:''}${(g=>!g?'':g.due?'<span class="pill warn">🔁 à recontrôler</span>':g.last.status==='ok'?'<span class="pill good">✔ validée</span>':g.last.status==='ko'?'<span class="pill bad">✖ rejetée</span>':'<span class="pill warn">en cours</span>')(gmap.get(r.id))}${ageBadge(r.age)}${(k=>`<button class="btn sec small" data-route="${r.id}" title="${k?'Retirer cette route de mes contrats':'Ajouter cette route (achat → vente) à l\'onglet Contrats / Route'}">${k?'✔ Dans ma route':'➕ Ma route'}</button>`)(resContract(r))}<button class="btn small" data-res="${r.id}">Contrôler</button></div>
+    ${resOpen.has(r.cid) ? resDetailHtml(r) : ''}
+  </div>`).join('') : '<div class="empty">Aucune ressource ne correspond.</div>';
+  resAutoDistances();
+}
+// Contrat actif créé depuis cette route de ressource
+function resContract(r){ return contracts.find(c=>!c.done && c.res===r.cid && c.from===termName(r.o) && c.to===termName(r.d)); }
+const resOpen = new Set(LS.get('resOpen', []));
+const resPins = new Set(LS.get('resPins', []));   // ressources épinglées en haut de la liste
+const resPick = LS.get('resPick', {});   // {cid: {b: id terminal d'achat, s: id terminal de vente}}
+function chipsHtml(list){
+  if(!list.length) return '<span class="muted">?</span>';
+  const max = list[list.length-1];
+  return `<span class="chips">${[1,2,4,8,16,24,32].map(n=>`<span class="box ${list.includes(n)?(n===max?'on max':'on'):''}">${n}</span>`).join('')}</span>`;
+}
+// Carte « vente seule » : ressource qu'aucun terminal ne vend (minage, récupération…)
+function soCardHtml(r){
+  const open = resOpen.has(r.cid), pin = resPins.has(r.cid), now = Date.now()/1000, sk = sigKeyFor(r.name);
+  const rowsH = r.sells.map((x,i)=>`<tr class="${i===0?'best':''}${x.full?' fullrow':''}">
+      <td class="pl">${tName(x.t)} <span class="pill">${KIND_LABEL[termKind(x.t)]}</span><div class="loc">${esc(termLoc(x.t))}</div></td>
+      <td class="num">${fmt(x.price)}</td>
+      <td class="num ${i?'neg':'pos'}">${i ? '−'+fmt(r.sell-x.price) : 'meilleur'}</td>
+      <td>${chipsHtml(boxList(x.p.container_sizes, x.t.max_container_size))}</td>
+      <td>${x.full?'<span class="pill bad">plein</span>':(STATUS[x.p.status_sell]?esc(STATUS[x.p.status_sell].toLowerCase()):'?')}</td>
+      <td>${ageBadge((now-x.p.date_modified)/3600)}</td></tr>`).join('');
+  return `<div class="route res so ${open?'open':''} ${pin?'pinned':''}" data-cid="${r.cid}">
+    <div class="c-com"><button class="pin ${pin?'on':''}" data-rpin="${r.cid}" title="${pin?'Désépingler':'Épingler en haut'}">📌</button> <span class="tog">${open?'▾':'▸'}</span> <span class="com">${esc(r.name)}</span> ${sk?`<button class="lnk" data-gosig="${esc(sk)}" title="Voir la signature de scan">📡</button> `:''}${r.kind?`<span class="pill">${esc(r.kind)}</span>`:''} ${r.illegal?'<span class="pill ill">illégal</span>':''} <span class="muted hintclick">${open?'cliquez pour refermer':'cliquez pour voir tous les lieux de vente'}</span></div>
+    <div class="c-dep">
+      <div class="lbl">Achat</div>
+      <div class="name muted">Aucun terminal ne le vend</div>
+      <div class="sub">S'obtient en minant ou en récupérant, puis se revend.</div>
+    </div>
+    <div class="c-arr">
+      <div class="lbl">Plus cher à la vente</div>
+      <div>${tName(r.d)} <span class="pill">${KIND_LABEL[termKind(r.d)]}</span></div>
+      <div class="loc">${esc(termLoc(r.d))}</div>
+      <div class="price">${fmt(r.sell)} <small>aUEC /SCU</small></div>
+      <div class="sub">${STATUS[r.statusSell]?'inventaire '+STATUS[r.statusSell].toLowerCase():'inventaire ?'} · ${r.ns} lieu${r.ns>1?'x':''} de vente</div>
+      ${boxHtml(r.boxSell, 'Caisses à la vente')}
+    </div>
+    <div class="c-ben">
+      <div class="lbl">Valeur d'un chargement</div>
+      <div class="big pos">${fmt(r.load)} <small>aUEC</small></div>
+      <div class="sub">${fmt(r.scu)} SCU vendus à ${esc(termName(r.d))}</div>
+      <div class="worst">
+        <div class="lbl">Vente la moins chère</div>
+        <div class="price warnc">${fmt(r.sellMin.price)} <small>aUEC /SCU</small></div>
+        <div class="sub">${esc(termName(r.sellMin.t))}</div>
+      </div>
+    </div>
+    <div class="c-tps"><div class="lbl">Trajet</div><div class="sub">dépend de l'endroit où vous minez</div></div>
+    <div class="act"><span class="pill">vente seule</span>${ageBadge(r.age)}</div>
+    ${open ? `<div class="rdetail" style="grid-template-columns:minmax(0,1fr)"><div>
+      <h4 class="sec">Où vendre · ${r.sells.length} lieu${r.sells.length>1?'x':''}</h4>
+      <div class="histwrap"><table class="hist dtab"><thead><tr><th>Terminal</th><th class="num">Vente /SCU</th><th class="num">Écart</th><th>Caisses acceptées</th><th>Inventaire</th><th>Données</th></tr></thead><tbody>${rowsH}</tbody></table></div>
+    </div></div>` : ''}
+  </div>`;
+}
+function resDetailHtml(r){
+  const now = Date.now()/1000;
+  const placeCell = x => `<td class="pl">${tName(x.t)} <span class="pill">${KIND_LABEL[termKind(x.t)]}</span>${x.t.star_system_name!==r.o.star_system_name?` <span class="pill warn">${esc(x.t.star_system_name)}</span>`:''}<div class="loc">${esc(termLoc(x.t))}</div></td>`;
+  const stockOf = p => p.scu_buy>0 ? p.scu_buy : (p.scu_buy_avg||0);
+  const cls = (i, n) => (i===0?'best':'') + (i===n-1 && i>0 ? ' worstrow' : '');
+  const mg = v => `<td class="num ${v>0?'pos':'neg'}">${v>0?'+':''}${fmt(v)}</td>`;
+  const mark = on => `<span class="radio ${on?'on':''}"></span>`;
+  const buyRows = r.buys.map((x,i)=>{ const on = x.t.id===r.o.id; return `<tr class="${cls(i, r.buys.length)}${on?' pick':''}" data-pick="b:${x.t.id}" title="Acheter ici">
+      <td class="rd">${mark(on)}</td>${placeCell(x)}
+      <td class="num">${fmt(x.price)}</td>
+      ${mg(r.sell - x.price)}
+      <td>${chipsHtml(boxList(x.p.container_sizes, x.t.max_container_size))}</td>
+      <td class="num">${stockOf(x.p) ? fmt(stockOf(x.p))+' SCU' : '?'}</td>
+      <td>${ageBadge((now-x.p.date_modified)/3600)}</td></tr>`; }).join('');
+  const sellRows = r.sells.map((x,i)=>{ const on = x.t.id===r.d.id; return `<tr class="${cls(i, r.sells.length)}${x.full?' fullrow':''}${on?' pick':''}" data-pick="s:${x.t.id}" title="Vendre ici">
+      <td class="rd">${mark(on)}</td>${placeCell(x)}
+      <td class="num">${fmt(x.price)}</td>
+      ${mg(x.price - r.buy)}
+      <td>${chipsHtml(boxList(x.p.container_sizes, x.t.max_container_size))}</td>
+      <td>${x.full?'<span class="pill bad">plein</span>':(STATUS[x.p.status_sell]?esc(STATUS[x.p.status_sell].toLowerCase()):'?')}</td>
+      <td>${ageBadge((now-x.p.date_modified)/3600)}</td></tr>`; }).join('');
+  return `<div class="rdetail">
+    <div>
+      <h4 class="sec">Où acheter · ${r.buys.length} lieu${r.buys.length>1?'x':''} <span class="muted" style="font-weight:400">cliquez pour choisir · marge si vendu à ${esc(termName(r.d))}</span></h4>
+      <div class="histwrap"><table class="hist dtab"><thead><tr><th></th><th>Terminal</th><th class="num">Achat /SCU</th><th class="num">Marge /SCU</th><th>Caisses acceptées</th><th class="num">Stock</th><th>Données</th></tr></thead><tbody>${buyRows}</tbody></table></div>
+    </div>
+    <div>
+      <h4 class="sec">Où vendre · ${r.sells.length} lieu${r.sells.length>1?'x':''} <span class="muted" style="font-weight:400">cliquez pour choisir · marge si acheté à ${esc(termName(r.o))}</span></h4>
+      <div class="histwrap"><table class="hist dtab"><thead><tr><th></th><th>Terminal</th><th class="num">Vente /SCU</th><th class="num">Marge /SCU</th><th>Caisses acceptées</th><th>Inventaire</th><th>Données</th></tr></thead><tbody>${sellRows}</tbody></table></div>
+    </div>
+  </div>`;
+}
+function boxList(csv, termMax){
+  let a = csv ? String(csv).split(',').map(Number).filter(n=>n>0) : [];
+  if(!a.length && termMax>0) a = [1,2,4,8,16,24,32].filter(n=>n<=termMax);
+  return [...new Set(a)].sort((x,y)=>x-y);
+}
+function boxHtml(list, label){
+  if(!list.length) return `<div class="boxes"><div class="bl">${label} : inconnues</div></div>`;
+  const max = list[list.length-1];
+  return `<div class="boxes"><div class="bl">${label} · <b>max ${max} SCU</b></div><div class="chips">${[1,2,4,8,16,24,32].map(n=>`<span class="box ${list.includes(n)?(n===max?'on max':'on'):''}">${n}</span>`).join('')}</div></div>`;
+}
+let resDistBusy = false;
+async function resAutoDistances(){
+  if(resDistBusy || distDisabled) return;
+  const todo = new Map();
+  resRows.slice(0,40).forEach(r=>{
+    if(state.distances[r.dk]==null) todo.set(r.dk, [r.o.id, r.d.id]);
+    if(r.start && r.start.pending) todo.set(distKey(r.start.st.id, r.o.id), [r.start.st.id, r.o.id]);
+  });
+  if(!todo.size) return;
+  resDistBusy = true;
+  for(const [dk, [a, b]] of todo){
+    if(state.distances[dk]!=null) continue;
+    try{ await fetchDistance(a, b); }catch(e){ toast('Distances indisponibles : '+e.message, true); distDisabled = true; break; }
+    await new Promise(res=>setTimeout(res,200));
+  }
+  resDistBusy = false;
+  computeResources();
+}
+(function initRes(){
+  const rs = LS.get('resFilters', {});
+  if(rs.maxAge!=null) $('#rMaxAge').value = rs.maxAge;
+  $('#rIllegal').value = rs.ill || (rs.noIll===false ? 'show' : 'hide');
+  if(rs.noFull!=null) $('#rNoFull').checked = rs.noFull;
+  if(rs.stOnly!=null) $('#rStationsOnly').checked = rs.stOnly;
+  if(rs.hideSo!=null) $('#rHideSo').checked = rs.hideSo;
+  if(rs.sort) $('#rSort').value = rs.sort;
+})();
+let rdeb;
+$('#tab-resources .panel').addEventListener('input', e=>{
+  if(e.target.id==='fShip'){ filters.ship = e.target.value; const v = state.vehicles.find(x=>'v'+x.id===e.target.value); if(v) filters.cargo = v.scu; LS.set('filters', filters); applyFiltersToForm(); }
+  if(e.target.id==='rCargo'){ const v = num(e.target.value); if(v>0){ filters.cargo = v; filters.ship = ''; LS.set('filters', filters); $('#fShip').value = ''; } }
+  if(e.target.id==='fBudget'){ filters.budget = num(e.target.value)||0; LS.set('filters', filters); }
+  if(e.target.id==='fPriceMode'){ filters.priceMode = e.target.value; LS.set('filters', filters); }
+  if(e.target.id==='rSort') resRev = false;
+  if(e.target.id==='rStart'){ LS.set('contractStart', e.target.value.trim()); $('#cStart').value = e.target.value; renderContracts(); }
+  clearTimeout(rdeb); rdeb = setTimeout(computeResources, 150);
+});
+// Recalcule la liste en gardant la carte cliquée au même endroit de l'écran (la liste se retrie après un clic)
+function rerenderKeeping(cid){
+  const sel = `.route.res[data-cid="${cid}"]`, before = document.querySelector(sel), top = before ? before.getBoundingClientRect().top : null;
+  computeResources();
+  const after = document.querySelector(sel);
+  if(after && top!=null) window.scrollBy(0, after.getBoundingClientRect().top - top);
+}
+$('#resList').addEventListener('click', e=>{
+  const tl = e.target.closest('[data-term]');
+  if(tl){ e.preventDefault(); e.stopPropagation(); goToLoc('t:'+tl.dataset.term); return; }
+  const gs = e.target.closest('button[data-gosig]');
+  if(gs){ e.stopPropagation(); goToSig(gs.dataset.gosig); return; }
+  const pb = e.target.closest('button[data-rpin]');
+  if(pb){ e.stopPropagation(); const c = +pb.dataset.rpin; resPins.has(c) ? resPins.delete(c) : resPins.add(c); LS.set('resPins', [...resPins]); rerenderKeeping(c); return; }
+  const tr = e.target.closest('tr[data-pick]');
+  if(tr){
+    const cid = +tr.closest('.route.res').dataset.cid, [side, tid] = tr.dataset.pick.split(':');
+    resPick[cid] = Object.assign({}, resPick[cid], {[side]: +tid});
+    LS.set('resPick', resPick); rerenderKeeping(cid);
+    return;
+  }
+  const rt = e.target.closest('button[data-route]');
+  if(rt){
+    const x = resRows.find(r=>r.id===rt.dataset.route); if(!x) return;
+    const k = resContract(x);
+    if(k){ contracts = contracts.filter(c=>c!==k); toast(`${x.name} retiré de ta route.`); }
+    else {
+      contracts.push({id:'k'+Date.now(), name:x.name, res:x.cid, from:termName(x.o), to:termName(x.d), scu:x.scu, buy:x.buy, sell:x.sell, done:false, created:Date.now()});
+      toast(`${x.name} ajouté à ta route : ${fmt(x.scu)} SCU, ${termName(x.o)} → ${termName(x.d)}. Voir l'onglet Contrats / Route.`);
+    }
+    fillLocList(); renderContracts(); rerenderKeeping(x.cid);
+    return;
+  }
+  const rb = e.target.closest('button[data-reset]');
+  if(rb){ const c = +rb.dataset.reset; delete resPick[c]; LS.set('resPick', resPick); rerenderKeeping(c); return; }
+  const b = e.target.closest('button[data-res]');
+  if(!b){
+    if(e.target.closest('.rdetail') || e.target.closest('a,input,select,button')) return;
+    const card = e.target.closest('.route.res'); if(!card) return;
+    const cid = +card.dataset.cid;
+    resOpen.has(cid) ? resOpen.delete(cid) : resOpen.add(cid);
+    LS.set('resOpen', [...resOpen]);
+    rerenderKeeping(cid);
+    return;
+  }
+  const x = resRows.find(r=>r.id===b.dataset.res); if(!x) return;
+  let r = null;
+  if(!r){
+    r = { id:x.id, cid:x.cid, commodity:x.name, illegal:x.illegal, o:x.o, d:x.d, origin:termName(x.o), dest:termName(x.d),
+      buy:x.buy, sell:x.sell, margin:x.margin, scu: x.scu, stock:x.stock, statusSell:x.statusSell,
+      dk: distKey(x.o.id, x.d.id) };
+    r.profit = r.scu * r.margin; applyDist(r);
+  }
+  createCheck(r);
+});
+$('#btnRefresh').addEventListener('click', ()=>loadAll(true));
+$('#resHead').addEventListener('click', e=>{
+  const b = e.target.closest('button[data-s]'); if(!b) return;
+  const cur = $('#rSort').value, s = b.dataset.s;
+  if(resGrp(cur)===s) resRev = !resRev;
+  else { resRev = false; $('#rSort').value = s==='ben' ? 'scu' : s; }
+  computeResources();
+});
+$('#resCloseAll').addEventListener('click', ()=>{ resOpen.clear(); LS.set('resOpen', []); computeResources(); });
+$('#sgCloseAll').addEventListener('click', ()=>{ sgOpen.clear(); renderSignatures(); });
+
+/* ================= CONTRATS DE HAULING ================= */
+let contracts = LS.get('contracts', []);
+const locKey = s => String(s||'').trim().toLowerCase();
+// Lieux que UEX ne connaît pas : sites Hathor (OLP en orbite, PAF au sol) + lieux ajoutés par l'utilisateur
+const HATHOR = [['Vivere','Hurston','Aberdeen'],['Ruptura','Hurston','Aberdeen'],['Attritus','Crusader','Daymar'],['Lamina','Crusader','Daymar']];
+const BUILTIN_LOCS = HATHOR.flatMap(([n, planet, moon])=>[[' OLP','station'],[' PAF-I','outpost'],[' PAF-II','outpost'],[' PAF-III','outpost']]
+  .map(([suf, kind])=>({name:n+suf, sys:'Stanton', planet, kind, note:moon+' (Hathor)', builtin:true})));
+let customLocs = LS.get('customLocs', []);
+const extraLocs = () => BUILTIN_LOCS.concat(customLocs);
+const KIND_TXT = {station:'en orbite', outpost:'au sol', city:'ville'};
+// Station UEX de la même planète, utilisée pour estimer les distances
+function proxyTerm(sys, planet){
+  const ts = Object.values(state.terminals).filter(t=>t.star_system_name===sys && (t.planet_name||t.orbit_name)===planet);
+  return ts.find(t=>t.id_space_station>0) || ts[0] || null;
+}
+function renderLocBox(){
+  const planets = [...new Set(Object.values(state.terminals).filter(t=>t.star_system_name && (t.planet_name||t.orbit_name)).map(t=>t.star_system_name+'|'+(t.planet_name||t.orbit_name)))].sort();
+  const sel = $('#xPlanet'), cur = sel.value;
+  sel.innerHTML = planets.map(v=>`<option value="${esc(v)}">${esc(v.replace('|',' › '))}</option>`).join('');
+  if(cur) sel.value = cur;
+  $('#locBoxSum').textContent = `${extraLocs().length} lieux`;
+  const row = (x, i) => `<tr><td><b>${esc(x.name)}</b></td><td>${esc(x.sys)} › ${esc(x.planet)}${x.note?` <span class="muted">(${esc(x.note)})</span>`:''}</td><td>${KIND_TXT[x.kind]||''}</td>
+    <td>${x.builtin?'<span class="muted">intégré</span>':`<button class="btn danger small" data-xdel="${i}" title="Supprimer">×</button>`}</td></tr>`;
+  $('#xList').innerHTML = `<div class="histwrap"><table class="hist"><thead><tr><th>Lieu</th><th>Près de</th><th>Type</th><th></th></tr></thead><tbody>
+    ${customLocs.map(row).join('')}${BUILTIN_LOCS.map(x=>row(x)).join('')}</tbody></table></div>`;
+}
+$('#xForm').addEventListener('submit', e=>{
+  e.preventDefault();
+  const name = $('#xName').value.trim(), [sys, planet] = ($('#xPlanet').value||'|').split('|');
+  if(!name || !planet) return;
+  if(locTerm(name) && !extraLocs().some(x=>locKey(x.name)===locKey(name))){ toast('Ce lieu est déjà connu d\'UEX.'); return; }
+  customLocs = customLocs.filter(x=>locKey(x.name)!==locKey(name)).concat({name, sys, planet, kind:$('#xKind').value});
+  LS.set('customLocs', customLocs); $('#xName').value = '';
+  fillLocList(); renderContracts();
+});
+$('#xList').addEventListener('click', e=>{
+  const b = e.target.closest('[data-xdel]'); if(!b) return;
+  customLocs.splice(+b.dataset.xdel, 1); LS.set('customLocs', customLocs); fillLocList(); renderContracts();
+});
+function fillLocList(){
+  const names = new Set();
+  extraLocs().forEach(x=>names.add(x.name));
+  Object.values(state.terminals).forEach(t=>{ [termName(t), t.space_station_name, t.city_name, t.outpost_name].forEach(n=>{ if(n) names.add(n); }); });
+  contracts.forEach(c=>{ names.add(c.from); names.add(c.to); });
+  $('#locList').innerHTML = [...names].sort((a,b)=>a.localeCompare(b)).map(n=>`<option value="${esc(n)}">`).join('');
+  renderLocBox();
+}
+// Terminal UEX correspondant à un lieu saisi (nom, station, ville ou avant-poste)
+function locTerm(name){
+  const k = locKey(name); if(!k) return null;
+  const t = Object.values(state.terminals).find(t=>[termName(t), t.name, t.space_station_name, t.city_name, t.outpost_name].some(n=>n && locKey(n)===k));
+  if(t) return t;
+  const x = extraLocs().find(x=>locKey(x.name)===k); if(!x) return null;
+  const p = proxyTerm(x.sys, x.planet);
+  return p ? Object.assign({}, p, {_proxy:true, _kind:x.kind}) : null;
+}
+function locSystem(name){ const t = locTerm(name); return t ? t.star_system_name : ''; }
+// Distance entre deux lieux : {gm} connue, {gm, approx} même planète, {pending} à demander à UEX, null = inconnue
+function locDist(a, b){
+  if(locKey(a)===locKey(b)) return {gm:0};
+  const ta = locTerm(a), tb = locTerm(b); if(!ta || !tb) return null;
+  if(ta.id===tb.id) return (ta._proxy || tb._proxy) ? {gm:1, approx:true} : {gm:0};
+  const v = state.distances[distKey(ta.id, tb.id)];
+  if(v!=null && v>=0) return {gm:v, approx: !!(ta._proxy || tb._proxy)};
+  const body = t => t.planet_name || t.orbit_name;
+  if(body(ta) && body(ta)===body(tb) && ta.star_system_name===tb.star_system_name) return {gm:1, approx:true};
+  return v==null ? {pending:true} : null;
+}
+let cDistBusy = false;
+async function ensureContractDistances(names){
+  if(cDistBusy || distDisabled) return;
+  const todo = [];
+  for(let i=0;i<names.length;i++) for(let j=i+1;j<names.length;j++){ const d = locDist(names[i], names[j]); if(d && d.pending) todo.push([locTerm(names[i]).id, locTerm(names[j]).id]); }
+  if(!todo.length) return;
+  cDistBusy = true;
+  for(const [a,b] of todo){
+    if(state.distances[distKey(a,b)]!=null) continue;
+    try{ await fetchDistance(a,b); }catch(e){ toast('Distances indisponibles : '+e.message, true); distDisabled = true; break; }
+    await new Promise(r=>setTimeout(r,200));
+  }
+  cDistBusy = false;
+  renderContracts();
+}
+function stopMin(name){ const t = locTerm(name), s = settings; return t ? (({station:+s.ovStation, city:+s.ovCity, outpost:+s.ovOutpost})[t._kind || termKind(t)]||0) : (+s.ovStation||0); }
+function flightMin(gm){ return gm>0 ? gm*1e6/(+settings.qtSpeed||200000)/60 + (+settings.qtSpool||0) : 0; }
+function saveContracts(){
+  LS.set('contracts', contracts);
+  const n = contracts.filter(c=>!c.done).length, el = $('#contractCount');
+  el.hidden = !n; el.textContent = n;
+}
+function cap(){ return +filters.cargo || 0; }
+
+// Itinéraire : à chaque arrêt on livre tout ce qui va ici, puis on charge (gros lots d'abord) ce qui rentre.
+// On teste les ordres de passage possibles et on garde le plus court en temps (vol + arrêts).
+// Un contrat plus grand que la soute est découpé en plusieurs voyages.
+function planRoute(active, capacity, start){
+  if(!(capacity>0)) return {err:'Indiquez la capacité de la soute.'};
+  const names = [], idx = new Map();
+  const add = n => { const k = locKey(n); if(!idx.has(k)){ idx.set(k, names.length); names.push(n); } return idx.get(k); };
+  const S = start ? add(start) : -1;
+  const chunks = [];
+  for(const c of active){
+    const n = Math.ceil(c.scu / capacity), f = add(c.from), t = add(c.to);
+    for(let i=0;i<n;i++) chunks.push({c, f, t, scu: i<n-1 ? capacity : c.scu - capacity*(n-1), part: n>1 ? `${i+1}/${n}` : ''});
+  }
+  // Temps de vol entre lieux ; distance inconnue → moyenne des distances connues
+  const N = names.length, D = [], known = [];
+  for(let i=0;i<N;i++){ D.push([]); for(let j=0;j<N;j++){ const d = i===j ? {gm:0} : locDist(names[i], names[j]); D[i].push(d && d.gm!=null ? d : null); if(d && d.gm>0) known.push(d.gm); } }
+  const avg = known.length ? known.reduce((a,b)=>a+b,0)/known.length : 20;
+  const SYS = names.map(n=>locSystem(n) || ((extraLocs().find(x=>locKey(x.name)===locKey(n))||{}).sys) || '');
+  const G = D.map(r=>r.map(d=>d ? d.gm : avg)), F = G.map((r,i)=>r.map((gm,j)=>flightMin(gm) + jumpExtra(SYS[i], SYS[j]))), STOP = names.map(stopMin);
+  const ord = chunks.map((x,i)=>i).sort((a,b)=>chunks[b].scu-chunks[a].scu);
+  function visit(st, load, L){
+    const ns = st.slice(); let dl = 0, pk = 0;
+    for(let i=0;i<ns.length;i++) if(ns[i]===1 && chunks[i].t===L){ ns[i] = 2; load -= chunks[i].scu; dl += chunks[i].scu; }
+    for(const i of ord) if(ns[i]===0 && chunks[i].f===L && load + chunks[i].scu <= capacity){ ns[i] = 1; load += chunks[i].scu; pk += chunks[i].scu; }
+    return {ns, load, val: dl*2 + pk};
+  }
+  function candidates(st, load){
+    const locs = new Set(); st.forEach((v,i)=>{ if(v===1) locs.add(chunks[i].t); if(v===0) locs.add(chunks[i].f); });
+    return [...locs].map(L=>Object.assign({L}, visit(st, load, L))).filter(x=>x.val>0);
+  }
+  const init = chunks.map(()=>0);
+  const legCost = (from, L) => (from<0 ? 0 : F[from][L]) + STOP[L];
+  // 1) ordre simple « place dans la soute » (sert de référence)
+  let gst = init, gload = 0, gat = S, gseq = [], gcost = 0, guard = 0;
+  while(gst.some(v=>v<2) && guard++<500){
+    const c = candidates(gst, gload); if(!c.length) break;
+    c.sort((a,b)=> b.val-a.val || legCost(gat,a.L)-legCost(gat,b.L));
+    const x = c[0]; gcost += legCost(gat, x.L); gseq.push(x.L); gst = x.ns; gload = x.load; gat = x.L;
+  }
+  // 2) recherche du plus court (élagage, limitée pour rester instantanée)
+  let best = {seq: gseq, cost: gcost}, nodes = 0, complete = true;
+  (function dfs(st, load, at, cost, seq){
+    if(cost >= best.cost - 1e-9) return;
+    if(!st.some(v=>v<2)){ best = {seq: seq.slice(), cost}; return; }
+    if(++nodes > 150000){ complete = false; return; }
+    const c = candidates(st, load).map(x=>Object.assign(x, {k: legCost(at, x.L)})).sort((a,b)=>a.k-b.k);
+    for(const x of c){ seq.push(x.L); dfs(x.ns, x.load, x.L, cost + x.k, seq); seq.pop(); }
+  })(init, 0, S, 0, []);
+  // 3) arrêts détaillés
+  let st = init, load = 0, at = S, totGm = 0, unknown = 0;
+  const stops = [];
+  for(const L of best.seq){
+    const stop = {name:names[L], sys: locSystem(names[L]), drop:[], pick:[], wait:[]};
+    for(let i=0;i<st.length;i++) if(st[i]===1 && chunks[i].t===L) stop.drop.push(chunks[i]);
+    const v = visit(st, load, L);
+    for(let i=0;i<st.length;i++){ if(st[i]===0 && v.ns[i]===1) stop.pick.push(chunks[i]); else if(st[i]===0 && chunks[i].f===L) stop.wait.push(chunks[i]); }
+    if(at>=0){ const d = D[at][L], raw = d ? null : locDist(names[at], names[L]), wait = !!(raw && raw.pending); stop.leg = {gm: G[at][L], min: F[at][L], jump: !!jumpExtra(SYS[at], SYS[L]), from: SYS[at], to: SYS[L], unknown: !d && !wait, pending: wait, approx: !!(d && d.approx)}; totGm += G[at][L]; if(!d && !wait) unknown++; }
+    st = v.ns; load = v.load; at = L; stop.load = load; stops.push(stop);
+  }
+  const loadMin = active.reduce((s,c)=>s+c.scu,0)/100*(+settings.loadPer100||0);
+  const pending = names.some((a,i)=>names.some((b,j)=>{ if(j<=i) return false; const d = locDist(a,b); return !!(d && d.pending); }));
+  return {stops, cost: best.cost + loadMin, greedyCost: gcost + loadMin, totGm, unknown, complete, names, pending};
+}
+
+// Argent d'un contrat : prix /SCU optionnels → achat total, vente totale, bénéfice
+function money(c){
+  const has = c.buy!=null || c.sell!=null; if(!has) return null;
+  const cost = (c.buy||0)*c.scu, rev = (c.sell||0)*c.scu;
+  return {cost, rev, profit: rev - cost};
+}
+function sumMoney(list){
+  const ms = list.map(money).filter(Boolean); if(!ms.length) return null;
+  return ms.reduce((a,m)=>({cost:a.cost+m.cost, rev:a.rev+m.rev, profit:a.profit+m.profit}), {cost:0, rev:0, profit:0});
+}
+const moneyTxt = m => m ? `<span class="${m.profit>=0?'pos':'neg'}">${m.profit>=0?'+':''}${fmt(m.profit)} aUEC</span>` : '';
+function renderContracts(){
+  saveContracts();
+  const C = cap(), active = contracts.filter(c=>!c.done);
+  const tm = sumMoney(active);
+  $('#cCount').innerHTML = contracts.length ? `(${active.length} en cours · ${fmt(active.reduce((s,c)=>s+c.scu,0))} SCU${tm?` · achat ${fmt(tm.cost)} · vente ${fmt(tm.rev)} · bénéfice ${moneyTxt(tm)}`:''})` : '';
+  // Liste
+  $('#cList').innerHTML = contracts.length ? `<div class="histwrap"><table class="hist ctab">
+    <thead><tr><th>Livré</th><th>Contrat</th><th>Récupération</th><th></th><th>Livraison</th><th class="num">SCU</th><th class="num">Achat /SCU</th><th class="num">Vente /SCU</th><th class="num">Bénéfice</th><th></th></tr></thead>
+    <tbody>${contracts.map(c=>`<tr data-cid="${c.id}" class="${c.done?'done':''}">
+      <td><input type="checkbox" data-cf="done" ${c.done?'checked':''}></td>
+      <td><input data-cf="name" value="${esc(c.name)}" placeholder="—"></td>
+      <td><input data-cf="from" value="${esc(c.from)}" list="locList"></td>
+      <td class="accent">→</td>
+      <td><input data-cf="to" value="${esc(c.to)}" list="locList"></td>
+      <td class="num"><input data-cf="scu" type="number" min="1" value="${c.scu}" style="width:80px;text-align:right"></td>
+      <td class="num"><input data-cf="buy" type="number" min="0" value="${c.buy??''}" placeholder="—" style="width:90px;text-align:right"></td>
+      <td class="num"><input data-cf="sell" type="number" min="0" value="${c.sell??''}" placeholder="—" style="width:90px;text-align:right"></td>
+      <td class="num">${moneyTxt(money(c)) || '<span class="muted">—</span>'}</td>
+      <td><button class="btn danger small" data-cdel title="Supprimer">×</button></td></tr>`).join('')}</tbody></table></div>`
+    : '<div class="empty">Aucun contrat. Ajoutez-en un ci-dessus.</div>';
+  // Paires
+  const pairs = new Map();
+  for(const c of active){
+    const k = locKey(c.from)+'→'+locKey(c.to);
+    const p = pairs.get(k) || pairs.set(k, {from:c.from, to:c.to, scu:0, list:[]}).get(k);
+    p.scu += c.scu; p.list.push(c);
+  }
+  const pl = [...pairs.values()].sort((a,b)=>b.scu-a.scu);
+  $('#cPairs').innerHTML = !pl.length ? '<div class="empty">Aucun contrat en cours.</div>' : `<div class="pairs">${pl.map(p=>{
+    const pc = C ? p.scu/C*100 : 0, over = C && p.scu > C, trips = C ? Math.ceil(p.scu/C) : 0;
+    const sf = locSystem(p.from), st = locSystem(p.to);
+    return `<div class="pair ${over?'over':''}">
+      <div class="ends"><div><b>${esc(p.from)}</b>${sf?`<div class="loc">${esc(sf)}</div>`:''}</div><span class="arrow">➜</span><div class="to"><b>${esc(p.to)}</b>${st?`<div class="loc">${esc(st)}</div>`:''}</div></div>
+      <div class="bar ${over?'over':pc>=90?'full':''}"><i style="width:${Math.min(100,pc)}%"></i></div>
+      <div class="sum"><span><b>${fmt(p.scu)}</b> / ${fmt(C)} SCU (${nf.format(pc)} %)</span>
+        <span>${over?`<span class="pill bad">surcharge +${fmt(p.scu-C)} SCU · ${trips} voyages</span>`:'<span class="pill good">rentre en 1 voyage</span>'}</span></div>
+      ${(m=>m?`<div class="sum"><span>achat ${fmt(m.cost)} · vente ${fmt(m.rev)}</span><span>bénéfice ${moneyTxt(m)}</span></div>`:'')(sumMoney(p.list))}
+      <ul>${p.list.map(c=>`<li>${esc(c.name||'Contrat')} : ${fmt(c.scu)} SCU${money(c)?' · '+moneyTxt(money(c)):''}</li>`).join('')}</ul>
+    </div>`; }).join('')}</div>`;
+  // Itinéraire
+  if(!active.length){ $('#cItin').innerHTML = '<div class="empty">Aucun contrat en cours.</div>'; return; }
+  const start = LS.get('contractStart', '');
+  const plan = planRoute(active, C, start);
+  if(plan.err){ $('#cItin').innerHTML = `<div class="empty">${plan.err}</div>`; return; }
+  if(plan.pending) ensureContractDistances(plan.names);
+  const peak = Math.max(0, ...plan.stops.map(s=>s.load)), gain = plan.greedyCost - plan.cost;
+  const lbl = x => `${esc(x.c.name||'contrat')}${x.part?' ('+x.part+')':''}`;
+  const legHtml = (s, i) => !s.leg ? `<div class="leg">${start?'':'1er arrêt : allez-y depuis votre position'}</div>`
+    : (i===0 && s.leg.gm===0) ? '<div class="leg">vous y êtes déjà</div>'
+    : `<div class="leg ${s.leg.unknown?'unk':''}">✈ ${s.leg.pending ? 'distance en cours…' : s.leg.gm>0 ? (s.leg.unknown ? 'distance inconnue, estimée ≈ '+nf1.format(s.leg.gm)+' Gm' : (s.leg.approx?'≈ ':'')+nf1.format(s.leg.gm)+' Gm'+(s.leg.approx && s.leg.gm<=1?' (même planète)':''))+' · '+fmtMin(s.leg.min)+' de vol'+(s.leg.jump?` (trou de ver ${esc(s.leg.from)} → ${esc(s.leg.to)} compris)`:'') : s.leg.jump ? `trou de ver ${esc(s.leg.from)} → ${esc(s.leg.to)} · ${fmtMin(s.leg.min)}` : 'même lieu'}</div>`;
+  const info = [
+    `${plan.stops.length} arrêts`,
+    `<b>≈ ${fmtMin(plan.cost)}</b> au total (vol + arrêts + chargement)`,
+    `${nf1.format(plan.totGm)} Gm`,
+    `charge maximale ${fmt(peak)} / ${fmt(C)} SCU`
+  ];
+  if(tm) info.push(`bénéfice ${moneyTxt(tm)} (achat ${fmt(tm.cost)} aUEC à avancer)`);
+  if(gain >= 1) info.push(`<span class="pos">${fmtMin(gain)} de gagné par rapport à l'ordre simple</span>`);
+  if(plan.pending) info.push('<span class="muted">distances en cours de récupération…</span>');
+  if(plan.unknown) info.push(`<span class="warnc">${plan.unknown} trajet${plan.unknown>1?'s':''} à distance inconnue (lieu absent d'UEX) : estimé${plan.unknown>1?'s':''}</span>`);
+  if(!plan.complete) info.push('<span class="warnc">beaucoup de contrats : meilleur ordre trouvé en recherche limitée</span>');
+  if(active.some(c=>c.scu>C)) info.push('<span class="warnc">certains contrats dépassent la soute : découpés en plusieurs voyages</span>');
+  if(!start) info.push('<span class="warnc">indiquez votre « Point de départ » pour compter le premier trajet</span>');
+  $('#cItin').innerHTML = `<p class="hint" style="margin-top:0">${info.join(' · ')}</p>
+  <ol class="itin">${start ? `<li>
+    <span class="n" title="Point de départ">🏁</span>
+    <div><div class="leg">point de départ (où je suis)</div><b>${esc(start)}</b> ${locSystem(start)?`<span class="loc">${esc(locSystem(start))}</span>`:''}
+      ${locTerm(start) ? '' : '<div class="acts warnc">Lieu inconnu d\'UEX : le premier trajet est estimé. Ajoutez-le dans « Lieux absents d\'UEX ».</div>'}</div>
+    <div class="lw"></div>
+  </li>` : ''}${plan.stops.map((s,i)=>`<li>
+    <span class="n">${i+1}</span>
+    <div>${legHtml(s, i)}<b>${esc(s.name)}</b> ${s.sys?`<span class="loc">${esc(s.sys)}</span>`:''}
+      <div class="acts">
+        ${s.drop.map(x=>`<div class="down">▼ Livrer ${fmt(x.scu)} SCU — ${lbl(x)} <span class="muted">(de ${esc(x.c.from)})</span></div>`).join('')}
+        ${s.pick.map(x=>`<div class="up">▲ Charger ${fmt(x.scu)} SCU — ${lbl(x)} <span class="muted">(pour ${esc(x.c.to)})</span></div>`).join('')}
+        ${s.wait.length?`<div class="warnc">⏸ Pas de place pour ${s.wait.map(x=>fmt(x.scu)+' SCU ('+lbl(x)+')').join(', ')} : à reprendre plus tard</div>`:''}
+      </div></div>
+    <div class="lw"><div class="bar ${s.load>=C*0.9?'full':''}"><i style="width:${C?Math.min(100,s.load/C*100):0}%"></i></div><div class="ld">à bord : ${fmt(s.load)} / ${fmt(C)} SCU</div></div>
+  </li>`).join('')}</ol>`;
+}
+$('#cStart').value = $('#rStart').value = LS.get('contractStart', '');
+let cStartDeb;
+$('#cStart').addEventListener('input', e=>{ clearTimeout(cStartDeb); cStartDeb = setTimeout(()=>{ LS.set('contractStart', e.target.value.trim()); $('#rStart').value = e.target.value; renderContracts(); computeResources(); }, 400); });
+$('#cForm').addEventListener('submit', e=>{
+  e.preventDefault();
+  const from = $('#cFrom').value.trim(), to = $('#cTo').value.trim(), scu = num($('#cScu').value);
+  if(!from || !to || !(scu>0)){ toast('Renseignez la récupération, la livraison et les SCU.', true); return; }
+  contracts.push({id:'k'+Date.now(), name:$('#cName').value.trim(), from, to, scu, buy:num($('#cBuy').value), sell:num($('#cSell').value), done:false, created:Date.now()});
+  $('#cName').value = ''; $('#cScu').value = ''; $('#cBuy').value = ''; $('#cSell').value = ''; $('#cFrom').focus();
+  fillLocList(); renderContracts();
+});
+$('#cList').addEventListener('change', e=>{
+  const f = e.target.dataset.cf; if(!f) return;
+  const c = contracts.find(x=>x.id===e.target.closest('tr').dataset.cid); if(!c) return;
+  if(f==='done') c.done = e.target.checked;
+  else if(f==='scu'){ const v = num(e.target.value); if(v>0) c.scu = v; }
+  else if(f==='buy' || f==='sell') c[f] = num(e.target.value);
+  else c[f] = e.target.value.trim();
+  setTimeout(renderContracts, 0);
+});
+$('#cList').addEventListener('click', e=>{
+  if(!e.target.closest('[data-cdel]')) return;
+  const id = e.target.closest('tr').dataset.cid;
+  contracts = contracts.filter(c=>c.id!==id); renderContracts();
+});
+$('#cClearDone').addEventListener('click', ()=>{
+  const n = contracts.filter(c=>c.done).length; if(!n){ toast('Aucun contrat livré.'); return; }
+  if(confirm(`Supprimer ${n} contrat(s) livré(s) ?`)){ contracts = contracts.filter(c=>!c.done); renderContracts(); }
+});
+$('#cShip').addEventListener('change', e=>{ filters.ship = e.target.value; const v = state.vehicles.find(x=>'v'+x.id===e.target.value); if(v) filters.cargo = v.scu; LS.set('filters', filters); applyFiltersToForm(); renderContracts(); computeResources(); });
+$('#cCargo').addEventListener('input', e=>{ const v = num(e.target.value); if(v>0){ filters.cargo = v; filters.ship = ''; LS.set('filters', filters); $('#cShip').value = ''; $('#fShip').value = ''; $('#rCargo').value = v; renderContracts(); } });
+
+/* ================= SIGNATURES (données minage scmdb.net) ================= */
+const MINING = {"v":"4.10.2-live.12913470","L":[["Breaker Stations Interior","Nyx","event"],["Breaker Stations Large Geode","Nyx","event"],["Glaciem Ring","Nyx","belt"],["Keeger Belt","Nyx","belt"],["Akiro Cluster","Pyro","belt"],["Pyro Belt (Cool 1)","Pyro","belt"],["Pyro Belt (Cool 2)","Pyro","belt"],["Pyro Belt (Warm 1)","Pyro","belt"],["Pyro Belt (Warm 2)","Pyro","belt"],["Pyro Deep Space Asteroids","Pyro","belt"],["Pyro I","Pyro","planet"],["Pyro II (Monox)","Pyro","planet"],["Pyro III (Bloom)","Pyro","planet"],["Pyro IV","Pyro","planet"],["Pyro V-a (Ignis)","Pyro","moon"],["Pyro V-b (Vatra)","Pyro","moon"],["Pyro V-c (Adir)","Pyro","moon"],["Pyro V-d (Fairo)","Pyro","moon"],["Pyro V-e (Fuego)","Pyro","moon"],["Pyro V-f (Vuur)","Pyro","moon"],["Pyro VI (Terminus)","Pyro","planet"],["Aaron Halo","Stanton","belt"],["Aberdeen","Stanton","moon"],["Arial","Stanton","moon"],["Asteroid Cluster (Low Yield)","Stanton","cluster"],["Asteroid Cluster (Medium Yield)","Stanton","cluster"],["Calliope","Stanton","moon"],["Cellin","Stanton","moon"],["Clio","Stanton","moon"],["Daymar","Stanton","moon"],["Euterpe","Stanton","moon"],["Hathor Caves","Stanton","cave"],["Hurston","Stanton","planet"],["Ita","Stanton","moon"],["Lagrange (Occupied)","Stanton","lagrange"],["Lagrange A","Stanton","lagrange"],["Lagrange B","Stanton","lagrange"],["Lagrange C","Stanton","lagrange"],["Lagrange D","Stanton","lagrange"],["Lagrange E","Stanton","lagrange"],["Lagrange F","Stanton","lagrange"],["Lagrange G","Stanton","lagrange"],["Lyria","Stanton","moon"],["Magda","Stanton","moon"],["Ship Graveyard","Stanton","special"],["Space Derelict","Stanton","special"],["Wala","Stanton","moon"],["Yela","Stanton","moon"],["Yela Asteroid Belt","Stanton","belt"],["microTech","Stanton","planet"]],"R":[["fps","Aphorite",null,null,[[0,75,0,75,0],[12,61.1,0,61.1,0],[18,61.1,0,61.1,0],[20,61.1,0,61.1,0],[26,61.1,0,61.1,0],[28,61.1,0,61.1,0],[30,61.1,0,61.1,0],[42,61.1,0,61.1,0],[46,61.1,0,61.1,0],[49,61.1,0,61.1,0],[10,58.6,0,58.6,0],[11,58.6,0,58.6,0],[13,58.6,0,58.6,0],[14,58.6,0,58.6,0],[15,58.6,0,58.6,0],[16,58.6,0,58.6,0],[17,58.6,0,58.6,0],[19,58.6,0,58.6,0],[22,58.6,0,58.6,0],[23,58.6,0,58.6,0],[27,58.6,0,58.6,0],[29,58.6,0,58.6,0],[32,58.6,0,58.6,0],[33,58.6,0,58.6,0],[43,58.6,0,58.6,0],[47,58.6,0,58.6,0],[31,30.2,0,30.2,0]]],["fps","Sadaryx",null,null,[[0,25,0,25,0]]],["ship","Savrilium","legendary",3200,[[1,90,0,100,0],[2,1.8,0,2,0],[3,1.8,0,2,0]]],["ship","Torite","uncommon",3900,[[2,28.5,0,28.5,0],[3,28.5,0,28.5,0],[4,28.5,0,28.5,0],[9,28.5,0,28.5,0],[37,28.4,0,28.4,0],[1,10,"Savrilium",100,0]]],["ship","Ice","common",4300,[[28,40,0,40,0],[30,40,0,40,0],[49,32.7,0,32.7,0],[26,32.6,0,32.6,0],[5,26.8,0,26.8,0],[6,26.8,0,26.8,0],[2,20.8,0,20.8,0],[3,20.8,0,20.8,0],[20,20.8,0,20.8,0],[48,20.5,0,20.5,0],[24,19.6,0,19.6,0],[25,19.6,0,19.6,0],[34,17.8,0,17.8,0],[36,17.8,0,17.8,0],[38,17.8,0,17.8,0],[39,17.8,0,17.8,0],[41,17.8,0,17.8,0],[4,14.9,0,14.9,0],[21,10.4,0,10.4,0]]],["ship","Iron","common",4270,[[16,43.5,0,43.5,0],[15,36,0,36,0],[12,35,0,35,0],[42,34.8,0,34.8,0],[43,34.8,0,34.8,0],[10,32.7,0,32.7,0],[26,32.7,0,32.7,0],[11,32.6,0,32.6,0],[49,32.6,0,32.6,0],[7,26.8,0,26.8,0],[8,26.8,0,26.8,0],[18,26.8,0,26.8,0],[19,26.8,0,26.8,0],[17,26.7,0,26.7,0],[13,25.7,0,25.7,0],[46,25.7,0,25.7,0],[2,20.8,0,20.8,0],[48,20.5,0,20.5,0],[24,19.6,0,19.6,0],[25,19.6,0,19.6,0],[34,17.9,0,17.9,0],[36,17.9,0,17.9,0],[38,17.9,0,17.9,0],[39,17.9,0,17.9,0],[41,17.9,0,17.9,0],[4,14.8,0,14.8,0],[21,10.3,0,10.3,0]]],["ship","Lindinium","epic",3400,[[2,9,0,10,0],[3,9,0,10,0]]],["ship","Tungsten","uncommon",3870,[[8,25.6,0,28.5,0],[16,25.6,0,28.5,0],[17,25.6,0,28.5,0],[40,25.6,0,28.5,0],[13,2.9,"Laranite",28.5,0],[35,2.8,"Laranite",28.5,0],[42,2.8,"Laranite",28.5,0],[46,2.8,"Laranite",28.5,0],[2,1,"Lindinium",10,0],[3,1,"Lindinium",10,0]]],["ship","Bexalite","rare",3600,[[2,16.2,0,18,0],[3,16.2,0,18,0],[7,16.2,0,18,0],[19,16.2,0,18,0],[39,16.2,0,18,0],[17,8.1,0,9,0],[18,8.1,0,9,0],[5,0.9,"Borase",18,0],[8,0.9,"Gold",18,0],[12,0.9,"Borase",18,0],[13,0.9,"Borase",18,0],[14,0.9,"Gold",18,0],[15,0.9,"Gold",18,0],[16,0.9,"Borase",18,0],[20,0.9,"Gold",18,0],[35,0.9,"Borase",18,0],[36,0.9,"Gold",18,0]]],["ship","Borase","rare",3570,[[5,16.2,0,18,0],[12,16.2,0,18,0],[13,16.2,0,18,0],[16,16.2,0,18,0],[35,16.2,0,18,0],[18,8.1,0,9,0],[2,0.9,"Bexalite",18,0],[3,0.9,"Bexalite",18,0],[7,0.9,"Bexalite",18,0],[8,0.9,"Gold",18,0],[14,0.9,"Gold",18,0],[15,0.9,"Gold",18,0],[19,0.9,"Bexalite",18,0],[20,0.9,"Gold",18,0],[36,0.9,"Gold",18,0],[39,0.9,"Bexalite",18,0],[17,0.5,"Bexalite",9,0]]],["ship","Gold","rare",3585,[[8,16.2,0,18,0],[14,16.2,0,18,0],[15,16.2,0,18,0],[20,16.2,0,18,0],[36,16.2,0,18,0],[17,8.1,0,9,0],[2,0.9,"Bexalite",18,0],[3,0.9,"Bexalite",18,0],[5,0.9,"Borase",18,0],[7,0.9,"Bexalite",18,0],[12,0.9,"Borase",18,0],[13,0.9,"Borase",18,0],[16,0.9,"Borase",18,0],[19,0.9,"Bexalite",18,0],[35,0.9,"Borase",18,0],[39,0.9,"Bexalite",18,0],[18,0.5,"Borase",9,0]]],["ship","Aluminium","common",4285,[[32,39.6,"Aluminum",44,0],[43,31.3,"Aluminum",34.8,0],[33,31.2,"Aluminum",34.7,0],[22,26.7,"Aluminum",29.7,0],[37,21.5,"Aluminum",23.9,0],[23,19.8,"Aluminum",22,0],[3,18.7,"Aluminum",20.8,0],[24,17.6,"Aluminum",19.6,0],[25,17.6,"Aluminum",19.6,0],[35,16.1,"Aluminum",17.9,0],[40,16,"Aluminum",17.8,0],[9,13.4,"Aluminum",14.9,0],[21,9.3,"Aluminum",10.3,0]]],["ship","Corundum","common",4225,[[22,26.8,0,29.8,0],[37,21.5,0,23.9,0],[23,19.8,0,22,0],[40,16.1,0,17.9,0],[35,16,0,17.8,0],[9,13.4,0,14.9,0],[32,4.4,"Aluminum",44,0],[33,3.5,"Aluminum",34.7,0],[43,3.5,"Aluminum",34.8,0],[3,2.1,"Aluminum",20.8,0],[24,2,"Aluminum",19.6,0],[25,2,"Aluminum",19.6,0],[21,1,"Aluminum",10.3,0]]],["ship","Silicon","common",4255,[[14,32.4,0,36,0],[15,32.4,0,36,0],[29,31.3,0,34.8,0],[17,24.1,0,26.8,0],[5,24,0,26.7,0],[6,24,0,26.7,0],[27,23.2,0,25.8,0],[47,23.2,0,25.8,0],[24,17.6,0,19.6,0],[25,17.6,0,19.6,0],[4,13.4,0,14.9,0],[21,9.3,0,10.3,0],[12,1.8,"Quartz",35,0],[11,1.6,"Hephaestanite (R)",32.7,0],[26,1.6,"Hephaestanite (R)",32.6,0],[49,1.6,"Hephaestanite (R)",32.7,0],[18,1.3,"Hephaestanite (R)",26.7,0],[19,1.3,"Hephaestanite (R)",26.8,0],[37,1.2,"Hephaestanite (R)",23.9,0],[23,1.1,"Hephaestanite (R)",22,0],[35,0.9,"Hephaestanite (R)",17.8,0],[40,0.9,"Hephaestanite (R)",17.8,0],[9,0.7,"Quartz",14.9,0]]],["ship","Hephaestanite","common",4180,[[11,29.5,"Hephaestanite (R)",32.7,0],[26,29.4,"Hephaestanite (R)",32.6,0],[49,29.4,"Hephaestanite (R)",32.7,0],[19,24.1,"Hephaestanite (R)",26.8,0],[18,24,"Hephaestanite (R)",26.7,0],[37,21.5,"Hephaestanite (R)",23.9,0],[23,19.8,"Hephaestanite (R)",22,0],[35,16,"Hephaestanite (R)",17.8,0],[40,16,"Hephaestanite (R)",17.8,0],[14,3.6,"Silicon",36,0],[15,3.6,"Silicon",36,0],[29,3.5,"Silicon",34.8,0],[5,2.7,"Silicon",26.7,0],[6,2.7,"Silicon",26.7,0],[17,2.7,"Silicon",26.8,0],[27,2.6,"Silicon",25.8,0],[47,2.6,"Silicon",25.8,0],[24,2,"Silicon",19.6,0],[25,2,"Silicon",19.6,0],[12,1.8,"Quartz",35,0],[4,1.5,"Silicon",14.9,0],[21,1,"Silicon",10.3,0],[9,0.7,"Quartz",14.9,0]]],["ship","Copper","common",4240,[[28,36,0,40,0],[30,36,0,40,0],[42,31.3,0,34.8,0],[10,29.4,0,32.6,0],[7,24,0,26.7,0],[8,24,0,26.7,0],[13,23.2,0,25.7,0],[46,23.2,0,25.8,0],[20,18.7,0,20.8,0],[48,18.4,0,20.5,0],[24,17.6,0,19.6,0],[25,17.6,0,19.6,0],[34,16,0,17.8,0],[36,16,0,17.8,0],[38,16,0,17.8,0],[39,16,0,17.8,0],[41,16,0,17.8,0],[4,13.4,0,14.9,0],[21,9.3,0,10.3,0],[32,4.4,"Tin",44,0],[14,3.6,"Tin",36,0],[33,3.5,"Tin",34.8,0],[11,3.3,"Tin",32.6,0],[23,2.2,"Tin",22,0],[9,1.5,"Tin",14.8,0]]],["ship","Tin","common",4195,[[32,39.6,0,44,0],[14,32.4,0,36,0],[33,31.3,0,34.8,0],[10,29.4,0,32.6,0],[11,29.4,0,32.6,0],[23,19.8,0,22,0],[9,13.3,0,14.8,0],[28,4,"Copper",40,0],[30,4,"Copper",40,0],[42,3.5,"Copper",34.8,0],[7,2.7,"Copper",26.7,0],[8,2.7,"Copper",26.7,0],[13,2.6,"Copper",25.7,0],[46,2.6,"Copper",25.8,0],[20,2.1,"Copper",20.8,0],[24,2,"Copper",19.6,0],[25,2,"Copper",19.6,0],[48,2,"Copper",20.5,0],[34,1.8,"Copper",17.8,0],[36,1.8,"Copper",17.8,0],[38,1.8,"Copper",17.8,0],[39,1.8,"Copper",17.8,0],[41,1.8,"Copper",17.8,0],[4,1.5,"Copper",14.9,0],[21,1,"Copper",10.3,0]]],["ship","Riccite","epic",3385,[[4,9,0,10,0],[9,9,0,10,0],[12,9,0,10,0],[14,9,0,10,0],[15,9,0,10,0],[16,9,0,10,0],[20,9,0,10,0]]],["ship","Laranite","uncommon",3825,[[13,25.7,0,28.5,0],[35,25.6,0,28.5,0],[42,25.6,0,28.5,0],[46,25.6,0,28.5,0],[8,2.8,"Tungsten",28.5,0],[16,2.8,"Tungsten",28.5,0],[17,2.8,"Tungsten",28.5,0],[40,2.8,"Tungsten",28.5,0],[4,1,"Riccite",10,0],[9,1,"Riccite",10,0],[12,1,"Riccite",10,0],[14,1,"Riccite",10,0],[15,1,"Riccite",10,0],[20,1,"Riccite",10,0]]],["ship","Stileron","legendary",3185,[[4,1.8,0,2,0],[9,1.8,0,2,0],[10,1.8,0,2,0],[11,1.8,0,2,0],[12,1.8,0,2,0],[13,1.8,0,2,0],[20,1.8,0,2,0]]],["ship","Taranite","rare",3555,[[6,18,0,18,0],[27,18,0,18,0],[28,18,0,18,0],[30,18,0,18,0],[40,18,0,18,0],[47,18,0,18,0],[4,0.2,"Stileron",2,0],[9,0.2,"Stileron",2,0],[10,0.2,"Stileron",2,0],[11,0.2,"Stileron",2,0],[12,0.2,"Stileron",2,0],[13,0.2,"Stileron",2,0],[20,0.2,"Stileron",2,0]]],["ship","Titanium","uncommon",3855,[[5,25.6,0,28.5,0],[22,25.6,0,28.5,0],[39,25.6,0,28.5,0],[48,25.6,0,28.5,0],[20,12.8,0,14.2,0],[21,12.8,0,14.2,0],[43,12.8,0,14.2,0],[6,1.4,"Aslarite",28.5,0],[7,1.4,"Agricium",28.5,0],[18,1.4,"Aslarite",28.5,0],[27,1.4,"Agricium",28.5,0],[29,1.4,"Agricium",28.5,0],[33,1.4,"Aslarite",28.5,0],[34,1.4,"Agricium",28.5,0],[36,1.4,"Aslarite",28.5,0],[38,1.4,"Agricium",28.5,0],[41,1.4,"Agricium",28.5,0],[47,1.4,"Agricium",28.5,0],[19,0.7,"Aslarite",14.2,0]]],["ship","Agricium","uncommon",3885,[[7,25.6,0,28.5,0],[27,25.6,0,28.5,0],[29,25.6,0,28.5,0],[34,25.6,0,28.5,0],[38,25.6,0,28.5,0],[41,25.6,0,28.5,0],[47,25.6,0,28.5,0],[19,12.8,0,14.2,0],[20,12.8,0,14.2,0],[5,1.4,"Titanium",28.5,0],[6,1.4,"Aslarite",28.5,0],[18,1.4,"Aslarite",28.5,0],[22,1.4,"Titanium",28.5,0],[33,1.4,"Aslarite",28.5,0],[36,1.4,"Aslarite",28.5,0],[39,1.4,"Titanium",28.5,0],[48,1.4,"Titanium",28.5,0],[23,1,"Ouratite",10,0],[32,1,"Ouratite",10,0],[21,0.7,"Titanium",14.2,0],[43,0.7,"Aslarite",14.2,0]]],["ship","Aslarite","uncommon",3840,[[6,25.6,0,28.5,0],[18,25.6,0,28.5,0],[33,25.6,0,28.5,0],[36,25.6,0,28.5,0],[19,12.8,0,14.2,0],[21,12.8,0,14.2,0],[43,12.8,0,14.2,0],[5,1.4,"Titanium",28.5,0],[7,1.4,"Agricium",28.5,0],[22,1.4,"Titanium",28.5,0],[27,1.4,"Agricium",28.5,0],[29,1.4,"Agricium",28.5,0],[34,1.4,"Agricium",28.5,0],[38,1.4,"Agricium",28.5,0],[39,1.4,"Titanium",28.5,0],[41,1.4,"Agricium",28.5,0],[47,1.4,"Agricium",28.5,0],[48,1.4,"Titanium",28.5,0],[20,0.7,"Titanium",14.2,0]]],["ship","Quartz","common",4210,[[12,31.5,0,35,0],[29,31.2,0,34.7,0],[27,23.1,0,25.7,0],[47,23.1,0,25.7,0],[9,13.4,0,14.9,0],[11,1.6,"Hephaestanite (R)",32.7,0],[26,1.6,"Hephaestanite (R)",32.6,0],[49,1.6,"Hephaestanite (R)",32.7,0],[18,1.3,"Hephaestanite (R)",26.7,0],[19,1.3,"Hephaestanite (R)",26.8,0],[37,1.2,"Hephaestanite (R)",23.9,0],[23,1.1,"Hephaestanite (R)",22,0],[35,0.9,"Hephaestanite (R)",17.8,0],[40,0.9,"Hephaestanite (R)",17.8,0]]],["fps","Dolivine",null,null,[[12,36.9,0,36.9,0],[18,36.9,0,36.9,0],[20,36.9,0,36.9,0],[26,36.9,0,36.9,0],[28,36.9,0,36.9,0],[30,36.9,0,36.9,0],[42,36.9,0,36.9,0],[46,36.9,0,36.9,0],[49,36.9,0,36.9,0],[10,35.4,0,35.4,0],[11,35.4,0,35.4,0],[13,35.4,0,35.4,0],[14,35.4,0,35.4,0],[15,35.4,0,35.4,0],[16,35.4,0,35.4,0],[17,35.4,0,35.4,0],[19,35.4,0,35.4,0],[22,35.4,0,35.4,0],[23,35.4,0,35.4,0],[27,35.4,0,35.4,0],[29,35.4,0,35.4,0],[32,35.4,0,35.4,0],[33,35.4,0,35.4,0],[43,35.4,0,35.4,0],[47,35.4,0,35.4,0],[31,18.3,0,18.3,0]]],["fps","Hadanite",null,null,[[10,6,0,6,0],[11,6,0,6,0],[13,6,0,6,0],[14,6,0,6,0],[15,6,0,6,0],[16,6,0,6,0],[17,6,0,6,0],[19,6,0,6,0],[22,6,0,6,0],[23,6,0,6,0],[27,6,0,6,0],[29,6,0,6,0],[32,6,0,6,0],[33,6,0,6,0],[43,6,0,6,0],[47,6,0,6,0],[31,3.2,0,3.2,0]]],["roc","Beradom",null,null,[[10,100,0,100,0],[12,100,0,100,0],[17,100,0,100,0],[32,64,0,64,0],[27,56,0,56,0],[46,56,0,56,0],[15,50,0,50,0],[29,48,0,48,0],[42,48,0,48,0],[49,28,0,28,0],[47,24,0,24,0],[28,20,0,20,0],[23,16,0,16,0],[26,12,0,12,0],[30,12,0,12,0],[22,4,0,4,0],[33,3.8,0,3.8,0],[43,3.7,0,3.7,0]]],["roc","Glacosite",null,null,[[11,100,0,100,0],[16,100,0,100,0],[19,100,0,100,0],[30,88,0,88,0],[26,84,0,84,0],[33,69.2,0,69.2,0],[28,68,0,68,0],[47,68,0,68,0],[49,68,0,68,0],[43,59.3,0,59.3,0],[15,50,0,50,0],[42,48,0,48,0],[46,40,0,40,0],[22,32,0,32,0],[23,32,0,32,0],[27,32,0,32,0],[32,32,0,32,0],[29,12,0,12,0]]],["fps","Janalite",null,null,[[12,2,0,2,0],[18,2,0,2,0],[20,2,0,2,0],[26,2,0,2,0],[28,2,0,2,0],[30,2,0,2,0],[42,2,0,2,0],[46,2,0,2,0],[49,2,0,2,0],[31,1.1,0,1.1,0]]],["roc","Feynmaline",null,null,[[13,100,0,100,0],[14,100,0,100,0],[18,100,0,100,0],[20,100,0,100,0],[22,64,0,64,0],[23,52,0,52,0],[29,40,0,40,0],[43,37,0,37,0],[33,26.9,0,26.9,0],[27,12,0,12,0],[28,12,0,12,0],[47,8,0,8,0],[26,4,0,4,0],[32,4,0,4,0],[42,4,0,4,0],[46,4,0,4,0],[49,4,0,4,0],[30,0,0,0,0]]],["ship","Quantainium","legendary",3170,[[21,1.8,0,2,0],[22,1.8,0,2,0],[23,1.8,0,2,0],[24,1.8,0,2,0],[25,1.8,0,2,0],[26,1.8,0,2,0],[27,1.8,0,2,0],[28,1.8,0,2,0],[29,1.8,0,2,0],[30,1.8,0,2,0],[32,1.8,0,2,0],[33,1.8,0,2,0],[42,1.8,0,2,0],[43,1.8,0,2,0],[46,1.8,0,2,0],[47,1.8,0,2,0],[49,1.8,0,2,0]]],["ship","Beryl","rare",3540,[[21,18,0,18,0],[34,18,0,18,0],[38,18,0,18,0],[41,18,0,18,0],[46,18,0,18,0],[22,0.2,"Quantainium",2,0],[23,0.2,"Quantainium",2,0],[24,0.2,"Quantainium",2,0],[25,0.2,"Quantainium",2,0],[26,0.2,"Quantainium",2,0],[27,0.2,"Quantainium",2,0],[28,0.2,"Quantainium",2,0],[29,0.2,"Quantainium",2,0],[30,0.2,"Quantainium",2,0],[32,0.2,"Quantainium",2,0],[33,0.2,"Quantainium",2,0],[42,0.2,"Quantainium",2,0],[43,0.2,"Quantainium",2,0],[47,0.2,"Quantainium",2,0],[49,0.2,"Quantainium",2,0]]],["ship","Ouratite","epic",3370,[[22,9,0,10,0],[23,9,0,10,0],[32,9,0,10,0],[48,9,0,10,0]]],["fps","Jaclium",null,null,[[31,19.5,0,19.5,0]]],["fps","Saldynium",null,null,[[31,15.8,0,15.8,0]]],["fps","Carinite",null,null,[[31,11.6,0,11.6,0]]],["fps","Carinite (Pure)",null,null,[[31,0.5,0,0.5,0]]],["roc","Carinite",null,null,[[31,100,0,100,0]]]]};
+const RARITY = {legendary:['Légendaire',2], epic:['Épique',3], rare:['Rare',4], uncommon:['Peu commune',5], common:['Commune',6]};
+const SIG_OTHER = {roc:{base:4000, max:7, txt:'Toutes les roches minables au ROC ont la même signature'}, fps:{base:3000, max:10, txt:'Tous les gisements minables à pied ont la même signature'}};
+const LOC_TYPE = {planet:'Planète', moon:'Lune', belt:'Ceinture', lagrange:'Lagrange', cluster:'Amas', cave:'Grotte', event:'Événement', special:'Spécial'};
+const LOC_NOTE = {'Lagrange A':'HUR-L1, HUR-L4', 'Lagrange B':'ARC-L5, CRU-L4, MIC-L3', 'Lagrange C':'HUR-L5, MIC-L1, MIC-L2, MIC-L5, CRU-L3',
+  'Lagrange D':'ARC-L3, CRU-L5, MIC-L4', 'Lagrange E':'CRU-L1, CRU-L2, HUR-L3', 'Lagrange F':'HUR-L2, ARC-L1, ARC-L2, ARC-L4',
+  'Aaron Halo':'toutes les bases minières', 'Pyro Deep Space Asteroids':'tous les amas, RAB et RMB', 'Yela Asteroid Belt':'même composition que Terminus Ring (Pyro)'};
+const SYS_ORDER = ['Stanton','Pyro','Nyx'];
+const SUB_ORDER = ['Hurston','Crusader','ArcCorp','microTech','Aaron Halo','Pyro I','Pyro II (Monox)','Pyro III (Bloom)','Pyro IV','Pyro V','Pyro VI (Terminus)','Ceintures de Pyro','Glaciem Ring','Keeger Belt','Breaker Stations','Espace profond','Autres'];
+const SUBSYS = {'Hurston':'Hurston','Arial':'Hurston','Aberdeen':'Hurston','Magda':'Hurston','Ita':'Hurston',
+  'Cellin':'Crusader','Daymar':'Crusader','Yela':'Crusader','Yela Asteroid Belt':'Crusader',
+  'Lyria':'ArcCorp','Wala':'ArcCorp','microTech':'microTech','Calliope':'microTech','Clio':'microTech','Euterpe':'microTech',
+  'Aaron Halo':'Aaron Halo','Asteroid Cluster (Low Yield)':'Espace profond','Asteroid Cluster (Medium Yield)':'Espace profond','Pyro Deep Space Asteroids':'Espace profond',
+  'Pyro I':'Pyro I','Pyro II (Monox)':'Pyro II (Monox)','Pyro III (Bloom)':'Pyro III (Bloom)','Pyro IV':'Pyro IV','Pyro VI (Terminus)':'Pyro VI (Terminus)',
+  'Glaciem Ring':'Glaciem Ring','Keeger Belt':'Keeger Belt'};
+const LAG_PFX = {HUR:'Hurston', CRU:'Crusader', ARC:'ArcCorp', MIC:'microTech'};
+// Un point de Lagrange regroupé (A à F) couvre plusieurs planètes : on le range sous chacune
+function subsOf(name){
+  if(/^Lagrange [A-F]$/.test(name)) return [...new Set(LOC_NOTE[name].split(', ').map(x=>LAG_PFX[x.slice(0,3)]))];
+  if(SUBSYS[name]) return [SUBSYS[name]];
+  if(/^Pyro V-/.test(name)) return ['Pyro V'];
+  if(/^Pyro Belt|^Akiro/.test(name)) return ['Ceintures de Pyro'];
+  if(/^Breaker/.test(name)) return ['Breaker Stations'];
+  return ['Autres'];
+}
+function noteFor(name, sub){
+  const n = LOC_NOTE[name]; if(!n) return '';
+  return sub && /^Lagrange [A-F]$/.test(name) ? n.split(', ').filter(x=>LAG_PFX[x.slice(0,3)]===sub).join(', ') : n;
+}
+function fillSgSub(sys){
+  const el = $('#sgSub'), cur = el.value;
+  const have = new Set(); MINING.L.forEach(l=>{ if(!sys || l[1]===sys) subsOf(l[0]).forEach(x=>have.add(x)); });
+  const opts = SUB_ORDER.filter(x=>have.has(x));
+  el.innerHTML = '<option value="">Tous</option>' + opts.map(x=>`<option>${esc(x)}</option>`).join('');
+  el.value = opts.includes(cur) ? cur : '';
+}
+function locTableHtml(r, locs, sub, mode){
+  const L = MINING.L, flat = mode==='pct', top = Math.max(0, ...locs.map(x=>x[1]));
+  const rowHtml = (x, sb, place) => { const l = L[x[0]], prim = !x[2] || sameEl(x[2], r[1]), note = noteFor(l[0], sb), isTop = x[1]===top; return `<tr class="${isTop?'top':''}">
+    <td><a href="#" class="lnkloc" data-mloc="${x[0]}" title="Voir tous les minerais de ce lieu"><b>${esc(l[0])}</b></a>${note?`<div class="loc">${esc(note)}</div>`:''}</td>
+    ${flat?`<td>${place}</td>`:''}<td>${LOC_TYPE[l[2]]||esc(l[2])}</td>
+    <td class="num">≤ ${nf1.format(x[1])} %<span class="pctbar"><i style="width:${Math.min(100,x[1])}%"></i></span></td>
+    <td>${prim ? `<span class="pos">roche ${esc(r[1])}</span> <span class="muted">(${nf1.format(x[3])} % des roches)</span>` : `<span class="warnc">contenu dans ${esc(x[2])}</span> <span class="muted">(${nf1.format(x[3])} % des roches)</span>`}</td>
+  </tr>`; };
+  let rows;
+  if(flat) rows = locs.map(x=>rowHtml(x, sub, esc(L[x[0]][1])+' › '+esc(subsOf(L[x[0]][0]).join(', ')))).join('');
+  else {
+    const so = x => { const i = SUB_ORDER.indexOf(x); return i<0 ? 99 : i; }, sy = x => { const i = SYS_ORDER.indexOf(x); return i<0 ? 9 : i; };
+    const ent = locs.flatMap(x=>subsOf(L[x[0]][0]).filter(sb=>!sub || sb===sub).map(sb=>({x, sb})));
+    ent.sort((a,b)=> sy(L[a.x[0]][1])-sy(L[b.x[0]][1]) || so(a.sb)-so(b.sb) || b.x[1]-a.x[1]);
+    let last = '';
+    rows = ent.map(({x, sb})=>{ const g = L[x[0]][1]+'|'+sb, h = g!==last ? `<tr class="grp"><td colspan="4">${esc(L[x[0]][1])} › <b>${esc(sb)}</b></td></tr>` : ''; last = g; return h + rowHtml(x, sb); }).join('');
+  }
+  const tops = locs.filter(x=>x[1]===top).map(x=>L[x[0]][0]);
+  locTableHtml.best = tops.length ? `<div class="bestline">★ <b>Meilleur${tops.length>1?'s':''} endroit${tops.length>1?'s':''}</b> (≤ ${nf1.format(top)} %) : ${tops.map(esc).join(', ')}</div>` : '';
+  return `<thead><tr><th>Lieu</th>${flat?'<th>Système › sous-système</th>':''}<th>Type</th><th class="num">Part max.</th><th>Dans quelle roche</th></tr></thead><tbody>${rows}</tbody>`;
+}
+let sgType = 'ship', sgLastVal = null;
+const sgSortCol = Object.assign({s:'sig', rev:false}, LS.get('sgSortCol', {}));
+const sgOpen = new Set();
+const sgPins = new Set(LS.get('sgPins', []));   // ressources épinglées en haut
+const sameEl = (a, b) => String(a).toLowerCase().replace(/[^a-z]/g,'').slice(0,6) === String(b).toLowerCase().replace(/[^a-z]/g,'').slice(0,6);
+function sigInfo(r){ // r = [type, nom, rareté, signature, lieux]
+  if(r[0]==='ship') return {base:r[3], max:(RARITY[r[2]]||['',6])[1]};
+  return SIG_OTHER[r[0]];
+}
+// Prix de vente UEX : meilleur prix par marchandise (raffinée et brute)
+const normEl = s => String(s).toLowerCase().replace(/\(.*?\)/g,'').replace(/[^a-z]/g,'').replace('aluminium','aluminum');
+function sigBestSell(){
+  const avg = filters.priceMode==='avg', best = {};
+  (state.prices||[]).forEach(p=>{ const v = avg ? (p.price_sell_avg||p.price_sell) : p.price_sell; if(v>0 && (!best[p.id_commodity] || v>best[p.id_commodity].v)) best[p.id_commodity] = {v, t:p.id_terminal}; });
+  return best;
+}
+function sigPrice(name, best){
+  const C = Object.values(state.commodities||{}), n = normEl(name), isRaw = c => /\((ore|raw)\)/i.test(c.name);
+  const same = C.filter(c=>normEl(c.name)===n), exact = same.find(c=>c.name.toLowerCase()===name.toLowerCase() && !isRaw(c));
+  const ref = exact || same.find(c=>!isRaw(c) && !c.name.includes('('));
+  const raw = name.includes('(') ? null : same.find(isRaw);
+  const out = c => !c ? null : best[c.id] ? {v:best[c.id].v, t:state.terminals[best[c.id].t]} : (c.price_sell>0 ? {v:c.price_sell} : null);
+  return {ref:out(ref), raw:out(raw), ids:[ref, raw].filter(Boolean).map(c=>c.id)};
+}
+// Navigation entre les onglets Ressources et Signatures
+function focusEl(el){ if(!el) return; el.scrollIntoView({block:'center'}); el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }
+function sigKeyFor(name){
+  try{ if(!MINING) return null; }catch(e){ return null; }
+  const n = normEl(name), lc = name.toLowerCase().replace(/\s*\((ore|raw)\)/,''), TORD = {ship:0, roc:1, fps:2};
+  const m = MINING.R.filter(r=>normEl(r[1])===n).sort((a,b)=> (b[1].toLowerCase()===lc)-(a[1].toLowerCase()===lc) || TORD[a[0]]-TORD[b[0]]);
+  return m[0] ? m[0][0]+'|'+m[0][1] : null;
+}
+function goToSig(key){
+  const find = () => [...$$('#sgList .sig')].find(x=>x.dataset.k===key);
+  sgType = key.split('|')[0]; $('#sgSearch').value = ''; sgOpen.add(key);
+  showTab('signatures');
+  if(!find()){ $('#sgSys').value = ''; $('#sgSub').value = ''; renderSignatures(); }
+  focusEl(find());
+}
+function goToRes(ids){
+  const find = () => ids.map(c=>document.querySelector(`.route.res[data-cid="${c}"]`)).find(Boolean);
+  showTab('resources'); computeResources();
+  if(!find() && $('#rSearch').value){ $('#rSearch').value = ''; computeResources(); }
+  const el = find();
+  if(!el){ toast(`${ids.map(c=>state.commodities[c]?.name).filter(Boolean).join(' / ')} n'apparaît pas dans Ressources avec les filtres actuels (aucune route achat → vente rentable).`, true); return; }
+  resOpen.add(+el.dataset.cid); LS.set('resOpen', [...resOpen]); computeResources();
+  focusEl(document.querySelector(`.route.res[data-cid="${el.dataset.cid}"]`));
+}
+function sigPriceTxt(x){ return `${fmt(x.v)} aUEC/SCU${x.t ? ' à '+termName(x.t)+(termLoc(x.t)?' ('+termLoc(x.t)+')':'') : ' (moyenne UEX)'}`; }
+function renderSignatures(){
+  if(!MINING){ $('#sgList').innerHTML = '<div class="empty">Données de minage absentes.</div>'; return; }
+  $$('#sgType button').forEach(b=>b.classList.toggle('on', b.dataset.t===sgType));
+  const val = num($('#sgValue').value), q = $('#sgSearch').value.trim().toLowerCase(), sys = $('#sgSys').value;
+  fillSgSub(sys);
+  const sub = $('#sgSub').value, sortMode = $('#sgSort').value;
+  const L = MINING.L, sellBest = sigBestSell();
+  let list = MINING.R.filter(r=>(sgType==='all' || r[0]===sgType) && (!q || r[1].toLowerCase().includes(q)));
+  list = list.map(r=>{
+    const si = sigInfo(r), locs = r[4].filter(x=>x[1]>0 && (!sys || L[x[0]][1]===sys) && (!sub || subsOf(L[x[0]][0]).includes(sub)));
+    const hitN = val>0 && si && val % si.base===0 && val/si.base<=si.max ? val/si.base : 0;
+    return {r, si, locs, hitN};
+  }).filter(x=>x.locs.length || (!sys && !sub));
+  // Tout : vaisseau (par signature), puis ROC, puis à pied (par nom)
+  const TORD = {ship:0, roc:1, fps:2};
+  const SGK = {name:x=>x.r[1], sig:x=>x.si?x.si.base:null, sell:x=>{ const p = sigPrice(x.r[1], sellBest); return p.ref ? p.ref.v : (p.raw ? p.raw.v : null); }};
+  const sgDesc = (sgSortCol.s==='sell')!==sgSortCol.rev, sgc = cmpKey(SGK[sgSortCol.s]||SGK.sig, sgDesc), byName = (a,b)=>a.r[1].localeCompare(b.r[1]);
+  list.sort(sgSortCol.s==='sig' ? (a,b)=> (TORD[a.r[0]]-TORD[b.r[0]]) || sgc(a,b) || byName(a,b) : (a,b)=> sgc(a,b) || byName(a,b));
+  $$('#sgHead button').forEach(b=>{ const on = b.dataset.s===sgSortCol.s; b.classList.toggle('on', on); b.textContent = b.textContent.replace(/ [▲▼]$/,'') + (on ? (sgDesc?' ▼':' ▲') : ''); });
+  const pinK = x => sgPins.has(x.r[0]+'|'+x.r[1]);
+  list.sort((a,b)=> pinK(b)-pinK(a));
+  // Valeur saisie : correspondances exactes d'abord, sinon la plus proche
+  let info = '';
+  if(val>0){
+    const hits = list.filter(x=>x.hitN);
+    if(hits.length===1 && val!==sgLastVal) sgOpen.add(hits[0].r[0]+'|'+hits[0].r[1]);
+    if(hits.length){ info =`<b>${fmt(val)}</b> = ` + hits.map(x=>`<b>${x.hitN} roche${x.hitN>1?'s':''} · ${esc(x.r[1])}</b>`).join(' ou '); list = hits.concat(list.filter(x=>!x.hitN)); }
+    else {
+      let best = null;
+      list.forEach(x=>{ if(!x.si) return; for(let n=1;n<=x.si.max;n++){ const d = Math.abs(val - x.si.base*n); if(!best || d<best.d) best = {d, n, x}; } });
+      info = best ? `Aucune correspondance exacte pour ${fmt(val)}. Le plus proche : <b>${best.n} × ${esc(best.x.r[1])}</b> = ${fmt(best.x.si.base*best.n)} (écart ${fmt(best.d)}). Un groupe mixte additionne les signatures de roches différentes.` : '';
+    }
+  }
+  sgLastVal = val;
+  if(SIG_OTHER[sgType]) info = (info?info+'<br>':'') + `${SIG_OTHER[sgType].txt} : <b>${fmt(SIG_OTHER[sgType].base)}</b> par gisement.`;
+  $('#sgInfo').innerHTML = info;
+  $('#sgList').innerHTML = list.length ? list.map(({r, si, locs, hitN})=>{
+    const key = r[0]+'|'+r[1], open = sgOpen.has(key), rar = RARITY[r[2]];
+    const mult = si ? Array.from({length:si.max}, (_,i)=>`<span class="${hitN===i+1?'hit':''}" title="${i+1} roche${i?'s':''}">${fmt(si.base*(i+1))}</span>`).join('') : '';
+    return `<div class="sig ${open?'open':''} ${hitN?'hit':''} ${sgPins.has(key)?'pinned':''}" data-k="${esc(key)}">
+      <div class="hd">
+        <div><button class="pin ${sgPins.has(key)?'on':''}" data-spin="${esc(key)}" title="${sgPins.has(key)?'Désépingler':'Épingler en haut'}">📌</button> ${sgType==='all' ? `<span title="${({ship:'Vaisseau',roc:'ROC',fps:'À pied'})[r[0]]}">${({ship:'🚀',roc:'🚜',fps:'⛏'})[r[0]]}</span> ` : ''}<span class="nm">${esc(r[1])}</span> ${(ids=>ids.length?`<button class="lnk" data-gores="${ids.join(',')}" title="Voir dans l'onglet Ressources">💰</button> `:'')(sigPrice(r[1], sellBest).ids)}${rar?`<span class="pill rar-${r[2]}">${rar[0]}</span>`:''}</div>
+        <div class="base">${si?fmt(si.base):'—'}</div>
+        ${(()=>{ const pr = sigPrice(r[1], sellBest), tip = [pr.ref?'Raffiné : '+sigPriceTxt(pr.ref):'', pr.raw?'Brut : '+sigPriceTxt(pr.raw):''].filter(Boolean).join('\n') || 'Prix de vente UEX non disponible';
+          return `<div class="px" title="${esc(tip)}">${pr.ref ? fmt(pr.ref.v)+' <small style="display:inline">/SCU</small>' : (pr.raw ? '' : '<span class="muted">—</span>')}${pr.raw ? `<small>brut ${fmt(pr.raw.v)}</small>` : ''}</div>`; })()}
+        <div class="mult">${mult}</div>
+        <div class="muted" style="font-size:12px">${locs.length} lieu${locs.length>1?'x':''} ${open?'▴':'▾'}</div>
+      </div>
+      ${open ? `<div class="bd">${(()=>{ const pr = sigPrice(r[1], sellBest); return (pr.ref||pr.raw) ? `<p class="hint" style="margin-top:0">💰 Meilleure vente${filters.priceMode==='avg'?' (moyenne)':''} — ${[pr.ref?'raffiné : <b>'+esc(sigPriceTxt(pr.ref))+'</b>':'', pr.raw?'brut : <b>'+esc(sigPriceTxt(pr.raw))+'</b>':''].filter(Boolean).join(' · ')}</p>` : ''; })()}${(()=>{ const t = locTableHtml(r, locs, sub, sortMode); return locTableHtml.best + '<div class="histwrap"><table class="hist">' + t; })()}</table></div>
+        <p class="hint">« Part max. » = probabilité de la roche à cet endroit × teneur maximale de ${esc(r[1])} dans cette roche.</p></div>` : ''}
+    </div>`; }).join('') : '<div class="empty">Aucune ressource ne correspond.</div>';
+  $('#sgSource').innerHTML = `Données de minage : <a href="https://scmdb.net/?page=mine" target="_blank" rel="noopener">scmdb.net</a>, version ${esc(MINING.v)}. Récupération 2 000 par panneau (salvage).`;
+}
+$('#sgHead').addEventListener('click', e=>{
+  const b = e.target.closest('button[data-s]'); if(!b) return;
+  if(sgSortCol.s===b.dataset.s) sgSortCol.rev = !sgSortCol.rev; else { sgSortCol.s = b.dataset.s; sgSortCol.rev = false; }
+  LS.set('sgSortCol', sgSortCol); renderSignatures();
+});
+$('#sgType').addEventListener('click', e=>{ const b = e.target.closest('button[data-t]'); if(!b) return; sgType = b.dataset.t; renderSignatures(); });
+['#sgValue','#sgSearch','#sgSys','#sgSub','#sgSort'].forEach(s=>$(s).addEventListener('input', renderSignatures));
+$('#sgList').addEventListener('click', e=>{
+  const ml = e.target.closest('[data-mloc]');
+  if(ml){ e.preventDefault(); e.stopPropagation(); goToLoc('m:'+ml.dataset.mloc); return; }
+  const pb = e.target.closest('button[data-spin]');
+  // Garde la ressource cliquée au même endroit de l'écran après le nouveau tri
+  const keep = k => { const q = el => [...$$('#sgList .sig')].find(x=>x.dataset.k===k), t = q() ? q().getBoundingClientRect().top : null; renderSignatures(); const n = q(); if(n && t!=null) window.scrollBy(0, n.getBoundingClientRect().top - t); };
+  const gr = e.target.closest('button[data-gores]');
+  if(gr){ goToRes(gr.dataset.gores.split(',').map(Number)); return; }
+  if(pb){ const k = pb.dataset.spin; sgPins.has(k) ? sgPins.delete(k) : sgPins.add(k); LS.set('sgPins', [...sgPins]); keep(k); return; }
+  const hd = e.target.closest('.hd'); if(!hd) return;
+  const k = hd.parentElement.dataset.k; sgOpen.has(k) ? sgOpen.delete(k) : sgOpen.add(k);
+  keep(k);
+});
+
+/* ================= LIEU ================= */
+// Dans Ressources : nom simple (le clic sur la ligne sert à choisir le lieu) + bouton 📍 vers la page Lieu
+function tName(t){ return t ? `<span class="name">${esc(termName(t))}</span> <button class="lnk" data-term="${t.id}" title="Voir tout ce qui s'achète et se vend ici (page Lieu)">📍</button>` : '?'; }
+function tLink(t){ return t ? `<a href="#" class="name lnkloc" data-term="${t.id}" title="Voir tout ce qui s'achète et se vend ici">${esc(termName(t))}</a>` : '?'; }
+const lcNorm = s => String(s||'').toLowerCase().trim();
+// Zones de minage correspondant à un terminal (sa lune, sa planète au sol, ou son point de Lagrange)
+function mineIdxForTerm(t){
+  const L = MINING.L, out = new Set();
+  const byBody = name => { const n = lcNorm(name); if(!n) return; L.forEach((l,i)=>{ const ln = lcNorm(l[0]); if(l[1]===t.star_system_name && (ln===n || ln.includes('('+n+')'))) out.add(i); }); };
+  if(t.moon_name) byBody(t.moon_name);
+  else if(termKind(t)!=='station') byBody(t.planet_name);
+  const m = String(t.nickname||t.name||'').match(/\b(HUR|CRU|ARC|MIC)-L\d\b/i);
+  if(m){ const code = m[0].toUpperCase(); L.forEach((l,i)=>{ if(/^Lagrange [A-F]$/.test(l[0]) && (LOC_NOTE[l[0]]||'').split(', ').includes(code)) out.add(i); }); }
+  return [...out];
+}
+function termsForMine(idx){ return Object.values(state.terminals).filter(t=>t.is_available_live && mineIdxForTerm(t).includes(idx)).sort((a,b)=>termName(a).localeCompare(termName(b),'fr')); }
+// Autres terminaux au même endroit (même station, ville ou avant-poste)
+function samePlace(t){
+  const key = x => x.star_system_name+'|'+(x.space_station_name||x.city_name||x.outpost_name||'');
+  if(!(t.space_station_name||t.city_name||t.outpost_name)) return [];
+  return Object.values(state.terminals).filter(x=>x.id!==t.id && x.is_available_live && key(x)===key(t));
+}
+let lcMap = new Map();
+function fillLcList(){
+  lcMap = new Map();
+  const opts = [];
+  Object.values(state.terminals).filter(t=>t.is_available_live).sort((a,b)=>termName(a).localeCompare(termName(b),'fr')).forEach(t=>{
+    const lab = `🏪 ${termName(t)} — ${termLoc(t)}`; lcMap.set(lab, 't:'+t.id); opts.push(lab); });
+  try{ MINING.L.forEach((l,i)=>{ const lab = `⛏ ${l[0]} — ${l[1]} (${LOC_TYPE[l[2]]||l[2]})`; lcMap.set(lab, 'm:'+i); opts.push(lab); }); }catch(e){}
+  $('#lcList').innerHTML = opts.map(o=>`<option value="${esc(o)}">`).join('');
+}
+function lcLabel(sel){
+  const [k, v] = sel.split(':');
+  if(k==='t'){ const t = state.terminals[v]; return t ? '🏪 '+termName(t) : null; }
+  const l = MINING.L[+v]; return l ? '⛏ '+l[0] : null;
+}
+function goToLoc(sel){
+  LS.set('lcSel', sel);
+  const rec = [sel].concat(LS.get('lcRecent', []).filter(x=>x!==sel)).slice(0, 8);
+  LS.set('lcRecent', rec);
+  $('#lcSearch').value = '';
+  showTab('location');
+  scrollTo({top:0});
+}
+function lcRecentHtml(){
+  const rec = LS.get('lcRecent', []).map(s=>[s, lcLabel(s)]).filter(x=>x[1]);
+  return rec.length ? 'Récents : ' + rec.map(([s, lab])=>`<button data-lc="${s}" class="${s===LS.get('lcSel','')?'on':''}">${esc(lab)}</button>`).join('') : '';
+}
+function renderLocation(){
+  $('#lcRecent').innerHTML = lcRecentHtml();
+  const sel = LS.get('lcSel', '');
+  const body = $('#lcBody');
+  if(!sel){ body.innerHTML = '<div class="panel empty">Aucun lieu choisi pour l\'instant. Cliquez sur un nom de lieu dans Ressources ou Signatures.</div>'; return; }
+  const [k, v] = sel.split(':');
+  if(k==='m') body.innerHTML = lcMineHtml(+v);
+  else {
+    if(!state.prices.length){ body.innerHTML = '<div class="panel empty">Chargement des prix UEX…</div>'; return; }
+    const t = state.terminals[v];
+    body.innerHTML = t ? lcTermHtml(t) : '<div class="panel empty">Ce terminal n\'existe plus dans les données UEX.</div>';
+  }
+}
+// ---------- Terminal de commerce ----------
+function lcTermHtml(t){
+  const avg = filters.priceMode==='avg', now = Date.now()/1000, T = state.terminals, C = state.commodities;
+  const maxAge = num($('#rMaxAge').value)||0, noFull = $('#rNoFull').checked;
+  const fresh = p => !(maxAge>0 && now-p.date_modified > maxAge*3600);
+  const bpOf = p => avg ? (p.price_buy_avg||p.price_buy) : p.price_buy;
+  const spOf = p => avg ? (p.price_sell_avg||p.price_sell) : p.price_sell;
+  // Meilleurs prix ailleurs (tous terminaux sauf celui-ci)
+  const minBuy = {}, maxSell = {}, nBuy = {}, nSell = {};
+  state.prices.forEach(p=>{
+    const x = T[p.id_terminal]; if(!x || !x.is_available_live || !fresh(p)) return;
+    const b = bpOf(p), sp = spOf(p);
+    if(b>0){ nBuy[p.id_commodity] = (nBuy[p.id_commodity]||0)+1; if(p.id_terminal!==t.id && (!minBuy[p.id_commodity] || b<minBuy[p.id_commodity].price)) minBuy[p.id_commodity] = {price:b, t:x}; }
+    if(sp>0 && !(noFull && p.status_sell===7)){ nSell[p.id_commodity] = (nSell[p.id_commodity]||0)+1; if(p.id_terminal!==t.id && (!maxSell[p.id_commodity] || sp>maxSell[p.id_commodity].price)) maxSell[p.id_commodity] = {price:sp, t:x}; }
+  });
+  const here = state.prices.filter(p=>p.id_terminal===t.id);
+  const cargo = c => { let n = +filters.cargo||0; if(filters.budget>0 && c>0) n = Math.min(n, Math.floor(filters.budget/c)); return n; };
+  const resCell = c => { const sk = sigKeyFor(c.name); return `<td class="pl"><a href="#" class="lnkloc" data-gores="${c.id}" title="Voir dans Ressources"><b>${esc(c.name)}</b></a> ${sk?`<button class="lnk" data-gosig="${esc(sk)}" title="Voir la signature de scan">📡</button>`:''} ${c.is_illegal?'<span class="pill ill">illégal</span>':''}${c.kind?`<div class="loc">${esc(c.kind)}</div>`:''}</td>`; };
+  const elsewhere = (o, lab) => o ? `<td class="pl">${tLink(o.t)}<div class="loc">${lab} ${fmt(o.price)} · ${esc(termLoc(o.t))}</div></td>` : '<td class="muted">aucun</td>';
+  const badge = (cls, txt) => cls ? `<span class="pill ${cls}">${txt}</span>` : '';
+  // --- À acheter ici ---
+  const buys = here.filter(p=>bpOf(p)>0 && C[p.id_commodity]).map(p=>{
+    const c = C[p.id_commodity], price = bpOf(p), ms = maxSell[c.id], mb = minBuy[c.id];
+    const margin = ms ? ms.price - price : null, scu = cargo(price);
+    const best = !mb || price <= mb.price, good = !best && mb && price <= mb.price*1.05;
+    const cls = margin>0 ? (best ? 'hot' : good ? 'warm' : '') : 'cold';
+    return {p, c, price, ms, mb, margin, scu, load: margin!=null ? margin*scu : null, cls,
+      tag: margin>0 ? (best ? badge('hot','★ Meilleur achat') : good ? badge('warm','Bon achat') : '') : '<span class="muted" style="font-size:11px">pas de revente rentable</span>'};
+  });
+  // --- À vendre ici ---
+  const sells = here.filter(p=>spOf(p)>0 && C[p.id_commodity]).map(p=>{
+    const c = C[p.id_commodity], price = spOf(p), ms = maxSell[c.id], mb = minBuy[c.id], full = p.status_sell===7;
+    const soOnly = !nBuy[c.id];   // ne s'achète nulle part : minage / récupération
+    const margin = mb ? price - mb.price : null;
+    const best = !ms || price >= ms.price, good = !best && ms && price >= ms.price*0.95;
+    const ok = !full && (soOnly || margin>0);
+    const cls = ok ? (best ? 'hot' : good ? 'warm' : '') : 'cold';
+    return {p, c, price, ms, mb, margin, full, soOnly, scu: +filters.cargo||0, cls,
+      load: soOnly ? price*(+filters.cargo||0) : (margin!=null ? margin*(+filters.cargo||0) : null),
+      tag: full ? '<span class="pill bad">inventaire plein</span>' : ok ? (best ? badge('hot','★ Meilleure vente') : good ? badge('warm','Bonne vente') : '') : '<span class="muted" style="font-size:11px">achat ailleurs plus cher</span>'};
+  });
+  const rank = {hot:0, warm:1, '':2, cold:3};
+  const sorter = (a,b)=> rank[a.cls]-rank[b.cls] || (b.load??-1e15)-(a.load??-1e15) || a.c.name.localeCompare(b.c.name,'fr');
+  buys.sort(sorter); sells.sort(sorter);
+  const age = p => ageBadge((now-p.date_modified)/3600);
+  const stockOf = p => p.scu_buy>0 ? p.scu_buy : (p.scu_buy_avg||0);
+  const buyRows = buys.map(x=>`<tr class="${x.cls}">
+      <td>${x.tag}</td>${resCell(x.c)}
+      <td class="num"><b>${fmt(x.price)}</b></td>
+      <td class="num ${x.margin>0?'pos':'neg'}">${x.margin!=null ? (x.margin>0?'+':'')+fmt(x.margin) : '—'}</td>
+      <td class="num ${x.load>0?'pos':''}">${x.load!=null && x.margin>0 ? fmt(x.load) : '—'}</td>
+      ${elsewhere(x.ms, 'vente')}
+      ${elsewhere(x.mb, 'achat')}
+      <td>${chipsHtml(boxList(x.p.container_sizes, t.max_container_size))}</td>
+      <td class="num">${stockOf(x.p) ? fmt(stockOf(x.p)) : '?'}</td>
+      <td>${age(x.p)}</td></tr>`).join('');
+  const sellRows = sells.map(x=>`<tr class="${x.cls}">
+      <td>${x.tag}</td>${resCell(x.c)}
+      <td class="num"><b>${fmt(x.price)}</b></td>
+      <td class="num ${x.soOnly?'':x.margin>0?'pos':'neg'}">${x.soOnly ? '<span class="muted">minage</span>' : x.margin!=null ? (x.margin>0?'+':'')+fmt(x.margin) : '—'}</td>
+      <td class="num ${x.load>0?'pos':''}">${x.load!=null && (x.soOnly || x.margin>0) ? fmt(x.load) : '—'}</td>
+      ${elsewhere(x.ms, 'vente')}
+      ${x.soOnly ? '<td class="muted">ne s\'achète nulle part</td>' : elsewhere(x.mb, 'achat')}
+      <td>${chipsHtml(boxList(x.p.container_sizes, t.max_container_size))}</td>
+      <td>${x.full?'<span class="pill bad">plein</span>':(STATUS[x.p.status_sell]?esc(STATUS[x.p.status_sell].toLowerCase()):'?')}</td>
+      <td>${age(x.p)}</td></tr>`).join('');
+  const flags = [['is_refuel','⛽ Ravitaillement'],['is_repair','🔧 Réparation'],['has_loading_dock','Quai de chargement'],['has_freight_elevator','Ascenseur de fret'],['has_docking_port','Port d\'amarrage'],['is_auto_load','Chargement auto'],['is_cargo_center','Centre de fret'],['is_refinery','Raffinerie'],['is_nqa','Sans questions (NQA)'],['is_jump_point','Point de saut']].filter(([f])=>t[f]).map(([,l])=>`<span class="pill">${l}</span>`).join('');
+  const others = samePlace(t), mines = mineIdxForTerm(t);
+  const hotB = buys.filter(x=>x.cls==='hot'||x.cls==='warm').length, hotS = sells.filter(x=>x.cls==='hot'||x.cls==='warm').length;
+  return `<div class="panel lchead">
+    <h2>🏪 ${esc(termName(t))} <span class="pill">${KIND_LABEL[termKind(t)]}</span></h2>
+    <div class="loc">${esc(termLoc(t))}${t.fullname?' · '+esc(t.fullname):''}${t.faction_name?' · '+esc(t.faction_name):''}</div>
+    <div class="lctags">${t.max_container_size?`<span class="pill acc">caisses jusqu'à ${t.max_container_size} SCU</span>`:''}${flags}</div>
+    ${others.length ? `<div class="lcrel">Au même endroit : ${others.map(o=>`<button data-lc="t:${o.id}">🏪 ${esc(termName(o))}</button>`).join('')}</div>` : ''}
+    ${mines.length ? `<div class="lcrel">Minage ici : ${mines.map(i=>`<button data-lc="m:${i}">⛏ ${esc(MINING.L[i][0])}</button>`).join('')}</div>` : ''}
+    <p class="hint">Chargement plein = ${fmt(filters.cargo)} SCU${filters.budget>0?' (budget '+fmt(filters.budget)+' aUEC)':''}. Filtres d'âge des données et d'inventaire plein repris de l'onglet Ressources.</p>
+  </div>
+  <div class="panel">
+    <h2>À acheter ici <span class="muted" style="font-weight:400;font-size:13px">— ${buys.length} ressource${buys.length>1?'s':''}, dont ${hotB} intéressante${hotB>1?'s':''}</span></h2>
+    <div class="lclegend"><span><span class="pill hot">★ Meilleur achat</span> le moins cher de tous les terminaux, revente rentable</span><span><span class="pill warm">Bon achat</span> à 5 % du moins cher, revente rentable</span></div>
+    ${buys.length ? `<div class="histwrap"><table class="hist lctab"><thead><tr><th></th><th>Ressource</th><th class="num">Achat ici /SCU</th><th class="num">Marge /SCU</th><th class="num">Chargement plein</th><th>Meilleure revente</th><th>Moins cher ailleurs</th><th>Caisses</th><th class="num">Stock</th><th>Données</th></tr></thead><tbody>${buyRows}</tbody></table></div>` : '<div class="empty">Rien ne s\'achète à ce terminal.</div>'}
+  </div>
+  <div class="panel">
+    <h2>À vendre ici <span class="muted" style="font-weight:400;font-size:13px">— ${sells.length} ressource${sells.length>1?'s':''}, dont ${hotS} intéressante${hotS>1?'s':''}</span></h2>
+    <div class="lclegend"><span><span class="pill hot">★ Meilleure vente</span> le prix le plus haut de tous les terminaux</span><span><span class="pill warm">Bonne vente</span> à 5 % du meilleur prix</span><span>Marge = prix ici − achat le moins cher ailleurs</span></div>
+    ${sells.length ? `<div class="histwrap"><table class="hist lctab"><thead><tr><th></th><th>Ressource</th><th class="num">Vente ici /SCU</th><th class="num">Marge /SCU</th><th class="num">Chargement plein</th><th>Meilleure vente ailleurs</th><th>Moins cher à l'achat</th><th>Caisses</th><th>Inventaire</th><th>Données</th></tr></thead><tbody>${sellRows}</tbody></table></div>` : '<div class="empty">Rien ne se vend à ce terminal.</div>'}
+  </div>`;
+}
+// ---------- Lieu de minage ----------
+function lcMineHtml(idx){
+  const L = MINING.L, l = L[idx];
+  if(!l) return '<div class="panel empty">Lieu de minage inconnu.</div>';
+  const sellBest = state.prices.length ? sigBestSell() : {};
+  const ent = MINING.R.flatMap(r=>r[4].filter(x=>x[0]===idx && x[1]>0).map(x=>({r, x})));
+  const TYPES = [['ship','🚀 Minage en vaisseau'],['roc','🚜 Minage au ROC'],['fps','⛏ Minage à pied']];
+  const terms = state.prices.length ? termsForMine(idx) : [];
+  const subs = subsOf(l[0]).filter(x=>x!=='Autres');
+  const blocks = TYPES.map(([ty, title])=>{
+    const list = ent.filter(e=>e.r[0]===ty).map(e=>{
+      const pr = sigPrice(e.r[1], sellBest), price = pr.ref ? pr.ref.v : (pr.raw ? pr.raw.v : null);
+      return Object.assign(e, {price, pr, value: price!=null ? price*e.x[1]/100 : null, si: sigInfo(e.r)});
+    }).sort((a,b)=> b.x[1]-a.x[1] || a.r[1].localeCompare(b.r[1],'fr'));
+    if(!list.length) return '';
+    // Les plus intéressantes : meilleure valeur indicative (prix × part)
+    const ranked = list.filter(e=>e.value!=null).sort((a,b)=>b.value-a.value);
+    const hot = new Set(ranked.slice(0,3).map(e=>e.r[1]));
+    const rows = list.map(e=>{ const r = e.r, x = e.x, prim = !x[2] || sameEl(x[2], r[1]), rar = RARITY[r[2]], key = r[0]+'|'+r[1], isHot = hot.has(r[1]);
+      return `<tr class="${isHot?'hot':''}">
+      <td>${isHot ? '<span class="pill hot">★ intéressant</span>' : ''}</td>
+      <td class="pl"><a href="#" class="lnkloc" data-gosig="${esc(key)}" title="Voir la signature de scan"><b>${esc(r[1])}</b></a> ${rar?`<span class="pill rar-${r[2]}">${rar[0]}</span>`:''} ${e.pr.ids.length?`<button class="lnk" data-gores="${e.pr.ids.join(',')}" title="Voir dans Ressources">💰</button>`:''}</td>
+      <td class="num"><b>≤ ${nf1.format(x[1])} %</b><span class="pctbar"><i style="width:${Math.min(100,x[1])}%"></i></span></td>
+      <td>${prim ? `<span class="pos">roche ${esc(r[1])}</span>` : `<span class="warnc">dans ${esc(x[2])}</span>`} <span class="muted">(${nf1.format(x[3])} % des roches)</span></td>
+      <td class="num">${e.si ? fmt(e.si.base) : '—'}</td>
+      <td class="num">${e.price!=null ? fmt(e.price) : '<span class="muted">—</span>'}${e.pr.raw && e.pr.ref ? `<div class="loc">brut ${fmt(e.pr.raw.v)}</div>` : ''}</td>
+      <td class="num">${e.value!=null ? fmt(e.value) : '—'}</td></tr>`; }).join('');
+    return `<div class="panel">
+      <h2>${title} <span class="muted" style="font-weight:400;font-size:13px">— ${list.length} ressource${list.length>1?'s':''}</span></h2>
+      <div class="histwrap"><table class="hist lctab"><thead><tr><th></th><th>Ressource</th><th class="num">Apparition (part max.)</th><th>Dans quelle roche</th><th class="num">Signature</th><th class="num">Vente /SCU</th><th class="num" title="Prix de vente × part max. : valeur moyenne d'un SCU de roche">Valeur indicative</th></tr></thead><tbody>${rows}</tbody></table></div>
+    </div>`;
+  }).join('');
+  return `<div class="panel lchead">
+    <h2>⛏ ${esc(l[0])} <span class="pill">${LOC_TYPE[l[2]]||esc(l[2])}</span></h2>
+    <div class="loc">${esc(l[1])}${subs.length?' › '+esc(subs.join(', ')):''}${LOC_NOTE[l[0]]?' · '+esc(LOC_NOTE[l[0]]):''}</div>
+    ${terms.length ? `<div class="lcrel">Terminaux de commerce ici : ${terms.map(t=>`<button data-lc="t:${t.id}">🏪 ${esc(termName(t))}</button>`).join('')}</div>` : ''}
+    <p class="hint">« Apparition » = probabilité de la roche à cet endroit × teneur maximale du minerai dans cette roche. ★ = les 3 meilleures valeurs indicatives (prix de vente UEX × apparition) de chaque type de minage.</p>
+  </div>${blocks || '<div class="panel empty">Aucun minerai répertorié ici.</div>'}`;
+}
+$('#tab-location').addEventListener('click', e=>{
+  const lc = e.target.closest('[data-lc]');
+  if(lc){ goToLoc(lc.dataset.lc); return; }
+  const tl = e.target.closest('[data-term]');
+  if(tl){ e.preventDefault(); goToLoc('t:'+tl.dataset.term); return; }
+  const gs = e.target.closest('[data-gosig]');
+  if(gs){ e.preventDefault(); goToSig(gs.dataset.gosig); return; }
+  const gr = e.target.closest('[data-gores]');
+  if(gr){ e.preventDefault(); goToRes(gr.dataset.gores.split(',').map(Number)); return; }
+});
+$('#lcSearch').addEventListener('change', e=>{
+  const v = e.target.value.trim(); if(!v) return;
+  let sel = lcMap.get(v);
+  if(!sel){ const q = v.toLowerCase(); for(const [lab, s2] of lcMap){ if(lab.toLowerCase().includes(q)){ sel = s2; break; } } }
+  if(sel) goToLoc(sel); else toast('Lieu introuvable : '+v, true);
+});
+
+// Settings
+function fillSettings(){ $('#sLang').value = settings.lang || 'auto'; $('#sToken').value = settings.token||''; $('#sMinNet').value = settings.minNet; $('#sTolerance').value = settings.tolerance; $('#sRetest').value = settings.retestDays; $('#retestDaysTxt').textContent = settings.retestDays;
+  $('#sQtSpeed').value = settings.qtSpeed; $('#sQtSpool').value = settings.qtSpool; $('#sOvStation').value = settings.ovStation; $('#sOvCity').value = settings.ovCity; $('#sOvOutpost').value = settings.ovOutpost; $('#sLoad').value = settings.loadPer100; $('#sJump').value = settings.jumpMin; }
+$('#btnSaveTravel').addEventListener('click', ()=>{
+  const g = (id, d) => { const v = num($(id).value); return v==null ? d : v; };
+  settings.qtSpeed = g('#sQtSpeed', 200000) || 200000; settings.qtSpool = g('#sQtSpool', 1); settings.ovStation = g('#sOvStation', 8); settings.ovCity = g('#sOvCity', 15); settings.ovOutpost = g('#sOvOutpost', 10); settings.loadPer100 = g('#sLoad', 5); settings.jumpMin = g('#sJump', 5);
+  LS.set('settings', settings); computeResources(); toast('Paramètres de trajet enregistrés.');
+});
+$('#sLang').addEventListener('change', e=>{ settings.lang = e.target.value; LS.set('settings', settings); location.reload(); });
+$('#btnSaveSettings').addEventListener('click', ()=>{ settings.token = $('#sToken').value.trim(); LS.set('settings', settings); toast('Réglages enregistrés.'); });
+$('#btnSaveThresholds').addEventListener('click', ()=>{ settings.minNet = num($('#sMinNet').value)||0; settings.tolerance = num($('#sTolerance').value)||0; settings.retestDays = num($('#sRetest').value)||14; $('#retestDaysTxt').textContent = settings.retestDays; LS.set('settings', settings); renderChecks(); computeResources(); toast('Seuils enregistrés.'); });
+$('#btnTestApi').addEventListener('click', async ()=>{
+  settings.token = $('#sToken').value.trim();
+  const out = $('#apiTestResult'); out.textContent = 'Test en cours…';
+  out.innerHTML = await testToken(settings.token);
+});
+$('#btnExport').addEventListener('click', ()=>{ const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(checks,null,2)],{type:'application/json'})); a.download = 'sc-hauling-controles.json'; a.click(); });
+$('#importFile').addEventListener('change', async e=>{ const f = e.target.files[0]; if(!f) return; try{ const arr = JSON.parse(await f.text()); if(!Array.isArray(arr)) throw new Error('format'); const ids = new Set(checks.map(c=>c.id)); arr.forEach(c=>{ if(!ids.has(c.id)) checks.push(c); }); renderChecks(); toast(arr.length+' fiche(s) importée(s).'); }catch(err){ toast('Fichier invalide.', true); } });
+$('#btnClearCache').addEventListener('click', ()=>{ ['terminals','commodities','prices','vehicles'].forEach(k=>LS.del('cache.'+k)); state.distances = {}; LS.del('distances'); loadAll(true); });
+
+async function testToken(tok){
+  if(!tok) return '<span class="muted">Aucun token : l\'application fonctionne en accès public.</span>';
+  try{
+    const r = await fetch(API+'commodities', {headers:{'Authorization':'Bearer '+tok}});
+    const j = await r.json().catch(()=>({}));
+    if(r.ok && j.status==='ok') return '<span class="pos">✔ Token valide, UEX répond.</span>';
+    return '<span class="neg">✖ Token refusé par UEX ('+esc(j.status||r.status)+'). Vérifiez que vous avez copié le « Jeton Bearer » en entier.</span>';
+  }catch(e){ return '<span class="neg">✖ Impossible de joindre UEX : '+esc(e.message)+'</span>'; }
+}
+function showWelcome(){ $('#wToken').value = settings.token || ''; $('#wResult').textContent = ''; $('#welcome').hidden = false; }
+$('#openWelcome').addEventListener('click', e=>{ e.preventDefault(); showWelcome(); });
+$('#wSkip').addEventListener('click', ()=>{ LS.set('welcomed', true); $('#welcome').hidden = true; });
+$('#wSave').addEventListener('click', async ()=>{
+  const tok = $('#wToken').value.trim();
+  if(!tok){ $('#wResult').innerHTML = '<span class="neg">Collez d\'abord votre token, ou choisissez « Continuer sans token ».</span>'; return; }
+  $('#wResult').textContent = 'Vérification…';
+  const msg = await testToken(tok); $('#wResult').innerHTML = msg;
+  if(msg.includes('✔')){
+    settings.token = tok; LS.set('settings', settings); LS.set('welcomed', true); fillSettings();
+    setTimeout(()=>{ $('#welcome').hidden = true; toast('Token enregistré.'); loadAll(true); }, 700);
+  }
+});
+if(!LS.get('welcomed') && !settings.token) showWelcome();
+
+// Bouton « remonter en haut »
+addEventListener('scroll', ()=>$('#toTop').classList.toggle('on', scrollY>400), {passive:true});
+$('#toTop').addEventListener('click', ()=>scrollTo({top:0, behavior:'smooth'}));
+
+fillSettings();
+try{ const t = sessionStorage.getItem('sch.tab'); if(t) showTab(t); }catch(e){}
+saveChecks();
+renderContracts();
+renderSignatures();
+fillLcList();
+loadAll(false);
+</script>
+</body>
+</html>
