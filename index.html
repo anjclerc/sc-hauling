@@ -255,6 +255,7 @@ a.lnkloc:hover{color:var(--accent);border-bottom-color:var(--accent)}
 .pill.warm{color:var(--accent);border-color:var(--accent)}
 .lclegend{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--muted);margin:0 0 8px}
 .about p{margin:6px 0}
+.privacy{margin:4px 0 8px;padding-left:20px;line-height:1.6;font-size:13px}
 .about a{text-decoration:none}
 .about a:hover{text-decoration:underline}
 </style>
@@ -454,6 +455,13 @@ a.lnkloc:hover{color:var(--accent);border-bottom-color:var(--accent)}
     <p><b>SC Hauling</b> — d'une idée de <b>Akumetsu86</b>, fait par <b>Claude</b> (IA d'Anthropic).</p>
     <p>Un grand merci à <a href="https://uexcorp.space" target="_blank" rel="noopener"><b>UEX</b></a> et à sa communauté de joueurs, qui relèvent les prix du commerce en jeu et les partagent gratuitement avec leur API. Sans eux, cette application n'existerait pas.</p>
     <p>Merci aussi à <a href="https://scmdb.net" target="_blank" rel="noopener"><b>scmdb.net</b></a> pour les données de minage (signatures et lieux des minerais).</p>
+    <h4 class="sec" style="margin-top:14px">Confidentialité</h4>
+    <ul class="privacy">
+      <li><b>Aucun cookie, aucun pistage</b> : pas de statistiques de visite, pas de publicité, aucun script chargé depuis un autre site.</li>
+      <li><b>Vos données restent dans votre navigateur</b> : réglages, token, contrats, contrôles et épingles sont enregistrés uniquement sur cet appareil et ne sont envoyés nulle part. Vider les données du site dans le navigateur les efface.</li>
+      <li><b>Seul site contacté : UEX</b> (api.uexcorp.uk), pour lire les prix, les terminaux et les distances. Votre token, si vous en avez mis un, n'est envoyé qu'à UEX.</li>
+      <li>Comme tout site web, l'hébergeur (GitHub Pages) et UEX voient l'adresse IP de votre connexion lorsqu'ils répondent.</li>
+    </ul>
     <p class="hint">Projet de fan non officiel. Star Citizen® est une marque de Cloud Imperium Rights LLC.</p>
   </div>
   <div class="grid2">
@@ -727,7 +735,11 @@ const I18N_EN = {
 "— d'une idée de":"— an idea by",", fait par":", made by","(IA d'Anthropic).":"(Anthropic's AI).",
 "Un grand merci à":"Many thanks to","et à sa communauté de joueurs, qui relèvent les prix du commerce en jeu et les partagent gratuitement avec leur API. Sans eux, cette application n'existerait pas.":"and its player community, who record in-game trade prices and share them for free through their API. Without them, this app would not exist.",
 "Merci aussi à":"Thanks also to","pour les données de minage (signatures et lieux des minerais).":"for the mining data (ore signatures and locations).",
-"Projet de fan non officiel. Star Citizen® est une marque de Cloud Imperium Rights LLC.":"Unofficial fan project. Star Citizen® is a trademark of Cloud Imperium Rights LLC.","Token de l'application (Bearer)":"Application token (Bearer)",
+"Projet de fan non officiel. Star Citizen® est une marque de Cloud Imperium Rights LLC.":"Unofficial fan project. Star Citizen® is a trademark of Cloud Imperium Rights LLC.",
+"Confidentialité":"Privacy","Aucun cookie, aucun pistage":"No cookies, no tracking",": pas de statistiques de visite, pas de publicité, aucun script chargé depuis un autre site.":": no visitor statistics, no ads, no script loaded from another site.",
+"Vos données restent dans votre navigateur":"Your data stays in your browser",": réglages, token, contrats, contrôles et épingles sont enregistrés uniquement sur cet appareil et ne sont envoyés nulle part. Vider les données du site dans le navigateur les efface.":": settings, token, contracts, checks and pins are stored only on this device and are never sent anywhere. Clearing the site data in your browser erases them.",
+"Seul site contacté : UEX":"Only site contacted: UEX","(api.uexcorp.uk), pour lire les prix, les terminaux et les distances. Votre token, si vous en avez mis un, n'est envoyé qu'à UEX.":"(api.uexcorp.uk), to read prices, terminals and distances. Your token, if you entered one, is only sent to UEX.",
+"Comme tout site web, l'hébergeur (GitHub Pages) et UEX voient l'adresse IP de votre connexion lorsqu'ils répondent.":"Like any website, the host (GitHub Pages) and UEX see your connection's IP address when they respond.","Token de l'application (Bearer)":"Application token (Bearer)",
 "Créé sur uexcorp.space → My Apps. Stocké uniquement dans ce navigateur (ou lu depuis":"Created on uexcorp.space → My Apps. Stored only in this browser (or read from","s'il est à côté du fichier).":"if it is next to the file).",
 "Optionnel":"Optional",": les prix UEX sont publics, l'application fonctionne aussi sans token.":": UEX prices are public, the app also works without a token.","Comment obtenir un token ?":"How to get a token?",
 "Enregistrer":"Save","Tester la connexion":"Test connection","Test en cours…":"Testing…","Seuils de rentabilité (verdict des contrôles)":"Profitability thresholds (check verdict)",
@@ -780,6 +792,8 @@ const I18N_EN_RE = [
 // Appliqués en dernier, après le dictionnaire
 const I18N_EN_POST = [
   [/(^|\s)à (?=[\p{Lu}\p{N}])/gu, '$1at '],
+  [/^ (?=[:;!?])/, ''],                                  // espace français en début de texte avant « : »
+  [/([\p{L}\p{N})»”*]) ([:;!?])(?=\s|$)/gu, '$1$2'],   // espace français avant : ; ! ?
 ];
 
 const I18N = (()=>{
@@ -795,7 +809,7 @@ const I18N = (()=>{
     if(text==null) return text;
     const n = norm(String(text)), t = n.trim();
     if(!t || !/\p{L}/u.test(t)) return text;
-    if(dict.has(t)) return n.replace(t, dict.get(t));
+    if(dict.has(t)){ let o = n.replace(t, dict.get(t)); I18N_EN_POST.forEach(([re, r])=>{ o = o.replace(re, r); }); return o; }
     // 1) phrases et mots connus (les plus longs d'abord), 2) motifs avec nombres, 3) « à » restant
     let out = n.replace(/mis à jour il y a (\d+) min/g, 'updated $1 min ago').replace(/d'il y a (\d+) (h|j)(?![\p{L}])/gu, (m,x,u)=>`from ${x} ${u==='j'?'d':u} ago`);
     out = out.replace(big, (m, off, str)=>{
