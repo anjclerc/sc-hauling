@@ -4,7 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SC Hauling — Ressources</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0b0f14">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="SC Hauling">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <script src="config.js"></script>
+<script>
+// Copyright (c) 2009 Kazuhiko Arase
+// Licensed under the MIT license:
+var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],f={},c=function(t,r){o=function(t){for(var r=new Array(t),e=0;e<t;e+=1){r[e]=new Array(t);for(var n=0;n<t;n+=1)r[e][n]=null}return r}(i=4*e+17),l(0,0),l(i-7,0),l(0,i-7),s(),h(),d(t,r),e>=7&&v(t),null==a&&(a=p(e,n,u)),w(a,r)},l=function(t,r){for(var e=-1;e<=7;e+=1)if(!(t+e<=-1||i<=t+e))for(var n=-1;n<=7;n+=1)r+n<=-1||i<=r+n||(o[t+e][r+n]=0<=e&&e<=6&&(0==n||6==n)||0<=n&&n<=6&&(0==e||6==e)||2<=e&&e<=4&&2<=n&&n<=4)},h=function(){for(var t=8;t<i-8;t+=1)null==o[t][6]&&(o[t][6]=t%2==0);for(var r=8;r<i-8;r+=1)null==o[6][r]&&(o[6][r]=r%2==0)},s=function(){for(var t=B.getPatternPosition(e),r=0;r<t.length;r+=1)for(var n=0;n<t.length;n+=1){var i=t[r],a=t[n];if(null==o[i][a])for(var u=-2;u<=2;u+=1)for(var f=-2;f<=2;f+=1)o[i+u][a+f]=-2==u||2==u||-2==f||2==f||0==u&&0==f}},v=function(t){for(var r=B.getBCHTypeNumber(e),n=0;n<18;n+=1){var a=!t&&1==(r>>n&1);o[Math.floor(n/3)][n%3+i-8-3]=a}for(n=0;n<18;n+=1){a=!t&&1==(r>>n&1);o[n%3+i-8-3][Math.floor(n/3)]=a}},d=function(t,r){for(var e=n<<3|r,a=B.getBCHTypeInfo(e),u=0;u<15;u+=1){var f=!t&&1==(a>>u&1);u<6?o[u][8]=f:u<8?o[u+1][8]=f:o[i-15+u][8]=f}for(u=0;u<15;u+=1){f=!t&&1==(a>>u&1);u<8?o[8][i-u-1]=f:u<9?o[8][15-u-1+1]=f:o[8][15-u-1]=f}o[i-8][8]=!t},w=function(t,r){for(var e=-1,n=i-1,a=7,u=0,f=B.getMaskFunction(r),c=i-1;c>0;c-=2)for(6==c&&(c-=1);;){for(var g=0;g<2;g+=1)if(null==o[n][c-g]){var l=!1;u<t.length&&(l=1==(t[u]>>>a&1)),f(n,c-g)&&(l=!l),o[n][c-g]=l,-1==(a-=1)&&(u+=1,a=7)}if((n+=e)<0||i<=n){n-=e,e=-e;break}}},p=function(t,r,e){for(var n=A.getRSBlocks(t,r),o=b(),i=0;i<e.length;i+=1){var a=e[i];o.put(a.getMode(),4),o.put(a.getLength(),B.getLengthInBits(a.getMode(),t)),a.write(o)}var u=0;for(i=0;i<n.length;i+=1)u+=n[i].dataCount;if(o.getLengthInBits()>8*u)throw"code length overflow. ("+o.getLengthInBits()+">"+8*u+")";for(o.getLengthInBits()+4<=8*u&&o.put(0,4);o.getLengthInBits()%8!=0;)o.putBit(!1);for(;!(o.getLengthInBits()>=8*u||(o.put(236,8),o.getLengthInBits()>=8*u));)o.put(17,8);return function(t,r){for(var e=0,n=0,o=0,i=new Array(r.length),a=new Array(r.length),u=0;u<r.length;u+=1){var f=r[u].dataCount,c=r[u].totalCount-f;n=Math.max(n,f),o=Math.max(o,c),i[u]=new Array(f);for(var g=0;g<i[u].length;g+=1)i[u][g]=255&t.getBuffer()[g+e];e+=f;var l=B.getErrorCorrectPolynomial(c),h=k(i[u],l.getLength()-1).mod(l);for(a[u]=new Array(l.getLength()-1),g=0;g<a[u].length;g+=1){var s=g+h.getLength()-a[u].length;a[u][g]=s>=0?h.getAt(s):0}}var v=0;for(g=0;g<r.length;g+=1)v+=r[g].totalCount;var d=new Array(v),w=0;for(g=0;g<n;g+=1)for(u=0;u<r.length;u+=1)g<i[u].length&&(d[w]=i[u][g],w+=1);for(g=0;g<o;g+=1)for(u=0;u<r.length;u+=1)g<a[u].length&&(d[w]=a[u][g],w+=1);return d}(o,n)};f.addData=function(t,r){var e=null;switch(r=r||"Byte"){case"Numeric":e=M(t);break;case"Alphanumeric":e=x(t);break;case"Byte":e=m(t);break;case"Kanji":e=L(t);break;default:throw"mode:"+r}u.push(e),a=null},f.isDark=function(t,r){if(t<0||i<=t||r<0||i<=r)throw t+","+r;return o[t][r]},f.getModuleCount=function(){return i},f.make=function(){if(e<1){for(var t=1;t<40;t++){for(var r=A.getRSBlocks(t,n),o=b(),i=0;i<u.length;i++){var a=u[i];o.put(a.getMode(),4),o.put(a.getLength(),B.getLengthInBits(a.getMode(),t)),a.write(o)}var g=0;for(i=0;i<r.length;i++)g+=r[i].dataCount;if(o.getLengthInBits()<=8*g)break}e=t}c(!1,function(){for(var t=0,r=0,e=0;e<8;e+=1){c(!0,e);var n=B.getLostPoint(f);(0==e||t>n)&&(t=n,r=e)}return r}())},f.createTableTag=function(t,r){t=t||2;var e="";e+='<table style="',e+=" border-width: 0px; border-style: none;",e+=" border-collapse: collapse;",e+=" padding: 0px; margin: "+(r=void 0===r?4*t:r)+"px;",e+='">',e+="<tbody>";for(var n=0;n<f.getModuleCount();n+=1){e+="<tr>";for(var o=0;o<f.getModuleCount();o+=1)e+='<td style="',e+=" border-width: 0px; border-style: none;",e+=" border-collapse: collapse;",e+=" padding: 0px; margin: 0px;",e+=" width: "+t+"px;",e+=" height: "+t+"px;",e+=" background-color: ",e+=f.isDark(n,o)?"#000000":"#ffffff",e+=";",e+='"/>';e+="</tr>"}return e+="</tbody>",e+="</table>"},f.createSvgTag=function(t,r,e,n){var o={};"object"==typeof arguments[0]&&(t=(o=arguments[0]).cellSize,r=o.margin,e=o.alt,n=o.title),t=t||2,r=void 0===r?4*t:r,(e="string"==typeof e?{text:e}:e||{}).text=e.text||null,e.id=e.text?e.id||"qrcode-description":null,(n="string"==typeof n?{text:n}:n||{}).text=n.text||null,n.id=n.text?n.id||"qrcode-title":null;var i,a,u,c,g=f.getModuleCount()*t+2*r,l="";for(c="l"+t+",0 0,"+t+" -"+t+",0 0,-"+t+"z ",l+='<svg version="1.1" xmlns="http://www.w3.org/2000/svg"',l+=o.scalable?"":' width="'+g+'px" height="'+g+'px"',l+=' viewBox="0 0 '+g+" "+g+'" ',l+=' preserveAspectRatio="xMinYMin meet"',l+=n.text||e.text?' role="img" aria-labelledby="'+y([n.id,e.id].join(" ").trim())+'"':"",l+=">",l+=n.text?'<title id="'+y(n.id)+'">'+y(n.text)+"</title>":"",l+=e.text?'<description id="'+y(e.id)+'">'+y(e.text)+"</description>":"",l+='<rect width="100%" height="100%" fill="white" cx="0" cy="0"/>',l+='<path d="',a=0;a<f.getModuleCount();a+=1)for(u=a*t+r,i=0;i<f.getModuleCount();i+=1)f.isDark(a,i)&&(l+="M"+(i*t+r)+","+u+c);return l+='" stroke="transparent" fill="black"/>',l+="</svg>"},f.createDataURL=function(t,r){t=t||2,r=void 0===r?4*t:r;var e=f.getModuleCount()*t+2*r,n=r,o=e-r;return I(e,e,(function(r,e){if(n<=r&&r<o&&n<=e&&e<o){var i=Math.floor((r-n)/t),a=Math.floor((e-n)/t);return f.isDark(a,i)?0:1}return 1}))},f.createImgTag=function(t,r,e){t=t||2,r=void 0===r?4*t:r;var n=f.getModuleCount()*t+2*r,o="";return o+="<img",o+=' src="',o+=f.createDataURL(t,r),o+='"',o+=' width="',o+=n,o+='"',o+=' height="',o+=n,o+='"',e&&(o+=' alt="',o+=y(e),o+='"'),o+="/>"};var y=function(t){for(var r="",e=0;e<t.length;e+=1){var n=t.charAt(e);switch(n){case"<":r+="&lt;";break;case">":r+="&gt;";break;case"&":r+="&amp;";break;case'"':r+="&quot;";break;default:r+=n}}return r};return f.createASCII=function(t,r){if((t=t||1)<2)return function(t){t=void 0===t?2:t;var r,e,n,o,i,a=1*f.getModuleCount()+2*t,u=t,c=a-t,g={"██":"█","█ ":"▀"," █":"▄","  ":" "},l={"██":"▀","█ ":"▀"," █":" ","  ":" "},h="";for(r=0;r<a;r+=2){for(n=Math.floor((r-u)/1),o=Math.floor((r+1-u)/1),e=0;e<a;e+=1)i="█",u<=e&&e<c&&u<=r&&r<c&&f.isDark(n,Math.floor((e-u)/1))&&(i=" "),u<=e&&e<c&&u<=r+1&&r+1<c&&f.isDark(o,Math.floor((e-u)/1))?i+=" ":i+="█",h+=t<1&&r+1>=c?l[i]:g[i];h+="\n"}return a%2&&t>0?h.substring(0,h.length-a-1)+Array(a+1).join("▀"):h.substring(0,h.length-1)}(r);t-=1,r=void 0===r?2*t:r;var e,n,o,i,a=f.getModuleCount()*t+2*r,u=r,c=a-r,g=Array(t+1).join("██"),l=Array(t+1).join("  "),h="",s="";for(e=0;e<a;e+=1){for(o=Math.floor((e-u)/t),s="",n=0;n<a;n+=1)i=1,u<=n&&n<c&&u<=e&&e<c&&f.isDark(o,Math.floor((n-u)/t))&&(i=0),s+=i?g:l;for(o=0;o<t;o+=1)h+=s+"\n"}return h.substring(0,h.length-1)},f.renderTo2dContext=function(t,r){r=r||2;for(var e=f.getModuleCount(),n=0;n<e;n++)for(var o=0;o<e;o++)t.fillStyle=f.isDark(n,o)?"black":"white",t.fillRect(o*r,n*r,r,r)},f};t.stringToBytes=(t.stringToBytesFuncs={default:function(t){for(var r=[],e=0;e<t.length;e+=1){var n=t.charCodeAt(e);r.push(255&n)}return r}}).default,t.createStringToBytes=function(t,r){var e=function(){for(var e=S(t),n=function(){var t=e.read();if(-1==t)throw"eof";return t},o=0,i={};;){var a=e.read();if(-1==a)break;var u=n(),f=n()<<8|n();i[String.fromCharCode(a<<8|u)]=f,o+=1}if(o!=r)throw o+" != "+r;return i}(),n="?".charCodeAt(0);return function(t){for(var r=[],o=0;o<t.length;o+=1){var i=t.charCodeAt(o);if(i<128)r.push(i);else{var a=e[t.charAt(o)];"number"==typeof a?(255&a)==a?r.push(a):(r.push(a>>>8),r.push(255&a)):r.push(n)}}return r}};var r,e,n,o,i,a=1,u=2,f=4,c=8,g={L:1,M:0,Q:3,H:2},l=0,h=1,s=2,v=3,d=4,w=5,p=6,y=7,B=(r=[[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50],[6,30,54],[6,32,58],[6,34,62],[6,26,46,66],[6,26,48,70],[6,26,50,74],[6,30,54,78],[6,30,56,82],[6,30,58,86],[6,34,62,90],[6,28,50,72,94],[6,26,50,74,98],[6,30,54,78,102],[6,28,54,80,106],[6,32,58,84,110],[6,30,58,86,114],[6,34,62,90,118],[6,26,50,74,98,122],[6,30,54,78,102,126],[6,26,52,78,104,130],[6,30,56,82,108,134],[6,34,60,86,112,138],[6,30,58,86,114,142],[6,34,62,90,118,146],[6,30,54,78,102,126,150],[6,24,50,76,102,128,154],[6,28,54,80,106,132,158],[6,32,58,84,110,136,162],[6,26,54,82,110,138,166],[6,30,58,86,114,142,170]],e=1335,n=7973,i=function(t){for(var r=0;0!=t;)r+=1,t>>>=1;return r},(o={}).getBCHTypeInfo=function(t){for(var r=t<<10;i(r)-i(e)>=0;)r^=e<<i(r)-i(e);return 21522^(t<<10|r)},o.getBCHTypeNumber=function(t){for(var r=t<<12;i(r)-i(n)>=0;)r^=n<<i(r)-i(n);return t<<12|r},o.getPatternPosition=function(t){return r[t-1]},o.getMaskFunction=function(t){switch(t){case l:return function(t,r){return(t+r)%2==0};case h:return function(t,r){return t%2==0};case s:return function(t,r){return r%3==0};case v:return function(t,r){return(t+r)%3==0};case d:return function(t,r){return(Math.floor(t/2)+Math.floor(r/3))%2==0};case w:return function(t,r){return t*r%2+t*r%3==0};case p:return function(t,r){return(t*r%2+t*r%3)%2==0};case y:return function(t,r){return(t*r%3+(t+r)%2)%2==0};default:throw"bad maskPattern:"+t}},o.getErrorCorrectPolynomial=function(t){for(var r=k([1],0),e=0;e<t;e+=1)r=r.multiply(k([1,C.gexp(e)],0));return r},o.getLengthInBits=function(t,r){if(1<=r&&r<10)switch(t){case a:return 10;case u:return 9;case f:case c:return 8;default:throw"mode:"+t}else if(r<27)switch(t){case a:return 12;case u:return 11;case f:return 16;case c:return 10;default:throw"mode:"+t}else{if(!(r<41))throw"type:"+r;switch(t){case a:return 14;case u:return 13;case f:return 16;case c:return 12;default:throw"mode:"+t}}},o.getLostPoint=function(t){for(var r=t.getModuleCount(),e=0,n=0;n<r;n+=1)for(var o=0;o<r;o+=1){for(var i=0,a=t.isDark(n,o),u=-1;u<=1;u+=1)if(!(n+u<0||r<=n+u))for(var f=-1;f<=1;f+=1)o+f<0||r<=o+f||0==u&&0==f||a==t.isDark(n+u,o+f)&&(i+=1);i>5&&(e+=3+i-5)}for(n=0;n<r-1;n+=1)for(o=0;o<r-1;o+=1){var c=0;t.isDark(n,o)&&(c+=1),t.isDark(n+1,o)&&(c+=1),t.isDark(n,o+1)&&(c+=1),t.isDark(n+1,o+1)&&(c+=1),0!=c&&4!=c||(e+=3)}for(n=0;n<r;n+=1)for(o=0;o<r-6;o+=1)t.isDark(n,o)&&!t.isDark(n,o+1)&&t.isDark(n,o+2)&&t.isDark(n,o+3)&&t.isDark(n,o+4)&&!t.isDark(n,o+5)&&t.isDark(n,o+6)&&(e+=40);for(o=0;o<r;o+=1)for(n=0;n<r-6;n+=1)t.isDark(n,o)&&!t.isDark(n+1,o)&&t.isDark(n+2,o)&&t.isDark(n+3,o)&&t.isDark(n+4,o)&&!t.isDark(n+5,o)&&t.isDark(n+6,o)&&(e+=40);var g=0;for(o=0;o<r;o+=1)for(n=0;n<r;n+=1)t.isDark(n,o)&&(g+=1);return e+=Math.abs(100*g/r/r-50)/5*10},o),C=function(){for(var t=new Array(256),r=new Array(256),e=0;e<8;e+=1)t[e]=1<<e;for(e=8;e<256;e+=1)t[e]=t[e-4]^t[e-5]^t[e-6]^t[e-8];for(e=0;e<255;e+=1)r[t[e]]=e;var n={glog:function(t){if(t<1)throw"glog("+t+")";return r[t]},gexp:function(r){for(;r<0;)r+=255;for(;r>=256;)r-=255;return t[r]}};return n}();function k(t,r){if(void 0===t.length)throw t.length+"/"+r;var e=function(){for(var e=0;e<t.length&&0==t[e];)e+=1;for(var n=new Array(t.length-e+r),o=0;o<t.length-e;o+=1)n[o]=t[o+e];return n}(),n={getAt:function(t){return e[t]},getLength:function(){return e.length},multiply:function(t){for(var r=new Array(n.getLength()+t.getLength()-1),e=0;e<n.getLength();e+=1)for(var o=0;o<t.getLength();o+=1)r[e+o]^=C.gexp(C.glog(n.getAt(e))+C.glog(t.getAt(o)));return k(r,0)},mod:function(t){if(n.getLength()-t.getLength()<0)return n;for(var r=C.glog(n.getAt(0))-C.glog(t.getAt(0)),e=new Array(n.getLength()),o=0;o<n.getLength();o+=1)e[o]=n.getAt(o);for(o=0;o<t.getLength();o+=1)e[o]^=C.gexp(C.glog(t.getAt(o))+r);return k(e,0).mod(t)}};return n}var A=function(){var t=[[1,26,19],[1,26,16],[1,26,13],[1,26,9],[1,44,34],[1,44,28],[1,44,22],[1,44,16],[1,70,55],[1,70,44],[2,35,17],[2,35,13],[1,100,80],[2,50,32],[2,50,24],[4,25,9],[1,134,108],[2,67,43],[2,33,15,2,34,16],[2,33,11,2,34,12],[2,86,68],[4,43,27],[4,43,19],[4,43,15],[2,98,78],[4,49,31],[2,32,14,4,33,15],[4,39,13,1,40,14],[2,121,97],[2,60,38,2,61,39],[4,40,18,2,41,19],[4,40,14,2,41,15],[2,146,116],[3,58,36,2,59,37],[4,36,16,4,37,17],[4,36,12,4,37,13],[2,86,68,2,87,69],[4,69,43,1,70,44],[6,43,19,2,44,20],[6,43,15,2,44,16],[4,101,81],[1,80,50,4,81,51],[4,50,22,4,51,23],[3,36,12,8,37,13],[2,116,92,2,117,93],[6,58,36,2,59,37],[4,46,20,6,47,21],[7,42,14,4,43,15],[4,133,107],[8,59,37,1,60,38],[8,44,20,4,45,21],[12,33,11,4,34,12],[3,145,115,1,146,116],[4,64,40,5,65,41],[11,36,16,5,37,17],[11,36,12,5,37,13],[5,109,87,1,110,88],[5,65,41,5,66,42],[5,54,24,7,55,25],[11,36,12,7,37,13],[5,122,98,1,123,99],[7,73,45,3,74,46],[15,43,19,2,44,20],[3,45,15,13,46,16],[1,135,107,5,136,108],[10,74,46,1,75,47],[1,50,22,15,51,23],[2,42,14,17,43,15],[5,150,120,1,151,121],[9,69,43,4,70,44],[17,50,22,1,51,23],[2,42,14,19,43,15],[3,141,113,4,142,114],[3,70,44,11,71,45],[17,47,21,4,48,22],[9,39,13,16,40,14],[3,135,107,5,136,108],[3,67,41,13,68,42],[15,54,24,5,55,25],[15,43,15,10,44,16],[4,144,116,4,145,117],[17,68,42],[17,50,22,6,51,23],[19,46,16,6,47,17],[2,139,111,7,140,112],[17,74,46],[7,54,24,16,55,25],[34,37,13],[4,151,121,5,152,122],[4,75,47,14,76,48],[11,54,24,14,55,25],[16,45,15,14,46,16],[6,147,117,4,148,118],[6,73,45,14,74,46],[11,54,24,16,55,25],[30,46,16,2,47,17],[8,132,106,4,133,107],[8,75,47,13,76,48],[7,54,24,22,55,25],[22,45,15,13,46,16],[10,142,114,2,143,115],[19,74,46,4,75,47],[28,50,22,6,51,23],[33,46,16,4,47,17],[8,152,122,4,153,123],[22,73,45,3,74,46],[8,53,23,26,54,24],[12,45,15,28,46,16],[3,147,117,10,148,118],[3,73,45,23,74,46],[4,54,24,31,55,25],[11,45,15,31,46,16],[7,146,116,7,147,117],[21,73,45,7,74,46],[1,53,23,37,54,24],[19,45,15,26,46,16],[5,145,115,10,146,116],[19,75,47,10,76,48],[15,54,24,25,55,25],[23,45,15,25,46,16],[13,145,115,3,146,116],[2,74,46,29,75,47],[42,54,24,1,55,25],[23,45,15,28,46,16],[17,145,115],[10,74,46,23,75,47],[10,54,24,35,55,25],[19,45,15,35,46,16],[17,145,115,1,146,116],[14,74,46,21,75,47],[29,54,24,19,55,25],[11,45,15,46,46,16],[13,145,115,6,146,116],[14,74,46,23,75,47],[44,54,24,7,55,25],[59,46,16,1,47,17],[12,151,121,7,152,122],[12,75,47,26,76,48],[39,54,24,14,55,25],[22,45,15,41,46,16],[6,151,121,14,152,122],[6,75,47,34,76,48],[46,54,24,10,55,25],[2,45,15,64,46,16],[17,152,122,4,153,123],[29,74,46,14,75,47],[49,54,24,10,55,25],[24,45,15,46,46,16],[4,152,122,18,153,123],[13,74,46,32,75,47],[48,54,24,14,55,25],[42,45,15,32,46,16],[20,147,117,4,148,118],[40,75,47,7,76,48],[43,54,24,22,55,25],[10,45,15,67,46,16],[19,148,118,6,149,119],[18,75,47,31,76,48],[34,54,24,34,55,25],[20,45,15,61,46,16]],r=function(t,r){var e={};return e.totalCount=t,e.dataCount=r,e},e={};return e.getRSBlocks=function(e,n){var o=function(r,e){switch(e){case g.L:return t[4*(r-1)+0];case g.M:return t[4*(r-1)+1];case g.Q:return t[4*(r-1)+2];case g.H:return t[4*(r-1)+3];default:return}}(e,n);if(void 0===o)throw"bad rs block @ typeNumber:"+e+"/errorCorrectionLevel:"+n;for(var i=o.length/3,a=[],u=0;u<i;u+=1)for(var f=o[3*u+0],c=o[3*u+1],l=o[3*u+2],h=0;h<f;h+=1)a.push(r(c,l));return a},e}(),b=function(){var t=[],r=0,e={getBuffer:function(){return t},getAt:function(r){var e=Math.floor(r/8);return 1==(t[e]>>>7-r%8&1)},put:function(t,r){for(var n=0;n<r;n+=1)e.putBit(1==(t>>>r-n-1&1))},getLengthInBits:function(){return r},putBit:function(e){var n=Math.floor(r/8);t.length<=n&&t.push(0),e&&(t[n]|=128>>>r%8),r+=1}};return e},M=function(t){var r=a,e=t,n={getMode:function(){return r},getLength:function(t){return e.length},write:function(t){for(var r=e,n=0;n+2<r.length;)t.put(o(r.substring(n,n+3)),10),n+=3;n<r.length&&(r.length-n==1?t.put(o(r.substring(n,n+1)),4):r.length-n==2&&t.put(o(r.substring(n,n+2)),7))}},o=function(t){for(var r=0,e=0;e<t.length;e+=1)r=10*r+i(t.charAt(e));return r},i=function(t){if("0"<=t&&t<="9")return t.charCodeAt(0)-"0".charCodeAt(0);throw"illegal char :"+t};return n},x=function(t){var r=u,e=t,n={getMode:function(){return r},getLength:function(t){return e.length},write:function(t){for(var r=e,n=0;n+1<r.length;)t.put(45*o(r.charAt(n))+o(r.charAt(n+1)),11),n+=2;n<r.length&&t.put(o(r.charAt(n)),6)}},o=function(t){if("0"<=t&&t<="9")return t.charCodeAt(0)-"0".charCodeAt(0);if("A"<=t&&t<="Z")return t.charCodeAt(0)-"A".charCodeAt(0)+10;switch(t){case" ":return 36;case"$":return 37;case"%":return 38;case"*":return 39;case"+":return 40;case"-":return 41;case".":return 42;case"/":return 43;case":":return 44;default:throw"illegal char :"+t}};return n},m=function(r){var e=f,n=t.stringToBytes(r),o={getMode:function(){return e},getLength:function(t){return n.length},write:function(t){for(var r=0;r<n.length;r+=1)t.put(n[r],8)}};return o},L=function(r){var e=c,n=t.stringToBytesFuncs.SJIS;if(!n)throw"sjis not supported.";!function(t,r){var e=n("友");if(2!=e.length||38726!=(e[0]<<8|e[1]))throw"sjis not supported."}();var o=n(r),i={getMode:function(){return e},getLength:function(t){return~~(o.length/2)},write:function(t){for(var r=o,e=0;e+1<r.length;){var n=(255&r[e])<<8|255&r[e+1];if(33088<=n&&n<=40956)n-=33088;else{if(!(57408<=n&&n<=60351))throw"illegal char at "+(e+1)+"/"+n;n-=49472}n=192*(n>>>8&255)+(255&n),t.put(n,13),e+=2}if(e<r.length)throw"illegal char at "+(e+1)}};return i},D=function(){var t=[],r={writeByte:function(r){t.push(255&r)},writeShort:function(t){r.writeByte(t),r.writeByte(t>>>8)},writeBytes:function(t,e,n){e=e||0,n=n||t.length;for(var o=0;o<n;o+=1)r.writeByte(t[o+e])},writeString:function(t){for(var e=0;e<t.length;e+=1)r.writeByte(t.charCodeAt(e))},toByteArray:function(){return t},toString:function(){var r="";r+="[";for(var e=0;e<t.length;e+=1)e>0&&(r+=","),r+=t[e];return r+="]"}};return r},S=function(t){var r=t,e=0,n=0,o=0,i={read:function(){for(;o<8;){if(e>=r.length){if(0==o)return-1;throw"unexpected end of file./"+o}var t=r.charAt(e);if(e+=1,"="==t)return o=0,-1;t.match(/^\s$/)||(n=n<<6|a(t.charCodeAt(0)),o+=6)}var i=n>>>o-8&255;return o-=8,i}},a=function(t){if(65<=t&&t<=90)return t-65;if(97<=t&&t<=122)return t-97+26;if(48<=t&&t<=57)return t-48+52;if(43==t)return 62;if(47==t)return 63;throw"c:"+t};return i},I=function(t,r,e){for(var n=function(t,r){var e=t,n=r,o=new Array(t*r),i={setPixel:function(t,r,n){o[r*e+t]=n},write:function(t){t.writeString("GIF87a"),t.writeShort(e),t.writeShort(n),t.writeByte(128),t.writeByte(0),t.writeByte(0),t.writeByte(0),t.writeByte(0),t.writeByte(0),t.writeByte(255),t.writeByte(255),t.writeByte(255),t.writeString(","),t.writeShort(0),t.writeShort(0),t.writeShort(e),t.writeShort(n),t.writeByte(0);var r=a(2);t.writeByte(2);for(var o=0;r.length-o>255;)t.writeByte(255),t.writeBytes(r,o,255),o+=255;t.writeByte(r.length-o),t.writeBytes(r,o,r.length-o),t.writeByte(0),t.writeString(";")}},a=function(t){for(var r=1<<t,e=1+(1<<t),n=t+1,i=u(),a=0;a<r;a+=1)i.add(String.fromCharCode(a));i.add(String.fromCharCode(r)),i.add(String.fromCharCode(e));var f,c,g,l=D(),h=(f=l,c=0,g=0,{write:function(t,r){if(t>>>r!=0)throw"length over";for(;c+r>=8;)f.writeByte(255&(t<<c|g)),r-=8-c,t>>>=8-c,g=0,c=0;g|=t<<c,c+=r},flush:function(){c>0&&f.writeByte(g)}});h.write(r,n);var s=0,v=String.fromCharCode(o[s]);for(s+=1;s<o.length;){var d=String.fromCharCode(o[s]);s+=1,i.contains(v+d)?v+=d:(h.write(i.indexOf(v),n),i.size()<4095&&(i.size()==1<<n&&(n+=1),i.add(v+d)),v=d)}return h.write(i.indexOf(v),n),h.write(e,n),h.flush(),l.toByteArray()},u=function(){var t={},r=0,e={add:function(n){if(e.contains(n))throw"dup key:"+n;t[n]=r,r+=1},size:function(){return r},indexOf:function(r){return t[r]},contains:function(r){return void 0!==t[r]}};return e};return i}(t,r),o=0;o<r;o+=1)for(var i=0;i<t;i+=1)n.setPixel(i,o,e(i,o));var a=D();n.write(a);for(var u=function(){var t=0,r=0,e=0,n="",o={},i=function(t){n+=String.fromCharCode(a(63&t))},a=function(t){if(t<0);else{if(t<26)return 65+t;if(t<52)return t-26+97;if(t<62)return t-52+48;if(62==t)return 43;if(63==t)return 47}throw"n:"+t};return o.writeByte=function(n){for(t=t<<8|255&n,r+=8,e+=1;r>=6;)i(t>>>r-6),r-=6},o.flush=function(){if(r>0&&(i(t<<6-r),t=0,r=0),e%3!=0)for(var o=3-e%3,a=0;a<o;a+=1)n+="="},o.toString=function(){return n},o}(),f=a.toByteArray(),c=0;c<f.length;c+=1)u.writeByte(f[c]);return u.flush(),"data:image/gif;base64,"+u};return t}();qrcode.stringToBytesFuncs["UTF-8"]=function(t){return function(t){for(var r=[],e=0;e<t.length;e++){var n=t.charCodeAt(e);n<128?r.push(n):n<2048?r.push(192|n>>6,128|63&n):n<55296||n>=57344?r.push(224|n>>12,128|n>>6&63,128|63&n):(e++,n=65536+((1023&n)<<10|1023&t.charCodeAt(e)),r.push(240|n>>18,128|n>>12&63,128|n>>6&63,128|63&n))}return r}(t)},function(t){"function"==typeof define&&define.amd?define([],t):"object"==typeof exports&&(module.exports=t())}((function(){return qrcode}));
+</script>
 <style>
 :root{
   --bg:#0b0f14; --panel:#121922; --panel2:#18212c; --line:#243241; --text:#d9e4ee; --muted:#7f93a6;
@@ -261,6 +274,11 @@ a.lnkloc:hover{color:var(--accent);border-bottom-color:var(--accent)}
 #updBar{position:sticky;top:0;z-index:30;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:9px 16px;background:var(--accent2);color:#111;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.4)}
 #updBar[hidden]{display:none}
 #tokenHint{font-size:12px;color:var(--accent2)}
+#syncBox{margin-top:12px;display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start}
+#syncBox[hidden]{display:none}
+#syncQr{background:#fff;border-radius:8px;line-height:0}
+#syncQr svg{display:block;max-width:100%;height:auto;shape-rendering:crispEdges}
+#syncInfo{flex:1;min-width:220px;font-size:13px}
 .mssum{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .msmode{display:flex;gap:6px;margin-bottom:12px}
 .msmode button{background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:6px;padding:6px 14px;cursor:pointer;font:inherit}
@@ -279,6 +297,8 @@ a.lnkloc:hover{color:var(--accent);border-bottom-color:var(--accent)}
 .msitem > summary{cursor:pointer;list-style:none;display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;padding:9px 12px}
 .msitem > summary::-webkit-details-marker{display:none}
 .msitem .mt{font-weight:600}
+.star{background:none;border:0;cursor:pointer;font-size:17px;line-height:1;padding:0 2px;color:var(--muted)}
+.star.on{color:var(--accent2)}
 .msitem .mr{margin-left:auto;font-variant-numeric:tabular-nums;white-space:nowrap}
 .msitem .mwhy{flex-basis:100%;font-size:12px;color:var(--warn)}
 .msitem .mbody{padding:0 12px 10px;font-size:13px;line-height:1.6}
@@ -532,7 +552,7 @@ details.uexsend label.chk input{width:auto}
     <h2>À propos</h2>
     <p><b>SC Hauling</b> — d'une idée de <b>Akumetsu86</b>, fait par <b>Claude</b> (IA d'Anthropic).</p>
     <p>Un grand merci à <a href="https://uexcorp.space" target="_blank" rel="noopener"><b>UEX</b></a> et à sa communauté de joueurs, qui relèvent les prix du commerce en jeu et les partagent gratuitement avec leur API. Sans eux, cette application n'existerait pas.</p>
-    <p>Merci aussi à <a href="https://scmdb.net" target="_blank" rel="noopener"><b>scmdb.net</b></a> pour les données de minage (signatures et lieux des minerais).</p>
+    <p>Merci aussi à <a href="https://scmdb.net" target="_blank" rel="noopener"><b>scmdb.net</b></a> pour les données de minage (signatures, lieux et qualité des minerais), des missions (rangs, prérequis, récompenses) et des blueprints de fabrication, partagées avec leur accord via leur <a href="https://github.com/KrovaxCode/SCMDB_DATA" target="_blank" rel="noopener">miroir GitHub</a>.</p>
     <p>Et merci à <a href="https://sc-trade.tools" target="_blank" rel="noopener"><b>SC Trade Tools</b></a> et à sa communauté, dont les relevés de prix servent à comparer avec ceux d'UEX.</p>
     <p class="muted">Version <span id="appVer"></span> — <button class="btn sec small" id="btnCheckUpd">Vérifier les mises à jour</button></p>
     <p class="muted" id="dataInfo"></p>
@@ -616,6 +636,17 @@ details.uexsend label.chk input{width:auto}
         <label class="btn sec" style="display:inline-block;cursor:pointer;color:var(--text);font-size:14px">Importer…<input type="file" id="importFile" accept=".json" hidden></label>
         <button class="btn danger" id="btnClearCache">Vider le cache API</button>
       </div>
+      <h4 class="sec" style="margin-top:16px">📱 Transférer vers un autre appareil</h4>
+      <p class="hint">Copie vos données (contrôles, contrats, lieux, épingles, missions, réglages) vers votre téléphone ou un autre ordinateur : scannez le QR code avec l'appareil photo, ou envoyez-vous le lien. Les données voyagent dans le lien lui-même, sans passer par aucun serveur, et jamais avec votre token ni votre secret key. Ne publiez pas ce lien.</p>
+      <div class="row" style="margin-top:8px">
+        <button class="btn sec" id="btnSync">Générer le QR code</button>
+        <button class="btn sec" id="btnSyncCopy" hidden>Copier le lien</button>
+        <button class="btn sec" id="btnSyncShare" hidden>Partager…</button>
+      </div>
+      <div id="syncBox" hidden><div id="syncQr"></div><div id="syncInfo"></div></div>
+      <h4 class="sec" style="margin-top:16px">📲 Installer l'appli</h4>
+      <p class="hint" id="installHint">Sur téléphone ou ordinateur, SC Hauling peut s'installer comme une appli : icône sur l'écran d'accueil, plein écran, démarrage rapide et consultation hors ligne des dernières données. Sur iPhone : bouton <b>Partager</b> de Safari › <b>Sur l'écran d'accueil</b>. Sur Android : menu ⋮ de Chrome › <b>Installer l'application</b>.</p>
+      <div class="row" style="margin-top:8px"><button class="btn" id="btnInstall" hidden>📲 Installer SC Hauling</button></div>
     </div>
   </div>
 </section>
@@ -678,11 +709,23 @@ let state = { terminals:{}, commodities:{}, prices:[], vehicles:[], fleet: LS.ge
 let checks = LS.get('checks', []);
 let filters = Object.assign({ship:'', cargo:46, budget:0, priceMode:'last'}, LS.get('filters', {}));
 // Version de la page : à changer à chaque publication (date-heure, comparée comme du texte).
-const APP_VERSION = '2026-11-04T16:30';
+const APP_VERSION = '2026-11-04T16:44';
 const SITE_URL = 'https://anjclerc.github.io/sc-hauling/';
 // Dictionnaire français → anglais (textes affichés). Les clés sont comparées espaces normalisés.
 const I18N_EN = {
 // ---- Barre du haut / onglets ----
+"📱 Transférer vers un autre appareil":"📱 Transfer to another device",
+"Copie vos données (contrôles, contrats, lieux, épingles, missions, réglages) vers votre téléphone ou un autre ordinateur : scannez le QR code avec l'appareil photo, ou envoyez-vous le lien. Les données voyagent dans le lien lui-même, sans passer par aucun serveur, et jamais avec votre token ni votre secret key. Ne publiez pas ce lien.":"Copies your data (checks, contracts, locations, pins, missions, settings) to your phone or another computer: scan the QR code with the camera, or send yourself the link. The data travels inside the link itself, through no server, and never with your token or secret key. Do not publish this link.",
+"Générer le QR code":"Generate the QR code","Copier le lien":"Copy the link","Partager…":"Share…","Scannez ce QR code":"Scan this QR code","avec l'appareil photo de l'autre appareil, puis confirmez l'import.":"with the other device's camera, then confirm the import.",
+"Trop de données pour un QR code : utilisez":"Too much data for a QR code: use","(message à vous-même), ou l'export en fichier.":"(a message to yourself), or the file export.",
+"À l'arrivée, rien n'est écrasé : les données sont ajoutées à celles déjà présentes.":"On arrival nothing is overwritten: the data is added to what is already there.",
+"Lien copié. Ouvrez-le sur l'autre appareil.":"Link copied. Open it on the other device.","Copiez ce lien :":"Copy this link:","Lien de transfert illisible (incomplet ou abîmé).":"Unreadable transfer link (incomplete or damaged).",
+"Importer les données d'un autre appareil ?":"Import data from another device?","Rien n'est écrasé : elles s'ajoutent aux vôtres.":"Nothing is overwritten: it is added to yours.",
+"📲 Installer l'appli":"📲 Install the app","📲 Installer SC Hauling":"📲 Install SC Hauling",
+"Sur téléphone ou ordinateur, SC Hauling peut s'installer comme une appli : icône sur l'écran d'accueil, plein écran, démarrage rapide et consultation hors ligne des dernières données. Sur iPhone : bouton":"On a phone or computer, SC Hauling can be installed as an app: home screen icon, full screen, fast start and offline access to the latest data. On iPhone: Safari's",
+"de Safari ›":"button ›","Sur l'écran d'accueil":"Add to Home Screen",". Sur Android : menu ⋮ de Chrome ›":". On Android: Chrome's ⋮ menu ›","Installer l'application":"Install app",
+"Depuis le fichier local, l'installation n'est pas possible : ouvrez le site.":"Installing is not possible from the local file: open the website.",
+"SC Hauling est installé. Vous le trouverez avec vos applis.":"SC Hauling is installed. You will find it with your apps.",
 "🛠 Blueprints":"🛠 Blueprints","Blueprints de fabrication":"Crafting blueprints",
 "Cherchez un objet (ou un ingrédient) : vous voyez comment obtenir son blueprint (connu par défaut ou via quelles missions, avec votre statut pour chacune) et où trouver chaque ingrédient (minage dans Signatures, achat dans Ressources).":"Search an item (or an ingredient): see how to get its blueprint (known by default or through which missions, with your status for each) and where to find each ingredient (mining in Signatures, buying in Resources).",
 "Rechercher un objet ou un ingrédient":"Search an item or an ingredient","ex. Arrowhead, Titanium":"e.g. Arrowhead, Titanium","Catégorie":"Category","Obtention":"How to get",
@@ -694,7 +737,7 @@ const I18N_EN = {
 "Aucune mission ne le donne dans les données actuelles (butin, Wikelo, événement ou pas encore obtenable).":"No mission gives it in the current data (loot, Wikelo, event, or not obtainable yet).",
 "Chargement des blueprints…":"Loading blueprints…","Données des blueprints indisponibles (connexion au site nécessaire).":"Blueprint data unavailable (connection to the site required).",
 "Aucun blueprint ne correspond.":"No matching blueprint.","Données :":"Data:",". Prix d'achat : UEX (la qualité n'est pas garantie).":". Buy prices: UEX (quality not guaranteed).",
-"Blueprints possibles :":"Possible blueprints:","Voir ce terminal (achat)":"See this terminal (buy)","pas vendu en terminal":"not sold at terminals","Voir les blueprints de cette mission":"See this mission's blueprints","Voir tous les blueprints":"See all blueprints","Blueprints de la mission":"Blueprints of mission","Coût d'entrée :":"Buy-in:","(à payer pour accepter la mission)":"(to pay when accepting the mission)",
+"Blueprints possibles :":"Possible blueprints:","Suivre cette mission":"Follow this mission","Suivre ce blueprint":"Follow this blueprint","Ne plus suivre":"Unfollow","Voir ce terminal (achat)":"See this terminal (buy)","pas vendu en terminal":"not sold at terminals","Voir les blueprints de cette mission":"See this mission's blueprints","Voir tous les blueprints":"See all blueprints","Blueprints de la mission":"Blueprints of mission","Coût d'entrée :":"Buy-in:","(à payer pour accepter la mission)":"(to pay when accepting the mission)",
 "Équipement à pied":"FPS gear","Vaisseau":"Ship","Objets de mission":"Mission items","Armure":"Armour","Armes":"Weapons","Munitions":"Ammo","Refroidisseur":"Cooler","Générateur":"Power plant","Bouclier":"Shield","Moteur quantique":"Quantum drive","Laser de minage":"Mining laser","Rayon tracteur":"Tractor beam","Module de minage":"Mining module","Conteneur de minerai":"Ore pod","Récupération":"Salvage",
 "🎯 Missions / BP":"🎯 Missions / BP","Missions et blueprints":"Missions and blueprints","Missions selon votre rang":"Missions for your rank",
 "Choisissez une faction et votre rang actuel : la page montre les missions que vous pouvez accepter maintenant, puis celles à débloquer, avec ce qu'il manque (rang ou missions à finir avant). Cochez « J'ai fini cette mission » pour débloquer la suite.":"Pick a faction and your current rank: the page shows the missions you can accept now, then the ones to unlock and what is missing (rank or missions to finish first). Tick “I finished this mission” to unlock the next ones.",
@@ -879,7 +922,7 @@ const I18N_EN = {
 "Accès API UEX":"UEX API access","À propos":"About",
 "— d'une idée de":"— an idea by",", fait par":", made by","(IA d'Anthropic).":"(Anthropic's AI).",
 "Un grand merci à":"Many thanks to","et à sa communauté de joueurs, qui relèvent les prix du commerce en jeu et les partagent gratuitement avec leur API. Sans eux, cette application n'existerait pas.":"and its player community, who record in-game trade prices and share them for free through their API. Without them, this app would not exist.",
-"Merci aussi à":"Thanks also to","Et merci à":"And thanks to","et à sa communauté, dont les relevés de prix servent à comparer avec ceux d'UEX.":"and its community, whose price reports are used for comparison with UEX.","pour les données de minage (signatures et lieux des minerais).":"for the mining data (ore signatures and locations).",
+"Merci aussi à":"Thanks also to","Et merci à":"And thanks to","et à sa communauté, dont les relevés de prix servent à comparer avec ceux d'UEX.":"and its community, whose price reports are used for comparison with UEX.","pour les données de minage (signatures, lieux et qualité des minerais), des missions (rangs, prérequis, récompenses) et des blueprints de fabrication, partagées avec leur accord via leur":"for the mining data (ore signatures, locations and quality), the missions (ranks, prerequisites, rewards) and the crafting blueprints, shared with their permission through their","miroir GitHub":"GitHub mirror",
 "Projet de fan non officiel. Star Citizen® est une marque de Cloud Imperium Rights LLC.":"Unofficial fan project. Star Citizen® is a trademark of Cloud Imperium Rights LLC.",
 "Confidentialité":"Privacy","Aucun cookie, aucun pistage":"No cookies, no tracking",": pas de statistiques de visite, pas de publicité, aucun script chargé depuis un autre site.":": no visitor statistics, no ads, no script loaded from another site.",
 "Vos données restent dans votre navigateur":"Your data stays in your browser",": réglages, token, contrats, contrôles et épingles sont enregistrés uniquement sur cet appareil et ne sont envoyés nulle part. Vider les données du site dans le navigateur les efface.":": settings, token, contracts, checks and pins are stored only on this device and are never sent anywhere. Clearing the site data in your browser erases them.",
@@ -942,6 +985,10 @@ const I18N_EN_RE = [
 ];
 // Appliqués en premier, avant le dictionnaire (phrases avec des nombres au milieu)
 const I18N_EN_PRE = [
+  [/⭐ Suivies \((\d+)\)/g, '⭐ Followed ($1)'],
+  [/⭐ Suivis \((\d+)\)/g, '⭐ Followed ($1)'],
+  [/Contenu : (\d+) contrôle\(s\), (\d+) contrat\(s\), (\d+) lieu\(x\), (\d+) épingle\(s\), (\d+) mission\(s\) finie\(s\)\. Taille du lien : ([\d\s,.  ]+) caractères\./g, 'Content: $1 check(s), $2 contract(s), $3 location(s), $4 pin(s), $5 finished mission(s). Link length: $6 characters.'],
+  [/(\d+) contrôle\(s\), (\d+) contrat\(s\), (\d+) lieu\(x\), (\d+) épingle\(s\)\./g, '$1 check(s), $2 contract(s), $3 location(s), $4 pin(s).'],
   [/(\d+) blueprints?\b(?! de)/g, (m,n)=>`${n} blueprint${n>1?'s':''}`],
   [/(\d+) affichés : affinez la recherche/g, '$1 shown: refine your search'],
   [/💰 dès /g, '💰 from '],
@@ -2550,12 +2597,16 @@ $('#btnTestApi').addEventListener('click', async ()=>{
   out.innerHTML = await testToken(settings.token);
 });
 // Sauvegarde complète : tout sauf le token et les caches
-const BACKUP_KEYS = ['checks','contracts','customLocs','resPins','resPick','sgPins','lcRecent','contractStart','filters','resFilters','settings','sgSortCol','msRank','msDone','msFac','msSys','msMode','bpType','bpSrc'];
+const BACKUP_KEYS = ['checks','contracts','customLocs','resPins','resPick','sgPins','lcRecent','contractStart','filters','resFilters','settings','sgSortCol','msRank','msDone','msFac','msSys','msMode','bpType','bpSrc','msFollow','bpFollow'];
 function backupCounts(d){ return {checks:(d.checks||[]).length, contracts:(d.contracts||[]).length, locs:(d.customLocs||[]).length, pins:(d.resPins||[]).length+(d.sgPins||[]).length}; }
-$('#btnExport').addEventListener('click', ()=>{
+function backupData(){
   const data = {};
   BACKUP_KEYS.forEach(k=>{ const v = LS.get(k); if(v!=null) data[k] = v; });
   if(data.settings){ data.settings = Object.assign({}, data.settings); delete data.settings.token; delete data.settings.secret; }
+  return data;
+}
+$('#btnExport').addEventListener('click', ()=>{
+  const data = backupData();
   const file = {app:'SC Hauling', format:2, exported:new Date().toISOString(), data};
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([JSON.stringify(file, null, 2)], {type:'application/json'}));
@@ -2566,6 +2617,9 @@ $('#btnExport').addEventListener('click', ()=>{
 $('#importFile').addEventListener('change', async e=>{
   const f = e.target.files[0]; e.target.value = ''; if(!f) return;
   let obj; try{ obj = JSON.parse(await f.text()); }catch(err){ toast('Fichier invalide : ce n\'est pas un fichier JSON.', true); return; }
+  importBackup(obj);
+});
+function importBackup(obj){
   // Ancien format : tableau de contrôles. Nouveau : {app, format, data:{…}}
   const d = Array.isArray(obj) ? {checks:obj} : (obj && typeof obj==='object' ? (obj.data || obj) : null);
   if(!d || !BACKUP_KEYS.some(k=>d[k]!=null)){ toast('Ce fichier ne contient aucune donnée SC Hauling.', true); return; }
@@ -2581,12 +2635,16 @@ $('#importFile').addEventListener('change', async e=>{
   ['filters','resFilters','sgSortCol'].forEach(k=>{ if(d[k]) LS.set(k, Object.assign({}, LS.get(k, {}), d[k])); });
   if(d.contractStart && !LS.get('contractStart')) LS.set('contractStart', d.contractStart);
   if(d.settings){ const cur = LS.get('settings', {}), keep = {token:cur.token, secret:cur.secret, lang:cur.lang}; LS.set('settings', Object.assign({}, cur, d.settings, keep)); }
+  // Missions : missions finies (union) et rangs (le plus élevé des deux)
+  ['msDone','msFollow','bpFollow'].forEach(k=>{ if(Array.isArray(d[k])) LS.set(k, [...new Set(LS.get(k, []).concat(d[k]))]); });
+  if(d.msRank && typeof d.msRank==='object'){ const cur = LS.get('msRank', {}); Object.entries(d.msRank).forEach(([k,v])=>{ if(!(cur[k] >= v)) cur[k] = v; }); LS.set('msRank', cur); }
+  ['msFac','msSys','msMode','bpType','bpSrc'].forEach(k=>{ if(d[k]!=null && LS.get(k)==null) LS.set(k, d[k]); });
   const msg = (add.checks+add.contracts+add.locs+add.pins)
     ? `Import terminé : ${add.checks} contrôle(s), ${add.contracts} contrat(s), ${add.locs} lieu(x) et ${add.pins} épingle(s) ajoutés.${d.settings?' Réglages repris.':''}`
     : `Rien de nouveau à ajouter : tout ce que contient le fichier était déjà présent.${d.settings?' Réglages repris.':''}`;
   try{ sessionStorage.setItem('sch.importMsg', msg); }catch(err){}
   location.reload();
-});
+}
 // ---- Données complémentaires publiées par le script GitHub (data/*.json, voir scripts/update-data.mjs) ----
 // mining.json remplace les données de minage intégrées si elles sont plus récentes ; sctrade.json (si publié)
 // sert à afficher, sous les prix UEX, le dernier prix relevé sur SC Trade Tools.
@@ -2658,6 +2716,8 @@ setTimeout(loadExtraData, 300);
 let MS = null, msLoading = null;
 const msRank = LS.get('msRank', {});           // { "Faction|échelle": rang }
 const msDone = new Set(LS.get('msDone', []));   // missions finies (clé stable)
+const msFollow = new Set(LS.get('msFollow', []));   // missions suivies
+const bpFollow = new Set(LS.get('bpFollow', []));   // blueprints suivis (nom du produit)
 const msKey = m => `${MS.F[m.f]}|${m.t}|${m.s}|${m.r0}`;
 const rankName = (s, r) => s >= 0 && MS.S[s] ? MS.S[s][2][r] ?? '?' : '';
 function msDoneTitle(o){ return MS.M.some(x=>x.f===o.f && x.t===o.t && msDone.has(msKey(x))); }
@@ -2699,8 +2759,8 @@ function msLinks(arr, cur, max){
   for(const j of arr){ const o = MS.M[j], k = o.f+'|'+o.t; if(seen.has(k)) continue; seen.add(k); out.push(j); }
   return out.slice(0, max||99).map(j=>msLink(j,cur)).join(', ') + (max && out.length>max ? ' …' : '');
 }
-function msItemHtml(m, i, st){
-  const cur = m.f, done = msDone.has(msKey(m));
+function msItemHtml(m, i, st, pre, curF){
+  const cur = m.f, done = msDone.has(msKey(m)), fol = msFollow.has(msKey(m));
   const reward = m.u ? (m.u[0]===m.u[1] ? fmt(m.u[0]) : fmt(m.u[0])+' – '+fmt(m.u[1])) + ' aUEC' : '';
   const why = (st.why||[]).map(w=>{
     if(w.rank != null){ const need = MS.S[m.s][3][w.rank], have = MS.S[m.s][3][msMyRank(m.f,m.s)] || 0;
@@ -2719,8 +2779,8 @@ function msItemHtml(m, i, st){
     m.un ? `<span class="pill good">débloque ${m.un.length}</span>` : '',
   ].join('');
   const range = m.s >= 0 ? `${esc(rankName(m.s,m.r0))}${m.r1!=null ? ' → '+esc(rankName(m.s,m.r1)) : ' <span>et plus</span>'}` : '<span class="muted">aucun rang requis</span>';
-  return `<details class="msitem${done?' done':''}" id="ms-${i}" data-ms="${i}">
-    <summary><span class="mt">${done?'✔ ':''}${esc(m.t)}</span>${pills}<span class="mr">${reward}${m.rep ? ` <span class="pos">+${fmt(m.rep)} rep</span>` : ''}</span>${why ? `<span class="mwhy">${why}</span>` : ''}</summary>
+  return `<details class="msitem${done?' done':''}" id="${pre||'ms'}-${i}" data-ms="${i}">
+    <summary><button class="star${fol?' on':''}" data-msfollow="${i}" title="${fol?'Ne plus suivre':'Suivre cette mission'}">${fol?'★':'☆'}</button><span class="mt">${done?'✔ ':''}${esc(m.t)}</span>${curF!=null && m.f!==curF ? `<span class="pill">${esc(MS.F[m.f])}</span>` : ''}${pills}<span class="mr">${reward}${m.rep ? ` <span class="pos">+${fmt(m.rep)} rep</span>` : ''}</span>${why ? `<span class="mwhy">${why}</span>` : ''}</summary>
     <div class="mbody">
       <div><span class="muted">Rang :</span> ${range}${m.s>=0 ? ` <span class="muted">(${esc(MS.S[m.s][1])})</span>` : ''}</div>
       ${m.bi ? `<div><span class="muted">Coût d'entrée :</span> <b>${fmt(m.bi)} aUEC</b> <span class="muted">(à payer pour accepter la mission)</span></div>` : ''}
@@ -2756,7 +2816,9 @@ async function renderMissions(){
     return `<span class="pill acc">Prochain rang : ${esc(MS.S[si][2][nr])} (${fmt(MS.S[si][3][nr])} rep) → ${n} mission${n>1?'s':''}</span>`; }).join('');
   $('#msSum').innerHTML = `<span class="pill good">✅ ${ok.length} disponible${ok.length>1?'s':''}</span><span class="pill warn">🔒 ${locked.length} à débloquer</span>${over.length ? `<span class="pill">${over.length} dépassée${over.length>1?'s':''}</span>` : ''}${next}`;
   const sec = (open, title, arr, empty) => `<details class="mssec panel" ${open?'open':''}><summary>${title}</summary>${arr.length ? grouped(arr) : `<p class="muted">${empty}</p>`}</details>`;
-  $('#msBody').innerHTML =
+  const folSeen = new Set(), fol = MS.M.map((m,i)=>({m,i})).filter(x=>{ const k = msKey(x.m); if(!msFollow.has(k) || folSeen.has(k)) return false; folSeen.add(k); return true; });
+  const folHtml = fol.length ? `<details class="mssec panel" open><summary>⭐ Suivies (${fol.length})</summary>${fol.map(x=>msItemHtml(x.m, x.i, msStatus(x.m), 'msf', f)).join('')}</details>` : '';
+  $('#msBody').innerHTML = folHtml +
     sec(true, `✅ Disponibles maintenant (${ok.length})`, ok, 'Aucune mission disponible avec ces filtres.') +
     sec(true, `🔒 À débloquer (${locked.length})`, locked, 'Rien à débloquer avec ces filtres.') +
     (over.length ? sec(false, `Plus proposées à votre rang (${over.length})`, over, '') : '');
@@ -2777,6 +2839,8 @@ $('#msRanks').addEventListener('change', e=>{ const sel = e.target.closest('sele
   msRank[MS.F[+$('#msFac').value]+'|'+MS.S[+sel.dataset.msscope][0]] = +sel.value; LS.set('msRank', msRank); renderMissions(); });
 $('#msBody').addEventListener('click', e=>{ const b = e.target.closest('[data-goms]'); if(b){ e.preventDefault(); goMission(+b.dataset.goms); return; }
   const g = e.target.closest('[data-gobp]'); if(g){ e.preventDefault(); goBlueprint(+g.dataset.gobp); return; }
+  const sf = e.target.closest('[data-msfollow]'); if(sf){ e.preventDefault(); e.stopPropagation(); const k = msKey(MS.M[+sf.dataset.msfollow]); msFollow.has(k) ? msFollow.delete(k) : msFollow.add(k); LS.set('msFollow', [...msFollow]);
+    const open = [...$$('#msBody details.msitem[open]')].map(d=>d.id); renderMissions().then(()=>open.forEach(id=>{ const d = document.getElementById(id); if(d) d.open = true; })); return; }
   const mb = e.target.closest('[data-msbp]'); if(mb){ e.preventDefault(); e.stopPropagation(); goMissionBlueprints(+mb.dataset.msbp); } });
 $('#msBody').addEventListener('change', e=>{ const c = e.target.closest('input[data-msdone]'); if(!c) return;
   const k = msKey(MS.M[+c.dataset.msdone]); c.checked ? msDone.add(k) : msDone.delete(k); LS.set('msDone', [...msDone]);
@@ -2816,7 +2880,8 @@ function bpWhere(kind, name){
   }
   return out.length ? out.join(' ') : '<span class="muted">—</span>';
 }
-function bpItemHtml(b, i){
+function bpItemHtml(b, i, pre){
+  const fol = bpFollow.has(b.n);
   const ms = (b.m||[]).map(j=>({j, m:MS?.M[j], st:MS?.M[j] ? msStatus(MS.M[j]) : null})).filter(x=>x.m);
   ms.sort((a,c)=> (a.st.st!=='ok') - (c.st.st!=='ok') || a.m.r0 - c.m.r0 || a.m.t.localeCompare(c.m.t));
   const okN = ms.filter(x=>x.st.st==='ok').length;
@@ -2825,8 +2890,8 @@ function bpItemHtml(b, i){
   const how = b.d ? '<p>Connu par défaut : tous les joueurs peuvent le fabriquer.</p>'
     : ms.length ? `<div>${ms.map(x=>`<div>${x.st.st==='ok' ? '✅' : x.st.st==='over' ? '⏹' : '🔒'} <button class="lnk2" data-goms="${x.j}">${esc(x.m.t)}</button> <span class="muted">— ${esc(MS.F[x.m.f])}${x.m.s>=0 ? ' · '+esc(rankName(x.m.s,x.m.r0)) : ''}${x.m.sy.length ? ' · '+esc(x.m.sy.join(', ')) : ''}</span></div>`).join('')}</div><p class="hint">✅ disponible pour vous · 🔒 à débloquer · ⏹ plus proposée à votre rang (selon les rangs choisis dans la vue Missions). Le blueprint fait partie des récompenses possibles de la mission.</p>`
     : '<p class="muted">Aucune mission ne le donne dans les données actuelles (butin, Wikelo, événement ou pas encore obtenable).</p>';
-  return `<details class="msitem" id="bp-${i}">
-    <summary><span class="mt">${esc(b.n)}</span><span class="pill">${esc(bpCat(b))}</span>${b.mf ? `<span class="pill">${esc(b.mf)}</span>` : ''}${src}<span class="mr muted">⏱ ${b.t>=60 ? Math.round(b.t/60)+' min' : b.t+' s'}</span></summary>
+  return `<details class="msitem" id="${pre||'bp'}-${i}">
+    <summary><button class="star${fol?' on':''}" data-bpfollow="${i}" title="${fol?'Ne plus suivre':'Suivre ce blueprint'}">${fol?'★':'☆'}</button><span class="mt">${esc(b.n)}</span><span class="pill">${esc(bpCat(b))}</span>${b.mf ? `<span class="pill">${esc(b.mf)}</span>` : ''}${src}<span class="mr muted">⏱ ${b.t>=60 ? Math.round(b.t/60)+' min' : b.t+' s'}</span></summary>
     <div class="mbody">
       <h4 class="sec">Ingrédients</h4>
       <div class="histwrap"><table class="bpt"><thead><tr><th>Emplacement</th><th>Ingrédient</th><th>Quantité</th><th>Qualité min.</th><th>Où le trouver</th></tr></thead><tbody>${rows}</tbody></table></div>
@@ -2847,7 +2912,8 @@ async function renderBlueprints(){
     && (!srcF || (srcF==='m' && b.m) || (srcF==='d' && b.d) || (srcF==='u' && !b.m && !b.d) || (srcF==='ok' && okFor(b))));
   const MAX = 40;
   $('#bpSum').innerHTML = (only ? `<span class="pill warn">Blueprints de la mission « ${esc(MS.M[bpMission].t)} » <button class="lnk2" data-bpclear="1" title="Voir tous les blueprints">✕</button></span>` : '') + `<span class="pill acc">${list.length} blueprint${list.length>1?'s':''}</span>${list.length>MAX ? `<span class="pill">${MAX} affichés : affinez la recherche</span>` : ''}`;
-  $('#bpBody').innerHTML = `<div class="panel">${list.length ? list.slice(0,MAX).map(({b,i})=>bpItemHtml(b,i)).join('') : '<p class="muted">Aucun blueprint ne correspond.</p>'}<p class="hint">Données : <a href="https://scmdb.net/?page=fab" target="_blank" rel="noopener">scmdb.net</a>, version ${esc(BP.v)}. Prix d'achat : UEX (la qualité n'est pas garantie).</p></div>`;
+  const folB = BP.B.map((b,i)=>({b,i})).filter(x=>bpFollow.has(x.b.n));
+  $('#bpBody').innerHTML = (folB.length ? `<details class="mssec panel" open><summary>⭐ Suivis (${folB.length})</summary>${folB.map(x=>bpItemHtml(x.b, x.i, 'bpf')).join('')}</details>` : '') + `<div class="panel">${list.length ? list.slice(0,MAX).map(({b,i})=>bpItemHtml(b,i)).join('') : '<p class="muted">Aucun blueprint ne correspond.</p>'}<p class="hint">Données : <a href="https://scmdb.net/?page=fab" target="_blank" rel="noopener">scmdb.net</a>, version ${esc(BP.v)}. Prix d'achat : UEX (la qualité n'est pas garantie).</p></div>`;
 }
 function goMissionBlueprints(i){
   if(!BP || !MS?.M[i]?.bl) return;
@@ -2865,6 +2931,8 @@ $('#bpSum').addEventListener('click', e=>{ if(e.target.closest('[data-bpclear]')
 $('#bpType').addEventListener('change', e=>{ LS.set('bpType', e.target.value); renderBlueprints(); });
 $('#bpSrc').addEventListener('change', e=>{ LS.set('bpSrc', e.target.value); renderBlueprints(); });
 $('#bpBody').addEventListener('click', e=>{
+  const sf = e.target.closest('[data-bpfollow]'); if(sf){ e.preventDefault(); e.stopPropagation(); const n = BP.B[+sf.dataset.bpfollow].n; bpFollow.has(n) ? bpFollow.delete(n) : bpFollow.add(n); LS.set('bpFollow', [...bpFollow]);
+    const open = [...$$('#bpBody details.msitem[open]')].map(d=>d.id); renderBlueprints().then(()=>open.forEach(id=>{ const d = document.getElementById(id); if(d) d.open = true; })); return; }
   const m = e.target.closest('[data-goms]'); if(m){ e.preventDefault(); goMission(+m.dataset.goms); return; }
   const gs = e.target.closest('[data-gosig]'); if(gs){ e.preventDefault(); goToSig(gs.dataset.gosig); return; }
   const gr = e.target.closest('[data-gores]'); if(gr){ e.preventDefault(); goToRes(gr.dataset.gores.split(',').map(Number)); return; }
@@ -2872,6 +2940,52 @@ $('#bpBody').addEventListener('click', e=>{
   const x = e.target.closest('[data-bpclear]'); if(x){ bpMission = null; renderBlueprints(); }
 });
 try{ if(LS.get('msMode','missions')==='bp') setMsMode('bp'); }catch(e){}
+
+// ---- Transfert vers un autre appareil : données compressées dans l'adresse (#sync=…), jamais envoyées à un serveur ----
+const b64u = bytes => { let s = ''; bytes.forEach(b=>s += String.fromCharCode(b)); return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); };
+const unb64u = str => { const s = atob(str.replace(/-/g,'+').replace(/_/g,'/')); return Uint8Array.from(s, c=>c.charCodeAt(0)); };
+async function packSync(obj){
+  const raw = new TextEncoder().encode(JSON.stringify(obj));
+  if(typeof CompressionStream === 'undefined') return '0' + b64u(raw);
+  const buf = await new Response(new Blob([raw]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer();
+  return '1' + b64u(new Uint8Array(buf));
+}
+async function unpackSync(str){
+  const bytes = unb64u(str.slice(1));
+  const raw = str[0] === '1' ? new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer()) : bytes;
+  return JSON.parse(new TextDecoder().decode(raw));
+}
+let syncUrl = '';
+$('#btnSync').addEventListener('click', async ()=>{
+  const data = backupData(), n = backupCounts(data);
+  syncUrl = SITE_URL + '#sync=' + await packSync({app:'SC Hauling', format:2, exported:new Date().toISOString(), data});
+  $('#btnSyncCopy').hidden = false; $('#btnSyncShare').hidden = !navigator.share; $('#syncBox').hidden = false;
+  let qrHtml = '';
+  try{ const q = qrcode(0, 'L'); q.addData(syncUrl, 'Byte'); q.make(); const cell = Math.max(3, Math.floor(300 / (q.getModuleCount()+8))); qrHtml = q.createSvgTag({cellSize:cell, margin:cell*4}); }catch(e){ qrHtml = ''; }
+  $('#syncQr').hidden = !qrHtml; $('#syncQr').innerHTML = qrHtml;
+  $('#syncInfo').innerHTML = (qrHtml
+      ? '<p><b>Scannez ce QR code</b> avec l\'appareil photo de l\'autre appareil, puis confirmez l\'import.</p>'
+      : '<p class="warnc">Trop de données pour un QR code : utilisez <b>Copier le lien</b> ou <b>Partager…</b> (message à vous-même), ou l\'export en fichier.</p>')
+    + `<p class="muted">Contenu : ${n.checks} contrôle(s), ${n.contracts} contrat(s), ${n.locs} lieu(x), ${n.pins} épingle(s), ${(data.msDone||[]).length} mission(s) finie(s). Taille du lien : ${fmt(syncUrl.length)} caractères.</p><p class="muted">À l'arrivée, rien n'est écrasé : les données sont ajoutées à celles déjà présentes.</p>`;
+});
+$('#btnSyncCopy').addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(syncUrl); toast('Lien copié. Ouvrez-le sur l\'autre appareil.'); }catch(e){ prompt('Copiez ce lien :', syncUrl); } });
+$('#btnSyncShare').addEventListener('click', ()=>{ navigator.share({title:'SC Hauling — transfert', url:syncUrl}).catch(()=>{}); });
+// À l'ouverture d'un lien de transfert (appelé après le premier chargement, pour que rien ne réécrive les données importées)
+async function handleSyncHash(){
+  const h = location.hash; if(!h.startsWith('#sync=')) return;
+  history.replaceState(null, '', location.pathname + location.search);   // retire les données de l'adresse
+  let obj; try{ obj = await unpackSync(h.slice(6)); }catch(e){ toast('Lien de transfert illisible (incomplet ou abîmé).', true); return; }
+  const n = backupCounts(obj.data || {});
+  if(confirm(`Importer les données d'un autre appareil ?\n${n.checks} contrôle(s), ${n.contracts} contrat(s), ${n.locs} lieu(x), ${n.pins} épingle(s).\nRien n'est écrasé : elles s'ajoutent aux vôtres.`)) importBackup(obj);
+}
+
+// ---- Appli installable (service worker + invite d'installation) ----
+if('serviceWorker' in navigator && location.protocol === 'https:'){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
+let installEvt = null;
+window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); installEvt = e; $('#btnInstall').hidden = false; });
+$('#btnInstall').addEventListener('click', async ()=>{ if(!installEvt) return; installEvt.prompt(); try{ await installEvt.userChoice; }catch(e){} installEvt = null; $('#btnInstall').hidden = true; });
+window.addEventListener('appinstalled', ()=>{ $('#btnInstall').hidden = true; toast('SC Hauling est installé. Vous le trouverez avec vos applis.'); });
+if(location.protocol === 'file:') $('#installHint').insertAdjacentHTML('beforeend', ' <span class="warnc">Depuis le fichier local, l\'installation n\'est pas possible : ouvrez le site.</span>');
 
 // ---- Bandeau « nouvelle version » : compare APP_VERSION avec la page publiée sur GitHub ----
 $('#appVer').textContent = APP_VERSION;
@@ -2941,7 +3055,7 @@ saveChecks();
 renderContracts();
 renderSignatures();
 fillLcList();
-loadAll(false);
+loadAll(false).finally(()=>setTimeout(handleSyncHash, 300));
 </script>
 </body>
 </html>
