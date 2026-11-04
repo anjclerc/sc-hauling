@@ -1,0 +1,24 @@
+# Vérifie l'appli à chaque publication de index.html (et à la demande) : voir tests/smoke.mjs.
+name: Tests de l'appli
+
+on:
+  push:
+    branches: [main]
+    paths: ['index.html', 'tests/**', '.github/workflows/tests.yml']
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Installer Playwright
+        run: |
+          npm install --no-save playwright@1.48.2
+          npx playwright install --with-deps chromium
+      - name: Lancer le test
+        run: node tests/smoke.mjs
